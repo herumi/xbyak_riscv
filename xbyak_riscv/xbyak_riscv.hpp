@@ -12,9 +12,8 @@
 #include <list>
 #include <string>
 #include <algorithm>
-#ifndef NDEBUG
-#include <iostream>
-#endif
+#include <unordered_set>
+#include <unordered_map>
 
 #ifdef _WIN32
 	#ifndef WIN32_LEAN_AND_MEAN
@@ -69,11 +68,22 @@ enum {
 	VERSION = 0x1000 /* 0xABCD = A.BC.D */
 };
 
-inline uint32_t getVersion() const { return VERSION; }
+inline uint32_t getVersion() { return VERSION; }
 
 enum {
 	ERR_NONE = 0,
+	ERR_OFFSET_IS_TOO_BIG,
+	ERR_CODE_IS_TOO_BIG,
+	ERR_LABEL_IS_NOT_FOUND,
+	ERR_LABEL_IS_REDEFINED,
+	ERR_LABEL_IS_TOO_FAR,
+	ERR_LABEL_IS_NOT_SET_BY_L,
+	ERR_LABEL_IS_ALREADY_SET_BY_L,
+	ERR_CANT_PROTECT,
+	ERR_CANT_ALLOC,
 	ERR_BAD_ADDRESSING,
+	ERR_BAD_PARAMETER,
+	ERR_MUNMAP,
 	ERR_INTERNAL // Put it at last.
 };
 
@@ -81,7 +91,18 @@ inline const char *ConvertErrorToString(int err)
 {
 	static const char *errTbl[] = {
 		"none",
+		"offset is too big",
+		"code is too big",
+		"label is not found",
+		"label is redefined",
+		"label is too far",
+		"label is not set by L",
+		"label is already set by L",
+		"can't protect",
+		"can't alloc",
 		"bad addressing",
+		"munmap",
+		"bad parameter",
 	};
 	assert(ERR_INTERNAL + 1 == sizeof(errTbl) / sizeof(*errTbl));
 	return err <= ERR_INTERNAL ? errTbl[err] : "unknown err";
@@ -289,7 +310,6 @@ public:
 		allocList_.erase(i);
 	}
 };
-#endif
 
 class Address;
 
@@ -303,7 +323,7 @@ public:
 	constexpr int getIdx() const { return idx_; }
 	const char *toString() const
 	{
-		static const char *tbl[4] = {
+		static const char tbl[][4] = {
 			"x0", "x1", "x2", "x3", "x4", "x5", "x6", "x7",
 			"x8", "x9", "x10", "x11", "x12", "x13", "x14", "x15",
 			"x16", "x17", "x18", "x19", "x20", "x21", "x22", "x23",
@@ -311,11 +331,11 @@ public:
 		};
 		return tbl[idx_];
 	}
-	bool operator==(const Operand& rhs) const
+	bool operator==(const Reg& rhs) const
 	{
 		return idx_ == rhs.idx_;
 	}
-	bool operator!=(const Operand& rhs) const { return !operator==(rhs); }
+	bool operator!=(const Reg& rhs) const { return !operator==(rhs); }
 };
 
 static const constexpr Reg x0(0), x1(1), x2(2), x3(3), x4(4), x5(5), x6(6), x7(7);
@@ -574,8 +594,6 @@ class LabelManager {
 	typedef std::unordered_set<Label*> LabelPtrList;
 
 	CodeArray *base_;
-	// global : stateList_.front(), local : stateList_.back()
-	StateList stateList_;
 	mutable int labelId_;
 	ClabelDefList clabelDefList_;
 	ClabelUndefList clabelUndefList_;
@@ -675,22 +693,9 @@ public:
 	{
 		base_ = 0;
 		labelId_ = 1;
-		stateList_.clear();
-		stateList_.push_back(SlabelState());
-		stateList_.push_back(SlabelState());
 		clabelDefList_.clear();
 		clabelUndefList_.clear();
 		resetLabelPtrList();
-	}
-	void enterLocal()
-	{
-		stateList_.push_back(SlabelState());
-	}
-	void leaveLocal()
-	{
-		if (stateList_.size() <= 2) XBYAK_RISCV_THROW(ERR_UNDER_LOCAL_LABEL)
-		if (hasUndefinedLabel_inner(stateList_.back().undefList)) XBYAK_RISCV_THROW(ERR_LABEL_IS_NOT_FOUND)
-		stateList_.pop_back();
 	}
 	void set(CodeArray *base) { base_ = base; }
 	void defineClabel(Label& label)
@@ -702,7 +707,7 @@ public:
 	void assign(Label& dst, const Label& src)
 	{
 		ClabelDefList::const_iterator i = clabelDefList_.find(src.id);
-		if (i == clabelDefList_.end()) XBYAK_RISCV_THROW(ERR_LABEL_ISNOT_SET_BY_L)
+		if (i == clabelDefList_.end()) XBYAK_RISCV_THROW(ERR_LABEL_IS_NOT_SET_BY_L)
 		define_inner(clabelDefList_, clabelUndefList_, dst.id, i->second.offset);
 		dst.mgr = this;
 		labelPtrList_.insert(&dst);
@@ -714,13 +719,6 @@ public:
 	void addUndefinedLabel(const Label& label, const JmpLabel& jmp)
 	{
 		clabelUndefList_.insert(ClabelUndefList::value_type(label.id, jmp));
-	}
-	bool hasUndefSlabel() const
-	{
-		for (StateList::const_iterator i = stateList_.begin(), ie = stateList_.end(); i != ie; ++i) {
-			if (hasUndefinedLabel_inner(i->undefList)) return true;
-		}
-		return false;
 	}
 	bool hasUndefClabel() const { return hasUndefinedLabel_inner(clabelUndefList_); }
 	const uint8_t *getCode() const { return base_->getCode(); }
@@ -770,8 +768,27 @@ public:
 private:
 	CodeGenerator operator=(const CodeGenerator&) = delete;
 	LabelManager labelMgr_;
-public:
-	using CodeArray::db;
+	template<class T>
+	void putL_inner(T& label, bool relative = false, size_t disp = 0)
+	{
+		const int jmpSize = relative ? 4 : (int)sizeof(size_t);
+		if (isAutoGrow() && size_ + 16 >= maxSize_) growMemory();
+		size_t offset = 0;
+		if (labelMgr_.getOffset(&offset, label)) {
+			if (relative) {
+				db(inner::VerifyInInt32(offset + disp - size_ - jmpSize), jmpSize);
+			} else if (isAutoGrow()) {
+				db(uint64_t(0), jmpSize);
+				save(size_ - jmpSize, offset, jmpSize, inner::LaddTop);
+			} else {
+				db(size_t(top_) + offset, jmpSize);
+			}
+			return;
+		}
+		db(uint64_t(0), jmpSize);
+		JmpLabel jmp(size_, jmpSize, (relative ? inner::LasIs : isAutoGrow() ? inner::LaddTop : inner::Labs), disp);
+		labelMgr_.addUndefinedLabel(label, jmp);
+	}
 public:
 	void L(Label& label) { labelMgr_.defineClabel(label); }
 	Label L() { Label label; L(label); return label; }
@@ -808,7 +825,7 @@ public:
 		labelMgr_.reset();
 		labelMgr_.set(this);
 	}
-	bool hasUndefinedLabel() const { return labelMgr_.hasUndefSlabel() || labelMgr_.hasUndefClabel(); }
+	bool hasUndefinedLabel() const { return labelMgr_.hasUndefClabel(); }
 	/*
 		MUST call ready() to complete generating code if you use AutoGrow mode.
 		It is not necessary for the other mode if hasUndefinedLabel() is true.
@@ -828,40 +845,6 @@ public:
 //#include "xbyak_mnemonic.h"
 #endif
 };
-
-namespace util {
-static const constexpr Mmx mm0(0), mm1(1), mm2(2), mm3(3), mm4(4), mm5(5), mm6(6), mm7(7);
-static const constexpr Xmm xmm0(0), xmm1(1), xmm2(2), xmm3(3), xmm4(4), xmm5(5), xmm6(6), xmm7(7);
-static const constexpr Ymm ymm0(0), ymm1(1), ymm2(2), ymm3(3), ymm4(4), ymm5(5), ymm6(6), ymm7(7);
-static const constexpr Zmm zmm0(0), zmm1(1), zmm2(2), zmm3(3), zmm4(4), zmm5(5), zmm6(6), zmm7(7);
-static const constexpr Reg32 eax(Operand::EAX), ecx(Operand::ECX), edx(Operand::EDX), ebx(Operand::EBX), esp(Operand::ESP), ebp(Operand::EBP), esi(Operand::ESI), edi(Operand::EDI);
-static const constexpr Reg16 ax(Operand::AX), cx(Operand::CX), dx(Operand::DX), bx(Operand::BX), sp(Operand::SP), bp(Operand::BP), si(Operand::SI), di(Operand::DI);
-static const constexpr Reg8 al(Operand::AL), cl(Operand::CL), dl(Operand::DL), bl(Operand::BL), ah(Operand::AH), ch(Operand::CH), dh(Operand::DH), bh(Operand::BH);
-static const constexpr AddressFrame ptr(0), byte(8), word(16), dword(32), qword(64), xword(128), yword(256), zword(512);
-static const constexpr AddressFrame ptr_b(0, true), xword_b(128, true), yword_b(256, true), zword_b(512, true);
-static const constexpr Fpu st0(0), st1(1), st2(2), st3(3), st4(4), st5(5), st6(6), st7(7);
-static const constexpr Opmask k0(0), k1(1), k2(2), k3(3), k4(4), k5(5), k6(6), k7(7);
-static const constexpr BoundsReg bnd0(0), bnd1(1), bnd2(2), bnd3(3);
-static const constexpr EvexModifierRounding T_sae(EvexModifierRounding::T_SAE), T_rn_sae(EvexModifierRounding::T_RN_SAE), T_rd_sae(EvexModifierRounding::T_RD_SAE), T_ru_sae(EvexModifierRounding::T_RU_SAE), T_rz_sae(EvexModifierRounding::T_RZ_SAE);
-static const constexpr EvexModifierZero T_z;
-#ifdef XBYAK_RISCV64
-static const constexpr Reg64 rax(Operand::RAX), rcx(Operand::RCX), rdx(Operand::RDX), rbx(Operand::RBX), rsp(Operand::RSP), rbp(Operand::RBP), rsi(Operand::RSI), rdi(Operand::RDI), r8(Operand::R8), r9(Operand::R9), r10(Operand::R10), r11(Operand::R11), r12(Operand::R12), r13(Operand::R13), r14(Operand::R14), r15(Operand::R15);
-static const constexpr Reg32 r8d(8), r9d(9), r10d(10), r11d(11), r12d(12), r13d(13), r14d(14), r15d(15);
-static const constexpr Reg16 r8w(8), r9w(9), r10w(10), r11w(11), r12w(12), r13w(13), r14w(14), r15w(15);
-static const constexpr Reg8 r8b(8), r9b(9), r10b(10), r11b(11), r12b(12), r13b(13), r14b(14), r15b(15), spl(Operand::SPL, true), bpl(Operand::BPL, true), sil(Operand::SIL, true), dil(Operand::DIL, true);
-static const constexpr Xmm xmm8(8), xmm9(9), xmm10(10), xmm11(11), xmm12(12), xmm13(13), xmm14(14), xmm15(15);
-static const constexpr Xmm xmm16(16), xmm17(17), xmm18(18), xmm19(19), xmm20(20), xmm21(21), xmm22(22), xmm23(23);
-static const constexpr Xmm xmm24(24), xmm25(25), xmm26(26), xmm27(27), xmm28(28), xmm29(29), xmm30(30), xmm31(31);
-static const constexpr Ymm ymm8(8), ymm9(9), ymm10(10), ymm11(11), ymm12(12), ymm13(13), ymm14(14), ymm15(15);
-static const constexpr Ymm ymm16(16), ymm17(17), ymm18(18), ymm19(19), ymm20(20), ymm21(21), ymm22(22), ymm23(23);
-static const constexpr Ymm ymm24(24), ymm25(25), ymm26(26), ymm27(27), ymm28(28), ymm29(29), ymm30(30), ymm31(31);
-static const constexpr Zmm zmm8(8), zmm9(9), zmm10(10), zmm11(11), zmm12(12), zmm13(13), zmm14(14), zmm15(15);
-static const constexpr Zmm zmm16(16), zmm17(17), zmm18(18), zmm19(19), zmm20(20), zmm21(21), zmm22(22), zmm23(23);
-static const constexpr Zmm zmm24(24), zmm25(25), zmm26(26), zmm27(27), zmm28(28), zmm29(29), zmm30(30), zmm31(31);
-static const constexpr Zmm tmm0(0), tmm1(1), tmm2(2), tmm3(3), tmm4(4), tmm5(5), tmm6(6), tmm7(7);
-static const constexpr RegRip rip;
-#endif
-} // util
 
 #ifdef _MSC_VER
 	#pragma warning(pop)
