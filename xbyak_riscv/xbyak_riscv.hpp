@@ -39,6 +39,12 @@
 	#define XBYAK_RISCV_USE_MMAP_ALLOCATOR
 #endif
 
+#ifdef NDEBUG
+	#define XBYAK_RISCV_ASSERT(x)
+#else
+	#define XBYAK_RISCV_ASSERT(x) assert(x)
+#endif
+
 // MFD_CLOEXEC defined only linux 3.17 or later.
 // Android wraps the memfd_create syscall from API version 30.
 #if !defined(MFD_CLOEXEC) || (defined(__ANDROID__) && __ANDROID_API__ < 30)
@@ -116,16 +122,15 @@ inline const char *ConvertErrorToString(int err)
 
 namespace local {
 
-inline uint32_t mask(size_t n)
+inline constexpr uint32_t mask(size_t n)
 {
-	assert(n <= 32);
-	if (n == 32) return 0xffffffff;
-	return (1u << n) - 1;
+	XBYAK_RISCV_ASSERT(n <= 32);
+	return n == 32 ? 0xffffffff : (1u << n) - 1;
 }
 // is x <= mask(n) ?
-inline bool inBit(uint32_t x, size_t n)
+inline constexpr bool inBit(uint32_t x, size_t n)
 {
-	return (x & ~mask(n)) != 0;
+	return x <= mask(n);
 }
 
 } // local
@@ -336,12 +341,12 @@ public:
 #endif
 
 class Reg {
-	int idx_;
+	uint32_t idx_;
 public:
-	constexpr Reg(int idx = 0)
+	constexpr Reg(uint32_t idx = 0)
 		: idx_(idx)
 	{
-		assert(local::isBit(idx, 5));
+		XBYAK_RISCV_ASSERT(local::inBit(idx, 5));
 	}
 	constexpr int getIdx() const { return idx_; }
 	const char *toString() const
@@ -714,11 +719,6 @@ class LabelManager {
 	template<class T>
 	bool hasUndefinedLabel_inner(const T& list) const
 	{
-#ifndef NDEBUG
-		for (typename T::const_iterator i = list.begin(); i != list.end(); ++i) {
-			std::cerr << "undefined label:" << i->first << std::endl;
-		}
-#endif
 		return !list.empty();
 	}
 	// detach all labels linked to LabelManager
@@ -808,7 +808,7 @@ struct Bit {
 	Bit(uint32_t v)
 		: v(v)
 	{
-		assert(inBit(v, n));
+		XBYAK_RISCV_ASSERT(inBit(v, n));
 	}
 	Bit(const Reg& r)
 		: v(r.getIdx())
