@@ -7,6 +7,7 @@
 	@note modified new BSD license
 	http://opensource.org/licenses/BSD-3-Clause
 */
+#include <stdio.h>
 #include <stdint.h>
 #include <assert.h>
 #include <list>
@@ -32,6 +33,10 @@
 	#ifndef MAP_JIT
 		#define MAP_JIT 0x800
 	#endif
+#endif
+
+#if defined(__GNUC__) && !defined(__MINGW32__)
+	#define XBYAK_RISCV_USE_MMAP_ALLOCATOR
 #endif
 
 // MFD_CLOEXEC defined only linux 3.17 or later.
@@ -107,6 +112,23 @@ inline const char *ConvertErrorToString(int err)
 	assert(ERR_INTERNAL + 1 == sizeof(errTbl) / sizeof(*errTbl));
 	return err <= ERR_INTERNAL ? errTbl[err] : "unknown err";
 }
+
+
+namespace local {
+
+inline uint32_t mask(size_t n)
+{
+	assert(n <= 32);
+	if (n == 32) return 0xffffffff;
+	return (1u << n) - 1;
+}
+// is x <= mask(n) ?
+inline bool inBit(uint32_t x, size_t n)
+{
+	return (x & ~mask(n)) != 0;
+}
+
+} // local
 
 #ifdef XBYAK_RISCV_NO_EXCEPTION
 namespace local {
@@ -221,8 +243,9 @@ struct Allocator {
 	virtual bool useProtect() const { return true; }
 };
 
+#ifdef XBYAK_RISCV_USE_MMAP_ALLOCATOR
 #ifdef XBYAK_RISCV_USE_MAP_JIT
-namespace util {
+namespace local {
 
 inline int getMacOsVersionPure()
 {
@@ -242,7 +265,7 @@ inline int getMacOsVersion()
 	return version;
 }
 
-} // util
+} // local
 #endif
 class MmapAllocator : public Allocator {
 	struct Allocation {
@@ -272,7 +295,7 @@ public:
 #endif
 #if defined(XBYAK_RISCV_USE_MAP_JIT)
 		const int mojaveVersion = 18;
-		if (util::getMacOsVersion() >= mojaveVersion) mode |= MAP_JIT;
+		if (local::getMacOsVersion() >= mojaveVersion) mode |= MAP_JIT;
 #endif
 		int fd = -1;
 #if defined(XBYAK_RISCV_USE_MEMFD)
@@ -310,8 +333,7 @@ public:
 		allocList_.erase(i);
 	}
 };
-
-class Address;
+#endif
 
 class Reg {
 	int idx_;
@@ -319,6 +341,7 @@ public:
 	constexpr Reg(int idx = 0)
 		: idx_(idx)
 	{
+		assert(local::isBit(idx, 5));
 	}
 	constexpr int getIdx() const { return idx_; }
 	const char *toString() const
@@ -373,7 +396,11 @@ class CodeArray {
 	typedef std::list<AddrInfo> AddrInfoList;
 	AddrInfoList addrInfoList_;
 	const Type type_;
+#ifdef XBYAK_RISCV_USE_MMAP_ALLOCATOR
 	MmapAllocator defaultAllocator_;
+#else
+	Allocator defaultAllocator_;
+#endif
 	Allocator *alloc_;
 protected:
 	size_t maxSize_;
@@ -483,6 +510,28 @@ public:
 	{
 		if (size > maxSize_) XBYAK_RISCV_THROW(ERR_OFFSET_IS_TOO_BIG)
 		size_ = size;
+	}
+	void dump() const
+	{
+		const uint8_t *p = getCode();
+		size_t bufSize = getSize();
+		size_t remain = bufSize;
+		for (int i = 0; i < 4; i++) {
+			size_t disp = 16;
+			if (remain < 16) {
+				disp = remain;
+			}
+			for (size_t j = 0; j < 16; j++) {
+				if (j < disp) {
+					printf("%02X", p[i * 16 + j]);
+				}
+			}
+			putchar('\n');
+			remain -= disp;
+			if (remain == 0) {
+				break;
+			}
+		}
 	}
 	/*
 		@param offset [in] offset from top
@@ -751,11 +800,23 @@ inline const uint8_t* Label::getAddress() const
 	return mgr->getCode() + offset;
 }
 
-typedef enum {
-	DefaultEncoding,
-	VexEncoding,
-	EvexEncoding
-} PreferredEncoding;
+namespace local {
+
+template<size_t n>
+struct Bit {
+	uint32_t v;
+	Bit(uint32_t v)
+		: v(v)
+	{
+		assert(inBit(v, n));
+	}
+	Bit(const Reg& r)
+		: v(r.getIdx())
+	{
+	}
+};
+
+} // local
 
 class CodeGenerator : public CodeArray {
 public:
@@ -765,6 +826,9 @@ public:
 		T_FAR, // far jump
 		T_AUTO // T_SHORT if possible
 	};
+	typedef local::Bit<3> Bit3;
+	typedef local::Bit<5> Bit5;
+	typedef local::Bit<7> Bit7;
 private:
 	CodeGenerator operator=(const CodeGenerator&) = delete;
 	LabelManager labelMgr_;
@@ -788,6 +852,11 @@ private:
 		db(uint64_t(0), jmpSize);
 		JmpLabel jmp(size_, jmpSize, (relative ? inner::LasIs : isAutoGrow() ? inner::LaddTop : inner::Labs), disp);
 		labelMgr_.addUndefinedLabel(label, jmp);
+	}
+	void Rtype(Bit5 opcode, Bit3 funct3, Bit7 funct7, Bit5 rd, Bit5 rs1, Bit5 rs2)
+	{
+		uint32_t v = (funct7.v << 25) | (rs2.v << 20) | (rs1.v << 15) | (funct3.v << 12) | (rd.v << 7) | opcode.v;
+		dd(v);
 	}
 public:
 	void L(Label& label) { labelMgr_.defineClabel(label); }
@@ -841,6 +910,10 @@ public:
 	// set read/exec
 	void readyRE() { return ready(PROTECT_RE); }
 
+	void add(const Reg& dst, const Reg& r1, const Reg& r2)
+	{
+		Rtype(0x33, 0, 0, dst, r1, r2);
+	}
 #ifndef XBYAK_RISCV_DONT_READ_LIST
 //#include "xbyak_mnemonic.h"
 #endif
