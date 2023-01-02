@@ -14,3 +14,5 @@ void sltiu(const Reg& rd, const Reg& rs1, int imm) { Itype(0x13, 3, rd, rs1, imm
 void xori(const Reg& rd, const Reg& rs1, int imm) { Itype(0x13, 4, rd, rs1, imm); }
 void ori(const Reg& rd, const Reg& rs1, int imm) { Itype(0x13, 6, rd, rs1, imm); }
 void andi(const Reg& rd, const Reg& rs1, int imm) { Itype(0x13, 7, rd, rs1, imm); }
+void jalr(const Reg& rd, const Reg& rs1, int imm = 0) { Itype(0x67, 0, rd, rs1, imm); }
+void ret() { jalr(x0, x1); }

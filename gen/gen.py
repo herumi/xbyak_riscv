@@ -31,3 +31,7 @@ tbl = [
 
 for (funct3, opcode, name) in tbl:
   print(f'void {name}(const Reg& rd, const Reg& rs1, int imm) {{ Itype({hex(opcode)}, {funct3}, rd, rs1, imm); }}')
+
+# misc
+print(f'void jalr(const Reg& rd, const Reg& rs1, int imm = 0) {{ Itype({hex(0b1100111)}, 0, rd, rs1, imm); }}')
+print('void ret() { jalr(x0, x1); }')

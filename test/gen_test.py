@@ -15,6 +15,15 @@ def putRRI(name):
     print(f'{name.strip("_")} x1, x2, 1234')
     print(f'{name.strip("_")} x1, x2, -1234')
 
+def put(name):
+  if isXbyak:
+    print(f'{name}(); dump1();')
+  else:
+    print(f'{name}')
+
+def misc():
+  put('ret')
+
 def main():
   global isXbyak
   if len(sys.argv) > 1 and sys.argv[1] == 'gas':
@@ -23,8 +32,10 @@ def main():
   for op in ['add', 'sub', 'sll', 'slt', 'sltu', 'xor_', 'srl', 'sra', 'or_', 'and_']:
     putRRR(op)
 
-  for op in ['addi', 'slti', 'sltiu', 'xori', 'ori', 'andi']:
+  for op in ['addi', 'slti', 'sltiu', 'xori', 'ori', 'andi', 'jalr']:
     putRRI(op)
+
+  misc()
 
 
 if __name__ == '__main__':
