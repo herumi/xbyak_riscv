@@ -95,6 +95,7 @@ enum {
 	ERR_BAD_ADDRESSING,
 	ERR_BAD_PARAMETER,
 	ERR_MUNMAP,
+	ERR_IMM_IS_NOT_IN_SBIT12,
 	ERR_INTERNAL // Put it at last.
 };
 
@@ -113,6 +114,7 @@ inline const char *ConvertErrorToString(int err)
 		"can't alloc",
 		"bad addressing",
 		"munmap",
+		"imm is not in sbit12",
 		"bad parameter",
 	};
 	assert(ERR_INTERNAL + 1 == sizeof(errTbl) / sizeof(*errTbl));
@@ -131,6 +133,12 @@ inline constexpr uint32_t mask(size_t n)
 inline constexpr bool inBit(uint32_t x, size_t n)
 {
 	return x <= mask(n);
+}
+
+// is x is signed 12-bit integer?
+inline constexpr bool inSBit12(int x)
+{
+	return -(1 << 12) <= x && x < (1 << 12);
 }
 
 } // local
@@ -829,6 +837,7 @@ public:
 	typedef local::Bit<3> Bit3;
 	typedef local::Bit<5> Bit5;
 	typedef local::Bit<7> Bit7;
+	typedef local::Bit<12> Bit12;
 private:
 	CodeGenerator operator=(const CodeGenerator&) = delete;
 	LabelManager labelMgr_;
@@ -856,6 +865,12 @@ private:
 	void Rtype(Bit7 opcode, Bit3 funct3, Bit7 funct7, Bit5 rd, Bit5 rs1, Bit5 rs2)
 	{
 		uint32_t v = (funct7.v << 25) | (rs2.v << 20) | (rs1.v << 15) | (funct3.v << 12) | (rd.v << 7) | opcode.v;
+		dd(v);
+	}
+	void Itype(Bit7 opcode, Bit3 funct3, Bit5 rd, Bit5 rs1, int imm)
+	{
+		if (!local::inSBit12(imm)) XBYAK_RISCV_THROW(ERR_IMM_IS_NOT_IN_SBIT12)
+		uint32_t v = (imm << 20) | (rs1.v << 15) | (funct3.v << 12) | (rd.v << 7) | opcode.v;
 		dd(v);
 	}
 public:
