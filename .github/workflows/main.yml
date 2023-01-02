@@ -1,0 +1,20 @@
+name: test
+on: [push]
+
+defaults:
+  run:
+    shell: sh
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    container:
+      image: debian:testing
+    steps:
+    - uses: actions/checkout@v3
+    - run: apt -y update
+    - run: apt -y install make g++ binutils-riscv64-linux-gnu binutils-riscv64-unknown-elf
+    - run: make test

@@ -76,7 +76,7 @@ namespace Xbyak_riscv {
 
 enum {
 	DEFAULT_MAX_CODE_SIZE = 4096,
-	VERSION = 0x1000 /* 0xABCD = A.BC.D */
+	VERSION = 0x0010 /* 0xABCD = A.BC.D */
 };
 
 inline uint32_t getVersion() { return VERSION; }
