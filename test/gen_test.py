@@ -1,25 +1,18 @@
 import sys
 isXbyak = True
 
-def putRRR(name):
+def put(name, args=""):
   if isXbyak:
-    print(f'{name}(x1, x2, x3); dump1();')
+    print(f'{name}({args}); dump1();')
   else:
-    print(f'{name.strip("_")} x1, x2, x3')
+    print(f'{name.strip("_")} {args}')
+
+def putRRR(name):
+  put(name, 'x1, x2, x3')
 
 def putRRI(name):
-  if isXbyak:
-    print(f'{name}(x1, x2, 1234); dump1();')
-    print(f'{name}(x1, x2, -1234); dump1();')
-  else:
-    print(f'{name.strip("_")} x1, x2, 1234')
-    print(f'{name.strip("_")} x1, x2, -1234')
-
-def put(name):
-  if isXbyak:
-    print(f'{name}(); dump1();')
-  else:
-    print(f'{name}')
+  put(name, 'x1, x2, 1234')
+  put(name, 'x1, x2, -1234')
 
 def misc():
   put('ret')
