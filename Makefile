@@ -2,10 +2,11 @@ PREFIX?=/usr/local
 INSTALL_DIR=$(PREFIX)/include/xbyak_riscv
 
 all:
-	$(MAKE) -C sample
+#	$(MAKE) -C sample
 
 clean:
-	$(MAKE) -C sample clean
+#	$(MAKE) -C sample clean
+	$(MAKE) -C test clean
 
 install:
 	mkdir -p $(INSTALL_DIR)
