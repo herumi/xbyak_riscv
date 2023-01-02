@@ -853,7 +853,7 @@ private:
 		JmpLabel jmp(size_, jmpSize, (relative ? inner::LasIs : isAutoGrow() ? inner::LaddTop : inner::Labs), disp);
 		labelMgr_.addUndefinedLabel(label, jmp);
 	}
-	void Rtype(Bit5 opcode, Bit3 funct3, Bit7 funct7, Bit5 rd, Bit5 rs1, Bit5 rs2)
+	void Rtype(Bit7 opcode, Bit3 funct3, Bit7 funct7, Bit5 rd, Bit5 rs1, Bit5 rs2)
 	{
 		uint32_t v = (funct7.v << 25) | (rs2.v << 20) | (rs1.v << 15) | (funct3.v << 12) | (rd.v << 7) | opcode.v;
 		dd(v);
@@ -909,13 +909,17 @@ public:
 	}
 	// set read/exec
 	void readyRE() { return ready(PROTECT_RE); }
-
-	void add(const Reg& dst, const Reg& r1, const Reg& r2)
+#ifdef XBYAK_RISCV_TEST
+	void dump1()
 	{
-		Rtype(0x33, 0, 0, dst, r1, r2);
+		for (size_t i = 0; i < size_; i++) printf("%02x", top_[size_ - 1 - i]);
+		printf("\n");
+		size_ = 0;
 	}
+#endif
+
 #ifndef XBYAK_RISCV_DONT_READ_LIST
-//#include "xbyak_mnemonic.h"
+#include "xbyak_riscv_mnemonic.h"
 #endif
 };
 
