@@ -15,4 +15,9 @@ void xori(const Reg& rd, const Reg& rs1, int imm) { Itype(0x13, 4, rd, rs1, imm)
 void ori(const Reg& rd, const Reg& rs1, int imm) { Itype(0x13, 6, rd, rs1, imm); }
 void andi(const Reg& rd, const Reg& rs1, int imm) { Itype(0x13, 7, rd, rs1, imm); }
 void jalr(const Reg& rd, const Reg& rs1, int imm = 0) { Itype(0x67, 0, rd, rs1, imm); }
+void lb(const Reg& rd, const Reg& rs1, int imm = 0) { Itype(0x3, 0, rd, rs1, imm); }
+void lh(const Reg& rd, const Reg& rs1, int imm = 0) { Itype(0x3, 1, rd, rs1, imm); }
+void lw(const Reg& rd, const Reg& rs1, int imm = 0) { Itype(0x3, 2, rd, rs1, imm); }
+void lbu(const Reg& rd, const Reg& rs1, int imm = 0) { Itype(0x3, 4, rd, rs1, imm); }
+void lhu(const Reg& rd, const Reg& rs1, int imm = 0) { Itype(0x3, 5, rd, rs1, imm); }
 void ret() { jalr(x0, x1); }
