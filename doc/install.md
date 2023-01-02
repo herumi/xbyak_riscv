@@ -3,7 +3,7 @@
 The following files are necessary. Please add the path to your compile directory.
 
 - xbyak_riscv.h
-- xbyak_mnemonic.h
+- xbyak_riscv_mnemonic.h
 
 Linux:
 ```
