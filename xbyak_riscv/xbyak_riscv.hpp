@@ -919,7 +919,7 @@ public:
 #endif
 
 #ifndef XBYAK_RISCV_DONT_READ_LIST
-#include "xbyak_riscv_mnemonic.h"
+#include "xbyak_riscv_mnemonic.hpp"
 #endif
 };
 
