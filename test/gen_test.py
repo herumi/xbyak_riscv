@@ -27,6 +27,10 @@ def putRM(name, rd, rs1, offset):
       args = f'{rd}, {offset}({rs1})'
   put(name, args)
 
+def putRI(name):
+  put(name, 'x2, 1234')
+  put(name, f'x31, {(1<<20)-1}')
+
 def misc():
   put('ret')
 
@@ -45,6 +49,9 @@ def main():
     putRM(op, 'x9', 'x3', 0)
     putRM(op, 'x1', 'x4', -4)
     putRM(op, 'x2', 'x5', 123)
+
+  for op in ['lui']:
+    putRI(op)
 
   misc()
 

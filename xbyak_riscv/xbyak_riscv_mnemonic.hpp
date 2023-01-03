@@ -20,4 +20,5 @@ void lh(const Reg& rd, const Reg& rs1, int imm = 0) { Itype(0x3, 1, rd, rs1, imm
 void lw(const Reg& rd, const Reg& rs1, int imm = 0) { Itype(0x3, 2, rd, rs1, imm); }
 void lbu(const Reg& rd, const Reg& rs1, int imm = 0) { Itype(0x3, 4, rd, rs1, imm); }
 void lhu(const Reg& rd, const Reg& rs1, int imm = 0) { Itype(0x3, 5, rd, rs1, imm); }
+void lui(const Reg& rd, uint32_t imm) { Utype(0x37, rd, imm); }
 void ret() { jalr(x0, x1); }

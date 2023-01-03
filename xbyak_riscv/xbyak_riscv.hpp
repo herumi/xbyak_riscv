@@ -85,6 +85,7 @@ enum {
 	ERR_NONE = 0,
 	ERR_OFFSET_IS_TOO_BIG,
 	ERR_CODE_IS_TOO_BIG,
+	ERR_IMM_IS_TOO_BIG,
 	ERR_LABEL_IS_NOT_FOUND,
 	ERR_LABEL_IS_REDEFINED,
 	ERR_LABEL_IS_TOO_FAR,
@@ -92,10 +93,8 @@ enum {
 	ERR_LABEL_IS_ALREADY_SET_BY_L,
 	ERR_CANT_PROTECT,
 	ERR_CANT_ALLOC,
-	ERR_BAD_ADDRESSING,
 	ERR_BAD_PARAMETER,
 	ERR_MUNMAP,
-	ERR_IMM_IS_NOT_IN_SBIT12,
 	ERR_INTERNAL // Put it at last.
 };
 
@@ -105,6 +104,7 @@ inline const char *ConvertErrorToString(int err)
 		"none",
 		"offset is too big",
 		"code is too big",
+		"imm is too big",
 		"label is not found",
 		"label is redefined",
 		"label is too far",
@@ -112,12 +112,10 @@ inline const char *ConvertErrorToString(int err)
 		"label is already set by L",
 		"can't protect",
 		"can't alloc",
-		"bad addressing",
-		"munmap",
-		"imm is not in sbit12",
 		"bad parameter",
+		"munmap",
 	};
-	assert(ERR_INTERNAL + 1 == sizeof(errTbl) / sizeof(*errTbl));
+	assert(ERR_INTERNAL == sizeof(errTbl) / sizeof(*errTbl));
 	return err <= ERR_INTERNAL ? errTbl[err] : "unknown err";
 }
 
@@ -135,10 +133,10 @@ inline constexpr bool inBit(uint32_t x, size_t n)
 	return x <= mask(n);
 }
 
-// is x is signed 12-bit integer?
-inline constexpr bool inSBit12(int x)
+// is x is signed n-bit integer?
+inline constexpr bool inSBit(int x, int n)
 {
-	return -(1 << 12) <= x && x < (1 << 12);
+	return -(1 << n) <= x && x < (1 << n);
 }
 
 } // local
@@ -885,8 +883,20 @@ private:
 	}
 	void Itype(Bit7 opcode, Bit3 funct3, Bit5 rd, Bit5 rs1, int imm)
 	{
-		if (!local::inSBit12(imm)) XBYAK_RISCV_THROW(ERR_IMM_IS_NOT_IN_SBIT12)
+		if (!local::inSBit(imm, 12)) XBYAK_RISCV_THROW(ERR_IMM_IS_TOO_BIG)
 		uint32_t v = (imm << 20) | (rs1.v << 15) | (funct3.v << 12) | (rd.v << 7) | opcode.v;
+		dd(v);
+	}
+	void Stype(Bit7 opcode, Bit3 funct3, Bit5 rs1, Bit5 rs2, int imm)
+	{
+		if (!local::inSBit(imm, 12)) XBYAK_RISCV_THROW(ERR_IMM_IS_TOO_BIG)
+		uint32_t v = (imm << 25) | (rs2.v << 20) | (rs1.v << 15) | (funct3.v << 12) | ((imm & local::mask(5)) << 7) | opcode.v;
+		dd(v);
+	}
+	void Utype(Bit7 opcode, Bit5 rd, uint32_t imm)
+	{
+		if (imm >= (1u << 20)) XBYAK_RISCV_THROW(ERR_IMM_IS_TOO_BIG)
+		uint32_t v = (imm << 12) | (rd.v << 7) | opcode.v;
 		dd(v);
 	}
 public:

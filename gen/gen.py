@@ -38,5 +38,12 @@ tbl = [
 for (funct3, opcode, name) in tbl:
   print(f'void {name}(const Reg& rd, const Reg& rs1, int imm = 0) {{ Itype({hex(opcode)}, {funct3}, rd, rs1, imm); }}')
 
+tbl = [
+  (0b0110111, "lui"),
+]
+
+for (opcode, name) in tbl:
+  print(f'void {name}(const Reg& rd, uint32_t imm) {{ Utype({hex(opcode)}, rd, imm); }}')
+
 # misc
 print('void ret() { jalr(x0, x1); }')
