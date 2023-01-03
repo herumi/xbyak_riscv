@@ -22,4 +22,7 @@ void lbu(const Reg& rd, const Reg& rs1, int imm = 0) { Itype(0x3, 4, rd, rs1, im
 void lhu(const Reg& rd, const Reg& rs1, int imm = 0) { Itype(0x3, 5, rd, rs1, imm); }
 void lui(const Reg& rd, uint32_t imm) { Utype(0x37, rd, imm); }
 void auipc(const Reg& rd, uint32_t imm) { Utype(0x17, rd, imm); }
+void slli(const Reg& rd, const Reg& rs1, uint32_t shamt) { opShift(0x0, 1, 0x13, rd, rs1, shamt); }
+void srli(const Reg& rd, const Reg& rs1, uint32_t shamt) { opShift(0x0, 5, 0x13, rd, rs1, shamt); }
+void srai(const Reg& rd, const Reg& rs1, uint32_t shamt) { opShift(0x20, 5, 0x13, rd, rs1, shamt); }
 void ret() { jalr(x0, x1); }

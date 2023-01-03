@@ -46,5 +46,14 @@ tbl = [
 for (opcode, name) in tbl:
   print(f'void {name}(const Reg& rd, uint32_t imm) {{ Utype({hex(opcode)}, rd, imm); }}')
 
+tbl = [
+  (0b0000000, 0b001, 0b0010011, 'slli'),
+  (0b0000000, 0b101, 0b0010011, 'srli'),
+  (0b0100000, 0b101, 0b0010011, 'srai'),
+]
+
+for (pre, funct3, opcode, name) in tbl:
+  print(f'void {name}(const Reg& rd, const Reg& rs1, uint32_t shamt) {{ opShift({hex(pre)}, {funct3}, {hex(opcode)}, rd, rs1, shamt); }}')
+
 # misc
 print('void ret() { jalr(x0, x1); }')

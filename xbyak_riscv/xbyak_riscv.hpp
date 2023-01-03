@@ -855,6 +855,7 @@ public:
 private:
 	CodeGenerator operator=(const CodeGenerator&) = delete;
 	LabelManager labelMgr_;
+	bool isRV32_;
 	template<class T>
 	void putL_inner(T& label, bool relative = false, size_t disp = 0)
 	{
@@ -899,6 +900,13 @@ private:
 		uint32_t v = (imm << 12) | (rd.v << 7) | opcode.v;
 		dd(v);
 	}
+	void opShift(Bit7 pre, Bit3 funct3, Bit7 opcode, Bit5 rd, Bit5 rs1, uint32_t shamt)
+	{
+		int range = isRV32_ ? 5 : 6;
+		if (shamt >= (1u << range)) XBYAK_RISCV_THROW(ERR_IMM_IS_TOO_BIG)
+		uint32_t v = (pre.v << 25) | (shamt << 20) | (rs1.v << 15) | (funct3.v << 12) | (rd.v << 7) | opcode.v;
+		dd(v);
+	}
 public:
 	void L(Label& label) { labelMgr_.defineClabel(label); }
 	Label L() { Label label; L(label); return label; }
@@ -925,6 +933,7 @@ public:
 	// constructor
 	CodeGenerator(size_t maxSize = DEFAULT_MAX_CODE_SIZE, void *userPtr = 0, Allocator *allocator = 0)
 		: CodeArray(maxSize, userPtr, allocator)
+		, isRV32_(false)
 	{
 		labelMgr_.set(this);
 	}
