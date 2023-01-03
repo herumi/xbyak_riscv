@@ -49,6 +49,8 @@ def main():
     putRM(op, 'x9', 'x3', 0)
     putRM(op, 'x1', 'x4', -4)
     putRM(op, 'x2', 'x5', 123)
+    putRM(op, 'x31', 'x7', (1<<11)-1)
+    putRM(op, 'x31', 'x7', -(1<<11))
 
   for op in ['lui', 'auipc']:
     putRI(op)

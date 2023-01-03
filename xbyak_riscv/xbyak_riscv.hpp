@@ -136,7 +136,7 @@ inline constexpr bool inBit(uint32_t x, size_t n)
 // is x is signed n-bit integer?
 inline constexpr bool inSBit(int x, int n)
 {
-	return -(1 << n) <= x && x < (1 << n);
+	return -(1 << (n-1)) <= x && x < (1 << (n-1));
 }
 
 } // local
