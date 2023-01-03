@@ -14,6 +14,19 @@ def putRRI(name):
   put(name, 'x1, x2, 1234')
   put(name, 'x1, x2, -1234')
 
+def putRM(name, rd, rs1, offset):
+  if isXbyak:
+    if offset == 0:
+      args = f'{rd}, {rs1}'
+    else:
+      args = f'{rd}, {rs1}, {offset}'
+  else:
+    if offset == 0:
+      args = f'{rd}, ({rs1})'
+    else:
+      args = f'{rd}, {offset}({rs1})'
+  put(name, args)
+
 def misc():
   put('ret')
 
@@ -27,6 +40,11 @@ def main():
 
   for op in ['addi', 'slti', 'sltiu', 'xori', 'ori', 'andi', 'jalr']:
     putRRI(op)
+
+  for op in ['lb', 'lh', 'lw', 'lbu', 'lhu']:
+    putRM(op, 'x9', 'x3', 0)
+    putRM(op, 'x1', 'x4', -4)
+    putRM(op, 'x2', 'x5', 123)
 
   misc()
 
