@@ -55,6 +55,10 @@ def main():
   for op in ['lui', 'auipc']:
     putRI(op)
 
+  for op in ['slli', 'srli', 'srai']:
+    put(op, 'x1, x2, 1')
+    put(op, 'x15, x20, 63')
+
   misc()
 
 
