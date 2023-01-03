@@ -40,6 +40,7 @@ for (funct3, opcode, name) in tbl:
 
 tbl = [
   (0b0110111, "lui"),
+  (0b0010111, 'auipc'),
 ]
 
 for (opcode, name) in tbl:

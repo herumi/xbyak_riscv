@@ -50,7 +50,7 @@ def main():
     putRM(op, 'x1', 'x4', -4)
     putRM(op, 'x2', 'x5', 123)
 
-  for op in ['lui']:
+  for op in ['lui', 'auipc']:
     putRI(op)
 
   misc()
