@@ -1,11 +1,14 @@
 import sys
 isXbyak = True
 
-def put(name, args=""):
+def putEach(op1, op2):
   if isXbyak:
-    print(f'{name}({args}); dump1();')
+    print(f'{op1}; dump1();')
   else:
-    print(f'{name.strip("_")} {args}')
+    print(op2)
+
+def put(name, args=""):
+  putEach(f'{name}({args})', f'{name.strip("_")} {args}')
 
 def putRRR(name):
   put(name, 'x1, x2, x3')
@@ -31,8 +34,17 @@ def putRI(name):
   put(name, 'x2, 1234')
   put(name, f'x31, {(1<<20)-1}')
 
+def putFence():
+  putEach('fence_rw_rw()', 'fence rw, rw')
+  putEach('fence_tso()', 'fence.tso')
+  putEach('fence_rw_w()', 'fence rw, w')
+  putEach('fence_r_rw()', 'fence r, rw')
+  putEach('fence_r_r()', 'fence r, r')
+  putEach('fence_w_w()', 'fence w, w')
+
 def misc():
   put('ret')
+  putFence()
 
 def main():
   global isXbyak
