@@ -68,5 +68,12 @@ tbl = [
 for (code, name) in tbl:
   print(f'void fence_{name}() {{ dd({hex(code)}); }}')
 
+tbl = [
+ (0b000, 0b0100011, 'sb'),
+]
+
+for (funct3, opcode, name) in tbl:
+  print(f'void {name}(const Reg& rs2, const Reg& rs1, int imm = 0) {{ Stype({hex(opcode)}, {funct3}, rs1, rs2, imm); }}')
+
 # misc
 print('void ret() { jalr(x0, x1); }')
