@@ -891,7 +891,7 @@ private:
 	void Stype(Bit7 opcode, Bit3 funct3, Bit5 rs1, Bit5 rs2, int imm)
 	{
 		if (!local::inSBit(imm, 12)) XBYAK_RISCV_THROW(ERR_IMM_IS_TOO_BIG)
-		uint32_t v = (imm << 25) | (rs2.v << 20) | (rs1.v << 15) | (funct3.v << 12) | ((imm & local::mask(5)) << 7) | opcode.v;
+		uint32_t v = ((imm >> 5) << 25) | (rs2.v << 20) | (rs1.v << 15) | (funct3.v << 12) | ((imm & local::mask(5)) << 7) | opcode.v;
 		dd(v);
 	}
 	void Utype(Bit7 opcode, Bit5 rd, uint32_t imm)
