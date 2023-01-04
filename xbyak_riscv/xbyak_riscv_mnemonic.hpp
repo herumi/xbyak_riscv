@@ -32,6 +32,8 @@ void fence_r_rw() { dd(0x230000f); }
 void fence_r_r() { dd(0x220000f); }
 void fence_w_w() { dd(0x110000f); }
 void fence_i() { dd(0x100f); }
+void ecall() { dd(0x73); }
+void ebreak() { dd(0x100073); }
 void sb(const Reg& rs2, const Reg& rs1, int imm = 0) { Stype(0x23, 0, rs1, rs2, imm); }
 void sh(const Reg& rs2, const Reg& rs1, int imm = 0) { Stype(0x23, 1, rs1, rs2, imm); }
 void sw(const Reg& rs2, const Reg& rs1, int imm = 0) { Stype(0x23, 2, rs1, rs2, imm); }

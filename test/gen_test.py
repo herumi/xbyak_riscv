@@ -44,7 +44,8 @@ def putFence():
   putEach('fence_i()', 'fence.i')
 
 def misc():
-  put('ret')
+  for name in ['ret', 'ecall', 'ebreak']:
+    put(name)
   putFence()
 
 def main():

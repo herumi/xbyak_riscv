@@ -56,17 +56,19 @@ for (pre, funct3, opcode, name) in tbl:
   print(f'void {name}(const Reg& rd, const Reg& rs1, uint32_t shamt) {{ opShift({hex(pre)}, {funct3}, {hex(opcode)}, rd, rs1, shamt); }}')
 
 tbl = [
-  (0x0330000f, 'rw_rw'),
-  (0x8330000f, 'tso'),
-  (0x0310000f, 'rw_w'),
-  (0x0230000f, 'r_rw'),
-  (0x0220000f, 'r_r'),
-  (0x0110000f, 'w_w'),
-  (0x0000100f, 'i'),
+  (0x0330000f, 'fence_rw_rw'),
+  (0x8330000f, 'fence_tso'),
+  (0x0310000f, 'fence_rw_w'),
+  (0x0230000f, 'fence_r_rw'),
+  (0x0220000f, 'fence_r_r'),
+  (0x0110000f, 'fence_w_w'),
+  (0x0000100f, 'fence_i'),
+  (0x00000073, 'ecall'),
+  (0x00100073, 'ebreak'),
 ]
 
 for (code, name) in tbl:
-  print(f'void fence_{name}() {{ dd({hex(code)}); }}')
+  print(f'void {name}() {{ dd({hex(code)}); }}')
 
 tbl = [
  (0b000, 0b0100011, 'sb'),
