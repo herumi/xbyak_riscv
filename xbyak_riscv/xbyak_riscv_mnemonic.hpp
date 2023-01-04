@@ -31,4 +31,5 @@ void fence_rw_w() { dd(0x310000f); }
 void fence_r_rw() { dd(0x230000f); }
 void fence_r_r() { dd(0x220000f); }
 void fence_w_w() { dd(0x110000f); }
+void fence_i() { dd(0x100f); }
 void ret() { jalr(x0, x1); }

@@ -41,6 +41,7 @@ def putFence():
   putEach('fence_r_rw()', 'fence r, rw')
   putEach('fence_r_r()', 'fence r, r')
   putEach('fence_w_w()', 'fence w, w')
+  putEach('fence_i()', 'fence.i')
 
 def misc():
   put('ret')
