@@ -58,7 +58,7 @@ def main():
   for op in ['addi', 'slti', 'sltiu', 'xori', 'ori', 'andi', 'jalr']:
     putRRI(op)
 
-  for op in ['lb', 'lh', 'lw', 'lbu', 'lhu']:
+  for op in ['lb', 'lh', 'lw', 'lbu', 'lhu', 'sb']:
     putRM(op, 'x9', 'x3', 0)
     putRM(op, 'x1', 'x4', -4)
     putRM(op, 'x2', 'x5', 123)
