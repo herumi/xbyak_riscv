@@ -70,6 +70,8 @@ for (code, name) in tbl:
 
 tbl = [
  (0b000, 0b0100011, 'sb'),
+ (0b001, 0b0100011, 'sh'),
+ (0b010, 0b0100011, 'sw'),
 ]
 
 for (funct3, opcode, name) in tbl:
