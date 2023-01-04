@@ -394,18 +394,16 @@ static const constexpr Reg s10(x26), s11(x27);
 static const constexpr Reg t3(x28), t4(x29), t5(x30), t6(x31);
 
 // 2nd parameter for constructor of CodeArray(maxSize, userPtr, alloc)
-void *const AutoGrow = (void*)1; //-V566
 void *const DontSetProtectRWE = (void*)2; //-V566
 
 class CodeArray {
 	enum Type {
 		USER_BUF = 1, // use userPtr(non alignment, non protect)
-		ALLOC_BUF, // use new(alignment, protect)
-		AUTO_GROW // automatically move and grow memory if necessary
+		ALLOC_BUF // use new(alignment, protect)
 	};
 	CodeArray(const CodeArray& rhs);
 	void operator=(const CodeArray&);
-	bool isAllocType() const { return type_ == ALLOC_BUF || type_ == AUTO_GROW; }
+	bool isAllocType() const { return type_ == ALLOC_BUF; }
 	struct AddrInfo {
 		size_t codeOffset; // position to write
 		size_t jmpAddr; // value to write
@@ -433,34 +431,8 @@ protected:
 	size_t maxSize_;
 	uint8_t *top_;
 	size_t size_;
-	bool isCalledCalcJmpAddress_;
 
 	bool useProtect() const { return alloc_->useProtect(); }
-	/*
-		allocate new memory and copy old data to the new area
-	*/
-	void growMemory()
-	{
-		const size_t newSize = (std::max<size_t>)(DEFAULT_MAX_CODE_SIZE, maxSize_ * 2);
-		uint8_t *newTop = alloc_->alloc(newSize);
-		if (newTop == 0) XBYAK_RISCV_THROW(ERR_CANT_ALLOC)
-		for (size_t i = 0; i < size_; i++) newTop[i] = top_[i];
-		alloc_->free(top_);
-		top_ = newTop;
-		maxSize_ = newSize;
-	}
-	/*
-		calc jmp address for AutoGrow mode
-	*/
-	void calcJmpAddress()
-	{
-		if (isCalledCalcJmpAddress_) return;
-		for (AddrInfoList::const_iterator i = addrInfoList_.begin(), ie = addrInfoList_.end(); i != ie; ++i) {
-			uint64_t disp = i->getVal(top_);
-			rewrite(i->codeOffset, disp, i->jmpSize);
-		}
-		isCalledCalcJmpAddress_ = true;
-	}
 public:
 	enum ProtectMode {
 		PROTECT_RW = 0, // read/write
@@ -468,12 +440,11 @@ public:
 		PROTECT_RE = 2 // read/exec
 	};
 	explicit CodeArray(size_t maxSize, void *userPtr = 0, Allocator *allocator = 0)
-		: type_(userPtr == AutoGrow ? AUTO_GROW : (userPtr == 0 || userPtr == DontSetProtectRWE) ? ALLOC_BUF : USER_BUF)
+		: type_((userPtr == 0 || userPtr == DontSetProtectRWE) ? ALLOC_BUF : USER_BUF)
 		, alloc_(allocator ? allocator : (Allocator*)&defaultAllocator_)
 		, maxSize_(maxSize)
 		, top_(type_ == USER_BUF ? reinterpret_cast<uint8_t*>(userPtr) : alloc_->alloc((std::max<size_t>)(maxSize, 1)))
 		, size_(0)
-		, isCalledCalcJmpAddress_(false)
 	{
 		if (maxSize_ > 0 && top_ == 0) XBYAK_RISCV_THROW(ERR_CANT_ALLOC)
 		if ((type_ == ALLOC_BUF && userPtr != DontSetProtectRWE && useProtect()) && !setProtectMode(PROTECT_RWE, false)) {
@@ -501,16 +472,11 @@ public:
 	{
 		size_ = 0;
 		addrInfoList_.clear();
-		isCalledCalcJmpAddress_ = false;
 	}
 	void write1byte(int code)
 	{
 		if (size_ >= maxSize_) {
-			if (type_ == AUTO_GROW) {
-				growMemory();
-			} else {
-				XBYAK_RISCV_THROW(ERR_CODE_IS_TOO_BIG)
-			}
+			XBYAK_RISCV_THROW(ERR_CODE_IS_TOO_BIG)
 		}
 		top_[size_++] = static_cast<uint8_t>(code);
 	}
@@ -576,8 +542,6 @@ public:
 	{
 		addrInfoList_.push_back(AddrInfo(offset, val, size, mode));
 	}
-	bool isAutoGrow() const { return type_ == AUTO_GROW; }
-	bool isCalledCalcJmpAddress() const { return isCalledCalcJmpAddress_; }
 	/**
 		change exec permission of memory
 		@param addr [in] buffer address
@@ -703,11 +667,7 @@ class LabelManager {
 #endif
 				if (jmp->jmpSize == 1 && !inner::IsInDisp8((uint32_t)disp)) XBYAK_RISCV_THROW(ERR_LABEL_IS_TOO_FAR)
 			}
-			if (base_->isAutoGrow()) {
-				base_->save(offset, disp, jmp->jmpSize, jmp->mode);
-			} else {
-				base_->rewrite(offset, disp, jmp->jmpSize);
-			}
+			base_->rewrite(offset, disp, jmp->jmpSize);
 			undefList.erase(itr);
 		}
 	}
@@ -791,7 +751,6 @@ public:
 	}
 	bool hasUndefClabel() const { return hasUndefinedLabel_inner(clabelUndefList_); }
 	const uint8_t *getCode() const { return base_->getCode(); }
-	bool isReady() const { return !base_->isAutoGrow() || base_->isCalledCalcJmpAddress(); }
 };
 
 inline Label::Label(const Label& rhs)
@@ -814,7 +773,7 @@ inline Label::~Label()
 }
 inline const uint8_t* Label::getAddress() const
 {
-	if (mgr == 0 || !mgr->isReady()) return 0;
+	if (mgr == 0) return 0;
 	size_t offset;
 	if (!mgr->getOffset(&offset, *this)) return 0;
 	return mgr->getCode() + offset;
@@ -858,21 +817,17 @@ private:
 	void putL_inner(T& label, bool relative = false, size_t disp = 0)
 	{
 		const int jmpSize = relative ? 4 : (int)sizeof(size_t);
-		if (isAutoGrow() && size_ + 16 >= maxSize_) growMemory();
 		size_t offset = 0;
 		if (labelMgr_.getOffset(&offset, label)) {
 			if (relative) {
 				write1byte(inner::VerifyInInt32(offset + disp - size_ - jmpSize), jmpSize);
-			} else if (isAutoGrow()) {
-				write1byte(uint64_t(0), jmpSize);
-				save(size_ - jmpSize, offset, jmpSize, inner::LaddTop);
 			} else {
 				write1byte(size_t(top_) + offset, jmpSize);
 			}
 			return;
 		}
 		write1byte(uint64_t(0), jmpSize);
-		JmpLabel jmp(size_, jmpSize, (relative ? inner::LasIs : isAutoGrow() ? inner::LaddTop : inner::Labs), disp);
+		JmpLabel jmp(size_, jmpSize, (relative ? inner::LasIs : inner::Labs), disp);
 		labelMgr_.addUndefinedLabel(label, jmp);
 	}
 	void Rtype(Bit7 opcode, Bit3 funct3, Bit7 funct7, Bit5 rd, Bit5 rs1, Bit5 rs2)
@@ -950,10 +905,6 @@ public:
 	void ready(ProtectMode mode = PROTECT_RWE)
 	{
 		if (hasUndefinedLabel()) XBYAK_RISCV_THROW(ERR_LABEL_IS_NOT_FOUND)
-		if (isAutoGrow()) {
-			calcJmpAddress();
-			if (useProtect()) setProtectMode(mode);
-		}
 	}
 	// set read/exec
 	void readyRE() { return ready(PROTECT_RE); }
