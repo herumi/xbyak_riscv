@@ -503,7 +503,7 @@ public:
 		addrInfoList_.clear();
 		isCalledCalcJmpAddress_ = false;
 	}
-	void db(int code)
+	void write1byte(int code)
 	{
 		if (size_ >= maxSize_) {
 			if (type_ == AUTO_GROW) {
@@ -514,18 +514,16 @@ public:
 		}
 		top_[size_++] = static_cast<uint8_t>(code);
 	}
-	void db(const uint8_t *code, size_t codeSize)
+	void write1byte(const uint8_t *code, size_t codeSize)
 	{
-		for (size_t i = 0; i < codeSize; i++) db(code[i]);
+		for (size_t i = 0; i < codeSize; i++) write1byte(code[i]);
 	}
-	void db(uint64_t code, size_t codeSize)
+	void write1byte(uint64_t code, size_t codeSize)
 	{
 		if (codeSize > 8) XBYAK_RISCV_THROW(ERR_BAD_PARAMETER)
-		for (size_t i = 0; i < codeSize; i++) db(static_cast<uint8_t>(code >> (i * 8)));
+		for (size_t i = 0; i < codeSize; i++) write1byte(static_cast<uint8_t>(code >> (i * 8)));
 	}
-	void dw(uint32_t code) { db(code, 2); }
-	void dd(uint32_t code) { db(code, 4); }
-	void dq(uint64_t code) { db(code, 8); }
+	void write4byte(uint32_t code) { write1byte(code, 4); }
 	const uint8_t *getCode() const { return top_; }
 	template<class F>
 	const F getCode() const { return reinterpret_cast<F>(top_); }
@@ -864,48 +862,48 @@ private:
 		size_t offset = 0;
 		if (labelMgr_.getOffset(&offset, label)) {
 			if (relative) {
-				db(inner::VerifyInInt32(offset + disp - size_ - jmpSize), jmpSize);
+				write1byte(inner::VerifyInInt32(offset + disp - size_ - jmpSize), jmpSize);
 			} else if (isAutoGrow()) {
-				db(uint64_t(0), jmpSize);
+				write1byte(uint64_t(0), jmpSize);
 				save(size_ - jmpSize, offset, jmpSize, inner::LaddTop);
 			} else {
-				db(size_t(top_) + offset, jmpSize);
+				write1byte(size_t(top_) + offset, jmpSize);
 			}
 			return;
 		}
-		db(uint64_t(0), jmpSize);
+		write1byte(uint64_t(0), jmpSize);
 		JmpLabel jmp(size_, jmpSize, (relative ? inner::LasIs : isAutoGrow() ? inner::LaddTop : inner::Labs), disp);
 		labelMgr_.addUndefinedLabel(label, jmp);
 	}
 	void Rtype(Bit7 opcode, Bit3 funct3, Bit7 funct7, Bit5 rd, Bit5 rs1, Bit5 rs2)
 	{
 		uint32_t v = (funct7.v << 25) | (rs2.v << 20) | (rs1.v << 15) | (funct3.v << 12) | (rd.v << 7) | opcode.v;
-		dd(v);
+		write4byte(v);
 	}
 	void Itype(Bit7 opcode, Bit3 funct3, Bit5 rd, Bit5 rs1, int imm)
 	{
 		if (!local::inSBit(imm, 12)) XBYAK_RISCV_THROW(ERR_IMM_IS_TOO_BIG)
 		uint32_t v = (imm << 20) | (rs1.v << 15) | (funct3.v << 12) | (rd.v << 7) | opcode.v;
-		dd(v);
+		write4byte(v);
 	}
 	void Stype(Bit7 opcode, Bit3 funct3, Bit5 rs1, Bit5 rs2, int imm)
 	{
 		if (!local::inSBit(imm, 12)) XBYAK_RISCV_THROW(ERR_IMM_IS_TOO_BIG)
 		uint32_t v = ((imm >> 5) << 25) | (rs2.v << 20) | (rs1.v << 15) | (funct3.v << 12) | ((imm & local::mask(5)) << 7) | opcode.v;
-		dd(v);
+		write4byte(v);
 	}
 	void Utype(Bit7 opcode, Bit5 rd, uint32_t imm)
 	{
 		if (imm >= (1u << 20)) XBYAK_RISCV_THROW(ERR_IMM_IS_TOO_BIG)
 		uint32_t v = (imm << 12) | (rd.v << 7) | opcode.v;
-		dd(v);
+		write4byte(v);
 	}
 	void opShift(Bit7 pre, Bit3 funct3, Bit7 opcode, Bit5 rd, Bit5 rs1, uint32_t shamt)
 	{
 		int range = isRV32_ ? 5 : 6;
 		if (shamt >= (1u << range)) XBYAK_RISCV_THROW(ERR_IMM_IS_TOO_BIG)
 		uint32_t v = (pre.v << 25) | (shamt << 20) | (rs1.v << 15) | (funct3.v << 12) | (rd.v << 7) | opcode.v;
-		dd(v);
+		write4byte(v);
 	}
 public:
 	void L(Label& label) { labelMgr_.defineClabel(label); }
