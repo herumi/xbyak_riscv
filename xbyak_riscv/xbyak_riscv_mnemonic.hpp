@@ -25,4 +25,10 @@ void auipc(const Reg& rd, uint32_t imm) { Utype(0x17, rd, imm); }
 void slli(const Reg& rd, const Reg& rs1, uint32_t shamt) { opShift(0x0, 1, 0x13, rd, rs1, shamt); }
 void srli(const Reg& rd, const Reg& rs1, uint32_t shamt) { opShift(0x0, 5, 0x13, rd, rs1, shamt); }
 void srai(const Reg& rd, const Reg& rs1, uint32_t shamt) { opShift(0x20, 5, 0x13, rd, rs1, shamt); }
+void fence_rw_rw() { dd(0x330000f); }
+void fence_tso() { dd(0x8330000f); }
+void fence_rw_w() { dd(0x310000f); }
+void fence_r_rw() { dd(0x230000f); }
+void fence_r_r() { dd(0x220000f); }
+void fence_w_w() { dd(0x110000f); }
 void ret() { jalr(x0, x1); }
