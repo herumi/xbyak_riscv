@@ -20,6 +20,8 @@ update:
 	$(MAKE) -C gen
 
 test:
+	$(MAKE) clean
+	$(MAKE) -C gen
 	$(MAKE) -C test test
 
 .PHONY: test update

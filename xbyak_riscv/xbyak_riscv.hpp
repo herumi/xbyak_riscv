@@ -218,19 +218,19 @@ inline constexpr bool inSBit(int x, int n)
 	return -(1 << (n-1)) <= x && x < (1 << (n-1));
 }
 
-inline constexpr bool isValidImmOfJal(uint64_t imm)
+inline constexpr bool isValidJalImm(size_t imm)
 {
-	const uint64_t M = mask(20);
+	const size_t M = mask(20);
 	return (imm < M || ~M <= imm) && (imm & 1) == 0;
 }
 // encode 20-bit imm to j-type imm
-inline constexpr uint32_t convertImm(uint64_t imm)
+inline constexpr uint32_t encodeJalImm(size_t imm)
 {
-	XBYAK_RISCV_ASSERT(isValidImmOfJal(imm));
+	XBYAK_RISCV_ASSERT(isValidJalImm(imm));
 	//      1   10  1     8
-	// imm[20|10:1|11|19:12]
+	// imm[20|10:1|11|19:12] << 12
 	uint32_t v = ((imm >> 20) << 19) | (((imm >> 1) & mask(10)) << 9) | (((imm >> 11) & 1) << 8) | ((imm >> 12) & mask(8));
-	return v;
+	return v << 12;
 }
 
 } // local
@@ -679,8 +679,8 @@ class LabelManager {
 			const JmpLabel *jmp = &itr->second;
 			size_t imm = size_t(base_->getSize()) - jmp->endOfJmp + 4;
 			if (jmp->isJal) {
-				if (!local::isValidImmOfJal(imm)) XBYAK_RISCV_THROW(ERR_INVALID_IMM_OF_JAL)
-				uint32_t v = (local::convertImm(imm) << 12) | jmp->encoded;
+				if (!local::isValidJalImm(imm)) XBYAK_RISCV_THROW(ERR_INVALID_IMM_OF_JAL)
+				uint32_t v = local::encodeJalImm(imm) | jmp->encoded;
 				base_->rewrite4B(jmp->endOfJmp - 4, v);
 			}
 			undefList.erase(itr);
@@ -849,8 +849,8 @@ private:
 		if (labelMgr_.getOffset(&offset, label)) { /* label exists */
 			uint64_t imm = offset - size_;
 			if (isJal) {
-				if (!local::isValidImmOfJal(imm)) XBYAK_RISCV_THROW(ERR_INVALID_IMM_OF_JAL)
-				uint32_t v = (local::convertImm(imm) << 12) | encoded;
+				if (!local::isValidJalImm(imm)) XBYAK_RISCV_THROW(ERR_INVALID_IMM_OF_JAL)
+				uint32_t v = local::encodeJalImm(imm) | encoded;
 				append4B(v);
 			} else {
 			}
@@ -883,12 +883,14 @@ private:
 		uint32_t v = (imm << 12) | (rd.v << 7) | opcode.v;
 		append4B(v);
 	}
+/*
 	void Jtype(Bit7 opcode, Bit5 rd, uint64_t imm)
 	{
-		if (!local::isValidImmOfJal(imm)) XBYAK_RISCV_THROW(ERR_INVALID_IMM_OF_JAL)
-		uint32_t v = (local::convertImm(imm) << 12) | (rd.v << 7) | opcode.v;
+		if (!local::isValidJalImm(imm)) XBYAK_RISCV_THROW(ERR_INVALID_IMM_OF_JAL)
+		uint32_t v = (local::encodeJalImm(imm)) | (rd.v << 7) | opcode.v;
 		append4B(v);
 	}
+*/
 	void opShift(Bit7 pre, Bit3 funct3, Bit7 opcode, Bit5 rd, Bit5 rs1, uint32_t shamt)
 	{
 		int range = isRV32_ ? 5 : 6;
