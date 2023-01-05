@@ -554,18 +554,12 @@ public:
 		if (size > maxSize_) XBYAK_RISCV_THROW(ERR_OFFSET_IS_TOO_BIG)
 		size_ = size;
 	}
-	/*
-		@param offset [in] offset from top
-		@param disp [in] offset from the next of jmp
-		@param size [in] write size(1, 2, 4, 8)
-	*/
-	void rewrite(size_t offset, uint64_t disp, size_t size)
+	void rewrite4B(size_t offset, uint32_t v)
 	{
-		assert(offset < maxSize_);
-		if (size != 1 && size != 2 && size != 4 && size != 8) XBYAK_RISCV_THROW(ERR_BAD_PARAMETER)
+		assert(offset + 4 <= maxSize_);
 		uint8_t *const data = top_ + offset;
-		for (size_t i = 0; i < size; i++) {
-			data[i] = static_cast<uint8_t>(disp >> (i * 8));
+		for (size_t i = 0; i < 4; i++) {
+			data[i] = static_cast<uint8_t>(v >> (i * 8));
 		}
 	}
 	void save(size_t offset, size_t val, int size, inner::LabelMode mode)
@@ -683,23 +677,13 @@ class LabelManager {
 			typename UndefList::iterator itr = undefList.find(labelId);
 			if (itr == undefList.end()) break;
 			const JmpLabel *jmp = &itr->second;
-			const size_t offset = jmp->endOfJmp;
-#if 0
-			size_t disp;
-			if (jmp->mode == inner::LaddTop) {
-				disp = addrOffset;
-			} else if (jmp->mode == inner::Labs) {
-				disp = size_t(base_->getCurr());
-			} else {
-				disp = addrOffset - jmp->endOfJmp + jmp->disp;
-#ifdef XBYAK_RISCV64
-				if (jmp->jmpSize <= 4 && !inner::IsInInt32(disp)) XBYAK_RISCV_THROW(ERR_OFFSET_IS_TOO_BIG)
-#endif
-				if (jmp->jmpSize == 1 && !inner::IsInDisp8((uint32_t)disp)) XBYAK_RISCV_THROW(ERR_LABEL_IS_TOO_FAR)
+			size_t imm = size_t(base_->getSize()) - jmp->endOfJmp + 4;
+			if (jmp->isJal) {
+				if (!local::isValidImmOfJal(imm)) XBYAK_RISCV_THROW(ERR_INVALID_IMM_OF_JAL)
+				uint32_t v = (local::convertImm(imm) << 12) | jmp->encoded;
+				base_->rewrite4B(jmp->endOfJmp - 4, v);
 			}
-			base_->rewrite(offset, disp, jmp->jmpSize);
 			undefList.erase(itr);
-#endif
 		}
 	}
 	template<class DefList, class T>
