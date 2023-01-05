@@ -87,6 +87,7 @@ enum {
 	ERR_CODE_IS_TOO_BIG,
 	ERR_IMM_IS_TOO_BIG,
 	ERR_INVALID_IMM_OF_JAL,
+	ERR_INVALID_IMM_OF_BTYPE,
 	ERR_LABEL_IS_NOT_FOUND,
 	ERR_LABEL_IS_REDEFINED,
 	ERR_LABEL_IS_TOO_FAR,
@@ -107,6 +108,7 @@ inline const char *ConvertErrorToString(int err)
 		"code is too big",
 		"imm is too big",
 		"invliad imm of jal",
+		"invliad imm of Btye",
 		"label is not found",
 		"label is redefined",
 		"label is too far",
@@ -218,21 +220,38 @@ inline constexpr bool inSBit(int x, int n)
 	return -(1 << (n-1)) <= x && x < (1 << (n-1));
 }
 
-inline constexpr bool isValidJalImm(size_t imm)
+template<int maskBit>
+inline constexpr bool isValidImm(size_t imm)
 {
-	const size_t M = mask(20);
+	const size_t M = mask(maskBit);
 	return (imm < M || ~M <= imm) && (imm & 1) == 0;
 }
-// encode 20-bit imm to j-type imm
-inline constexpr uint32_t encodeJalImm(size_t imm)
+inline constexpr bool isValidImmJal(size_t imm)
 {
-	XBYAK_RISCV_ASSERT(isValidJalImm(imm));
+	return isValidImm<20>(imm);
+}
+// encode 20-bit imm to j-type imm
+inline constexpr uint32_t encodeImmJal(size_t imm)
+{
+	XBYAK_RISCV_ASSERT(isValidImmJal(imm));
 	//      1   10  1     8
 	// imm[20|10:1|11|19:12] << 12
 	uint32_t v = ((imm >> 20) << 19) | (((imm >> 1) & mask(10)) << 9) | (((imm >> 11) & 1) << 8) | ((imm >> 12) & mask(8));
 	return v << 12;
 }
+inline constexpr bool isValidImmBtype(size_t imm)
+{
+	return isValidImm<12>(imm);
+}
 
+inline constexpr uint32_t encodeImmBtype(size_t imm)
+{
+	XBYAK_RISCV_ASSERT(isValidImmBtype(imm));
+	//          25            7
+	// imm[12|10:5]  imm[4:1|11]
+	uint32_t v = ((imm >> 12) << 31) | (((imm >> 5) & mask(6)) << 25) | (((imm >> 1) && mask(4)) << 8) | (((imm >> 11) & 1) << 7);
+	return v;
+}
 } // local
 
 namespace inner {
@@ -679,8 +698,12 @@ class LabelManager {
 			const JmpLabel *jmp = &itr->second;
 			size_t imm = size_t(base_->getSize()) - jmp->endOfJmp + 4;
 			if (jmp->isJal) {
-				if (!local::isValidJalImm(imm)) XBYAK_RISCV_THROW(ERR_INVALID_IMM_OF_JAL)
-				uint32_t v = local::encodeJalImm(imm) | jmp->encoded;
+				if (!local::isValidImmJal(imm)) XBYAK_RISCV_THROW(ERR_INVALID_IMM_OF_JAL)
+				uint32_t v = local::encodeImmJal(imm) | jmp->encoded;
+				base_->rewrite4B(jmp->endOfJmp - 4, v);
+			} else {
+				if (!local::isValidImmBtype(imm)) XBYAK_RISCV_THROW(ERR_INVALID_IMM_OF_BTYPE)
+				uint32_t v = local::encodeImmBtype(imm) | jmp->encoded;
 				base_->rewrite4B(jmp->endOfJmp - 4, v);
 			}
 			undefList.erase(itr);
@@ -842,17 +865,19 @@ private:
 			append1B(longCode); append4B(disp - longJmpSize);
 		}
 	}
-	template<class T>
-	void opJmp(T& label, uint32_t encoded, bool isJal)
+	void opJmp(const Label& label, uint32_t encoded, bool isJal)
 	{
 		size_t offset = 0;
 		if (labelMgr_.getOffset(&offset, label)) { /* label exists */
 			uint64_t imm = offset - size_;
 			if (isJal) {
-				if (!local::isValidJalImm(imm)) XBYAK_RISCV_THROW(ERR_INVALID_IMM_OF_JAL)
-				uint32_t v = local::encodeJalImm(imm) | encoded;
+				if (!local::isValidImmJal(imm)) XBYAK_RISCV_THROW(ERR_INVALID_IMM_OF_JAL)
+				uint32_t v = local::encodeImmJal(imm) | encoded;
 				append4B(v);
 			} else {
+				if (!local::isValidImmBtype(imm)) XBYAK_RISCV_THROW(ERR_INVALID_IMM_OF_BTYPE)
+				uint32_t v = local::encodeImmBtype(imm) | encoded;
+				append4B(v);
 			}
 		} else {
 			append4B(encoded);
@@ -886,8 +911,8 @@ private:
 /*
 	void Jtype(Bit7 opcode, Bit5 rd, uint64_t imm)
 	{
-		if (!local::isValidJalImm(imm)) XBYAK_RISCV_THROW(ERR_INVALID_IMM_OF_JAL)
-		uint32_t v = (local::encodeJalImm(imm)) | (rd.v << 7) | opcode.v;
+		if (!local::isValidImmJal(imm)) XBYAK_RISCV_THROW(ERR_INVALID_IMM_OF_JAL)
+		uint32_t v = (local::encodeImmJal(imm)) | (rd.v << 7) | opcode.v;
 		append4B(v);
 	}
 */
@@ -948,6 +973,10 @@ public:
 	void jal(const Reg& rd, const Label& label)
 	{
 		opJmp(label, (rd.getIdx() << 7) | 0x6f, true);
+	}
+	void beq(const Reg& src1, const Reg& src2, const Label& label)
+	{
+		opJmp(label, (src2.getIdx() << 20) | (src1.getIdx() << 15) | (0 << 12) | 0x63, false);
 	}
 };
 
