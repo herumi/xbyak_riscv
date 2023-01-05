@@ -44,7 +44,14 @@ def putFence():
   putEach('fence_i()', 'fence.i')
 
 def putJal():
-  pass
+  n = 32
+  if isXbyak:
+    print('auto lp = L();')
+  else:
+    print('lp:')
+  for i in range(n):
+    put('jal', f'x{i}, lp')
+
   
 def misc():
   for name in ['ret', 'ecall', 'ebreak']:
