@@ -45,13 +45,11 @@ def putFence():
 
 def putJal():
   n = 32
-  if isXbyak:
-    print('auto lp = L();')
-  else:
-    print('lp:')
+  putEach('Label B = L(), F;', 'B:')
   for i in range(n):
-    put('jal', f'x{i}, lp')
-
+    put('jal', f'x{i}, B')
+    put('jal', f'x{i}, F')
+  putEach('L(F);', 'F:')
   
 def misc():
   for name in ['ret', 'ecall', 'ebreak']:
