@@ -973,14 +973,6 @@ public:
 	}
 	// set read/exec
 	void readyRE() { return ready(PROTECT_RE); }
-#ifdef XBYAK_RISCV_TEST
-	void dump1()
-	{
-		for (size_t i = 0; i < size_; i++) printf("%02x", top_[size_ - 1 - i]);
-		printf("\n");
-		size_ = 0;
-	}
-#endif
 
 #ifndef XBYAK_RISCV_DONT_READ_LIST
 #include "xbyak_riscv_mnemonic.hpp"

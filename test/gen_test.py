@@ -3,7 +3,7 @@ isXbyak = True
 
 def putEach(op1, op2):
   if isXbyak:
-    print(f'{op1}; dump1();')
+    print(f'{op1};')
   else:
     print(op2)
 
