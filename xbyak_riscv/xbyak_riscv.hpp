@@ -86,6 +86,7 @@ enum {
 	ERR_OFFSET_IS_TOO_BIG,
 	ERR_CODE_IS_TOO_BIG,
 	ERR_IMM_IS_TOO_BIG,
+	ERR_INVALID_IMM_OF_JAL,
 	ERR_LABEL_IS_NOT_FOUND,
 	ERR_LABEL_IS_REDEFINED,
 	ERR_LABEL_IS_TOO_FAR,
@@ -105,6 +106,7 @@ inline const char *ConvertErrorToString(int err)
 		"offset is too big",
 		"code is too big",
 		"imm is too big",
+		"invliad imm of jal",
 		"label is not found",
 		"label is redefined",
 		"label is too far",
@@ -118,28 +120,6 @@ inline const char *ConvertErrorToString(int err)
 	assert(ERR_INTERNAL == sizeof(errTbl) / sizeof(*errTbl));
 	return err <= ERR_INTERNAL ? errTbl[err] : "unknown err";
 }
-
-
-namespace local {
-
-inline constexpr uint32_t mask(size_t n)
-{
-	XBYAK_RISCV_ASSERT(n <= 32);
-	return n == 32 ? 0xffffffff : (1u << n) - 1;
-}
-// is x <= mask(n) ?
-inline constexpr bool inBit(uint32_t x, size_t n)
-{
-	return x <= mask(n);
-}
-
-// is x is signed n-bit integer?
-inline constexpr bool inSBit(int x, int n)
-{
-	return -(1 << (n-1)) <= x && x < (1 << (n-1));
-}
-
-} // local
 
 #ifdef XBYAK_RISCV_NO_EXCEPTION
 namespace local {
@@ -218,6 +198,42 @@ inline void AlignedFree(void *p)
 	free(p);
 #endif
 }
+
+namespace local {
+
+inline constexpr uint32_t mask(size_t n)
+{
+	XBYAK_RISCV_ASSERT(n <= 32);
+	return n == 32 ? 0xffffffff : (1u << n) - 1;
+}
+// is x <= mask(n) ?
+inline constexpr bool inBit(uint32_t x, size_t n)
+{
+	return x <= mask(n);
+}
+
+// is x is signed n-bit integer?
+inline constexpr bool inSBit(int x, int n)
+{
+	return -(1 << (n-1)) <= x && x < (1 << (n-1));
+}
+
+inline constexpr bool isValidImmOfJal(uint64_t imm)
+{
+	const uint64_t M = mask(20);
+	return (imm < M || ~M <= imm) && (imm & 1) == 0;
+}
+// encode 20-bit imm to j-type imm
+inline constexpr uint32_t convertImm(uint64_t imm)
+{
+	XBYAK_RISCV_ASSERT(isValidImmOfJal(imm));
+	//      1   10  1     8
+	// imm[20|10:1|11|19:12]
+	uint32_t v = ((imm >> 20) << 19) | (((imm >> 1) & mask(10)) << 9) | (((imm >> 11) & 1) << 8) | ((imm >> 12) & mask(8));
+	return v;
+}
+
+} // local
 
 namespace inner {
 
@@ -480,16 +496,52 @@ public:
 		}
 		top_[size_++] = static_cast<uint8_t>(code);
 	}
-	void write1byte(const uint8_t *code, size_t codeSize)
-	{
-		for (size_t i = 0; i < codeSize; i++) write1byte(code[i]);
-	}
 	void write1byte(uint64_t code, size_t codeSize)
 	{
 		if (codeSize > 8) XBYAK_RISCV_THROW(ERR_BAD_PARAMETER)
 		for (size_t i = 0; i < codeSize; i++) write1byte(static_cast<uint8_t>(code >> (i * 8)));
 	}
 	void write4byte(uint32_t code) { write1byte(code, 4); }
+	void dump(bool separate = false) const
+	{
+		const uint8_t *p = getCode();
+		const size_t bufSize = getSize();
+		if (separate) {
+			size_t pos = 0;
+			while (pos < bufSize) {
+				uint32_t v = p[pos];
+				size_t n = (v & 3) == 3 ? 4 : 2;
+				if (pos + n <= bufSize) {
+					for (size_t i = 0; i < n; i++) {
+						printf("%02x", p[pos + n - 1 - i]);
+					}
+					printf("\n");
+					pos += n;
+				} else {
+					printf("%02x error\n", v);
+					return;
+				}
+			}
+			return;
+		}
+		size_t remain = bufSize;
+		for (int i = 0; i < 4; i++) {
+			size_t disp = 16;
+			if (remain < 16) {
+				disp = remain;
+			}
+			for (size_t j = 0; j < 16; j++) {
+				if (j < disp) {
+					printf("%02x", p[i * 16 + j]);
+				}
+			}
+			putchar('\n');
+			remain -= disp;
+			if (remain == 0) {
+				break;
+			}
+		}
+	}
 	const uint8_t *getCode() const { return top_; }
 	template<class F>
 	const F getCode() const { return reinterpret_cast<F>(top_); }
@@ -501,28 +553,6 @@ public:
 	{
 		if (size > maxSize_) XBYAK_RISCV_THROW(ERR_OFFSET_IS_TOO_BIG)
 		size_ = size;
-	}
-	void dump() const
-	{
-		const uint8_t *p = getCode();
-		size_t bufSize = getSize();
-		size_t remain = bufSize;
-		for (int i = 0; i < 4; i++) {
-			size_t disp = 16;
-			if (remain < 16) {
-				disp = remain;
-			}
-			for (size_t j = 0; j < 16; j++) {
-				if (j < disp) {
-					printf("%02X", p[i * 16 + j]);
-				}
-			}
-			putchar('\n');
-			remain -= disp;
-			if (remain == 0) {
-				break;
-			}
-		}
 	}
 	/*
 		@param offset [in] offset from top
@@ -800,6 +830,7 @@ struct Bit {
 class CodeGenerator : public CodeArray {
 public:
 	enum LabelType {
+		T_jal,
 		T_SHORT,
 		T_NEAR,
 		T_FAR, // far jump
@@ -830,6 +861,34 @@ private:
 		JmpLabel jmp(size_, jmpSize, (relative ? inner::LasIs : inner::Labs), disp);
 		labelMgr_.addUndefinedLabel(label, jmp);
 	}
+	void makeJmp(uint32_t disp, LabelType type, uint8_t shortCode, uint8_t longCode, uint8_t longPref)
+	{
+		const int shortJmpSize = 2;
+		const int longHeaderSize = longPref ? 2 : 1;
+		const int longJmpSize = longHeaderSize + 4;
+		if (type != T_NEAR && inner::IsInDisp8(disp - shortJmpSize)) {
+			write1byte(shortCode); write1byte(disp - shortJmpSize);
+		} else {
+			if (type == T_SHORT) XBYAK_RISCV_THROW(ERR_LABEL_IS_TOO_FAR)
+			if (longPref) write1byte(longPref);
+			write1byte(longCode); write4byte(disp - longJmpSize);
+		}
+	}
+	template<class T>
+	void opJmp(T& label, LabelType type, uint32_t code)
+	{
+		size_t offset = 0;
+		if (labelMgr_.getOffset(&offset, label)) { /* label exists */
+			uint64_t imm = offset - size_;
+			if (!local::isValidImmOfJal(imm)) XBYAK_RISCV_THROW(ERR_INVALID_IMM_OF_JAL)
+			uint32_t v = (local::convertImm(imm) << 12) | code;
+			write4byte(v);
+		} else {
+			write4byte(code);
+			JmpLabel jmp(size_, 4, inner::LasIs);
+			labelMgr_.addUndefinedLabel(label, jmp);
+		}
+	}
 	void Rtype(Bit7 opcode, Bit3 funct3, Bit7 funct7, Bit5 rd, Bit5 rs1, Bit5 rs2)
 	{
 		uint32_t v = (funct7.v << 25) | (rs2.v << 20) | (rs1.v << 15) | (funct3.v << 12) | (rd.v << 7) | opcode.v;
@@ -851,6 +910,12 @@ private:
 	{
 		if (imm >= (1u << 20)) XBYAK_RISCV_THROW(ERR_IMM_IS_TOO_BIG)
 		uint32_t v = (imm << 12) | (rd.v << 7) | opcode.v;
+		write4byte(v);
+	}
+	void Jtype(Bit7 opcode, Bit5 rd, uint64_t imm)
+	{
+		if (!local::isValidImmOfJal(imm)) XBYAK_RISCV_THROW(ERR_INVALID_IMM_OF_JAL)
+		uint32_t v = (local::convertImm(imm) << 12) | (rd.v << 7) | opcode.v;
 		write4byte(v);
 	}
 	void opShift(Bit7 pre, Bit3 funct3, Bit7 opcode, Bit5 rd, Bit5 rs1, uint32_t shamt)
@@ -920,6 +985,10 @@ public:
 #ifndef XBYAK_RISCV_DONT_READ_LIST
 #include "xbyak_riscv_mnemonic.hpp"
 #endif
+	void jal(const Reg& rd, const Label& label)
+	{
+		opJmp(label, T_jal, (rd.getIdx() << 7) | 0x6f);
+	}
 };
 
 #ifdef _MSC_VER

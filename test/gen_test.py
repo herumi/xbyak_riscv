@@ -43,10 +43,12 @@ def putFence():
   putEach('fence_w_w()', 'fence w, w')
   putEach('fence_i()', 'fence.i')
 
+def putJal():
+  pass
+  
 def misc():
   for name in ['ret', 'ecall', 'ebreak']:
     put(name)
-  putFence()
 
 def main():
   global isXbyak
@@ -72,6 +74,9 @@ def main():
   for op in ['slli', 'srli', 'srai']:
     put(op, 'x1, x2, 1')
     put(op, 'x15, x20, 63')
+
+  putFence()
+  putJal()
 
   misc()
 

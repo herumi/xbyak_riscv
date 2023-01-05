@@ -81,3 +81,4 @@ for (funct3, opcode, name) in tbl:
 
 # misc
 print('void ret() { jalr(x0, x1); }')
+print('void jal(const Reg& rd, uint32_t imm) { Jtype(0x6f, rd, imm); }')
