@@ -625,11 +625,10 @@ public:
 
 struct JmpLabel {
 	size_t endOfJmp; /* offset from top to the end address of jmp */
-	int jmpSize;
-	inner::LabelMode mode;
-	size_t disp; // disp for [rip + disp]
-	explicit JmpLabel(size_t endOfJmp = 0, int jmpSize = 0, inner::LabelMode mode = inner::LasIs, size_t disp = 0)
-		: endOfJmp(endOfJmp), jmpSize(jmpSize), mode(mode), disp(disp)
+	uint32_t encoded;
+	bool isJal;
+	explicit JmpLabel(size_t endOfJmp = 0, uint32_t encoded = 0, bool isJal = false)
+		: endOfJmp(endOfJmp), encoded(encoded), isJal(isJal)
 	{
 	}
 };
@@ -684,7 +683,8 @@ class LabelManager {
 			typename UndefList::iterator itr = undefList.find(labelId);
 			if (itr == undefList.end()) break;
 			const JmpLabel *jmp = &itr->second;
-			const size_t offset = jmp->endOfJmp - jmp->jmpSize;
+			const size_t offset = jmp->endOfJmp;
+#if 0
 			size_t disp;
 			if (jmp->mode == inner::LaddTop) {
 				disp = addrOffset;
@@ -699,6 +699,7 @@ class LabelManager {
 			}
 			base_->rewrite(offset, disp, jmp->jmpSize);
 			undefList.erase(itr);
+#endif
 		}
 	}
 	template<class DefList, class T>
@@ -844,23 +845,6 @@ private:
 	CodeGenerator operator=(const CodeGenerator&) = delete;
 	LabelManager labelMgr_;
 	bool isRV32_;
-	template<class T>
-	void putL_inner(T& label, bool relative = false, size_t disp = 0)
-	{
-		const int jmpSize = relative ? 4 : (int)sizeof(size_t);
-		size_t offset = 0;
-		if (labelMgr_.getOffset(&offset, label)) {
-			if (relative) {
-				append1B(inner::VerifyInInt32(offset + disp - size_ - jmpSize), jmpSize);
-			} else {
-				append1B(size_t(top_) + offset, jmpSize);
-			}
-			return;
-		}
-		append1B(uint64_t(0), jmpSize);
-		JmpLabel jmp(size_, jmpSize, (relative ? inner::LasIs : inner::Labs), disp);
-		labelMgr_.addUndefinedLabel(label, jmp);
-	}
 	void makeJmp(uint32_t disp, LabelType type, uint8_t shortCode, uint8_t longCode, uint8_t longPref)
 	{
 		const int shortJmpSize = 2;
@@ -875,17 +859,20 @@ private:
 		}
 	}
 	template<class T>
-	void opJmp(T& label, LabelType type, uint32_t code)
+	void opJmp(T& label, uint32_t encoded, bool isJal)
 	{
 		size_t offset = 0;
 		if (labelMgr_.getOffset(&offset, label)) { /* label exists */
 			uint64_t imm = offset - size_;
-			if (!local::isValidImmOfJal(imm)) XBYAK_RISCV_THROW(ERR_INVALID_IMM_OF_JAL)
-			uint32_t v = (local::convertImm(imm) << 12) | code;
-			append4B(v);
+			if (isJal) {
+				if (!local::isValidImmOfJal(imm)) XBYAK_RISCV_THROW(ERR_INVALID_IMM_OF_JAL)
+				uint32_t v = (local::convertImm(imm) << 12) | encoded;
+				append4B(v);
+			} else {
+			}
 		} else {
-			append4B(code);
-			JmpLabel jmp(size_, 4, inner::LasIs);
+			append4B(encoded);
+			JmpLabel jmp(size_, encoded, isJal);
 			labelMgr_.addUndefinedLabel(label, jmp);
 		}
 	}
@@ -935,11 +922,6 @@ public:
 		src : used by L()
 	*/
 	void assignL(Label& dst, const Label& src) { labelMgr_.assign(dst, src); }
-	/*
-		put address of label to buffer
-		@note the put size is 4(32-bit), 8(64-bit)
-	*/
-	void putL(const Label& label) { putL_inner(label); }
 
 	// call(function pointer)
 //	template<class Ret, class... Params>
@@ -979,7 +961,7 @@ public:
 #endif
 	void jal(const Reg& rd, const Label& label)
 	{
-		opJmp(label, T_jal, (rd.getIdx() << 7) | 0x6f);
+		opJmp(label, (rd.getIdx() << 7) | 0x6f, true);
 	}
 };
 
