@@ -68,7 +68,7 @@ tbl = [
 ]
 
 for (code, name) in tbl:
-  print(f'void {name}() {{ write4byte({hex(code)}); }}')
+  print(f'void {name}() {{ append4B({hex(code)}); }}')
 
 tbl = [
  (0b000, 0b0100011, 'sb'),

@@ -25,15 +25,15 @@ void auipc(const Reg& rd, uint32_t imm) { Utype(0x17, rd, imm); }
 void slli(const Reg& rd, const Reg& rs1, uint32_t shamt) { opShift(0x0, 1, 0x13, rd, rs1, shamt); }
 void srli(const Reg& rd, const Reg& rs1, uint32_t shamt) { opShift(0x0, 5, 0x13, rd, rs1, shamt); }
 void srai(const Reg& rd, const Reg& rs1, uint32_t shamt) { opShift(0x20, 5, 0x13, rd, rs1, shamt); }
-void fence_rw_rw() { write4byte(0x330000f); }
-void fence_tso() { write4byte(0x8330000f); }
-void fence_rw_w() { write4byte(0x310000f); }
-void fence_r_rw() { write4byte(0x230000f); }
-void fence_r_r() { write4byte(0x220000f); }
-void fence_w_w() { write4byte(0x110000f); }
-void fence_i() { write4byte(0x100f); }
-void ecall() { write4byte(0x73); }
-void ebreak() { write4byte(0x100073); }
+void fence_rw_rw() { append4B(0x330000f); }
+void fence_tso() { append4B(0x8330000f); }
+void fence_rw_w() { append4B(0x310000f); }
+void fence_r_rw() { append4B(0x230000f); }
+void fence_r_r() { append4B(0x220000f); }
+void fence_w_w() { append4B(0x110000f); }
+void fence_i() { append4B(0x100f); }
+void ecall() { append4B(0x73); }
+void ebreak() { append4B(0x100073); }
 void sb(const Reg& rs2, const Reg& rs1, int imm = 0) { Stype(0x23, 0, rs1, rs2, imm); }
 void sh(const Reg& rs2, const Reg& rs1, int imm = 0) { Stype(0x23, 1, rs1, rs2, imm); }
 void sw(const Reg& rs2, const Reg& rs1, int imm = 0) { Stype(0x23, 2, rs1, rs2, imm); }
