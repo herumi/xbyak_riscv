@@ -43,14 +43,18 @@ def putFence():
   putEach('fence_w_w()', 'fence w, w')
   putEach('fence_i()', 'fence.i')
 
-def putJal():
+def putJmp(name):
   n = 32
-  putEach('Label B = L(), F;', 'B:')
+  putEach(f'Label B{name} = L(), F{name};', f'B{name}:')
   for i in range(n):
-    put('jal', f'x{i}, B')
-    put('jal', f'x{i}, F')
-  putEach('L(F);', 'F:')
-  
+    if name == 'jal':
+      put(name, f'x{i}, B{name}')
+      put(name, f'x{i}, F{name}')
+    else:
+      put(name, f'x{i},x5, B{name}')
+      put(name, f'x{i},x2, F{name}')
+  putEach(f'L(F{name});', f'F{name}:')
+
 def misc():
   for name in ['ret', 'ecall', 'ebreak']:
     put(name)
@@ -81,7 +85,8 @@ def main():
     put(op, 'x15, x20, 63')
 
   putFence()
-  putJal()
+  putJmp('jal')
+  putJmp('beq')
 
   misc()
 

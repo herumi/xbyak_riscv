@@ -249,7 +249,7 @@ inline constexpr uint32_t encodeImmBtype(size_t imm)
 	XBYAK_RISCV_ASSERT(isValidImmBtype(imm));
 	//          25            7
 	// imm[12|10:5]  imm[4:1|11]
-	uint32_t v = ((imm >> 12) << 31) | (((imm >> 5) & mask(6)) << 25) | (((imm >> 1) && mask(4)) << 8) | (((imm >> 11) & 1) << 7);
+	uint32_t v = ((imm >> 12) << 31) | (((imm >> 5) & mask(6)) << 25) | (((imm >> 1) & mask(4)) << 8) | (((imm >> 11) & 1) << 7);
 	return v;
 }
 } // local
@@ -869,21 +869,21 @@ private:
 	{
 		size_t offset = 0;
 		if (labelMgr_.getOffset(&offset, label)) { /* label exists */
-			uint64_t imm = offset - size_;
+			size_t imm = offset - size_;
+			uint32_t v;
 			if (isJal) {
 				if (!local::isValidImmJal(imm)) XBYAK_RISCV_THROW(ERR_INVALID_IMM_OF_JAL)
-				uint32_t v = local::encodeImmJal(imm) | encoded;
-				append4B(v);
+				v = local::encodeImmJal(imm) | encoded;
 			} else {
 				if (!local::isValidImmBtype(imm)) XBYAK_RISCV_THROW(ERR_INVALID_IMM_OF_BTYPE)
-				uint32_t v = local::encodeImmBtype(imm) | encoded;
-				append4B(v);
+				v = local::encodeImmBtype(imm) | encoded;
 			}
-		} else {
-			append4B(encoded);
-			JmpLabel jmp(size_, encoded, isJal);
-			labelMgr_.addUndefinedLabel(label, jmp);
+			append4B(v);
+			return;
 		}
+		append4B(encoded);
+		JmpLabel jmp(size_, encoded, isJal);
+		labelMgr_.addUndefinedLabel(label, jmp);
 	}
 	void Rtype(Bit7 opcode, Bit3 funct3, Bit7 funct7, Bit5 rd, Bit5 rs1, Bit5 rs2)
 	{
