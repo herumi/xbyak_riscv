@@ -64,7 +64,7 @@ def main():
   if len(sys.argv) > 1 and sys.argv[1] == 'gas':
     isXbyak = False
 
-  for op in ['add', 'sub', 'sll', 'slt', 'sltu', 'xor_', 'srl', 'sra', 'or_', 'and_']:
+  for op in ['add', 'sub', 'sll', 'slt', 'sltu', 'xor_', 'srl', 'sra', 'or_', 'and_', 'addw', 'subw', 'sllw', 'srlw', 'sraw']:
     putRRR(op)
 
   for op in ['addi', 'slti', 'sltiu', 'xori', 'ori', 'andi', 'jalr', 'addiw']:
