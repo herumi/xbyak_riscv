@@ -128,6 +128,14 @@ def opAtomic(funct7, name, suf, funct3):
 
 tbl = [
   (0b00001, 'amoswap'),
+  (0b00000, 'amoadd'),
+  (0b00100, 'amoxor'),
+  (0b01100, 'amoand'),
+  (0b01000, 'amoor'),
+  (0b10000, 'amomin'),
+  (0b10100, 'amomax'),
+  (0b11000, 'amominu'),
+  (0b11100, 'amomaxu'),
 ]
 for (funct7, name) in tbl:
   opAtomic(funct7, name, 'w', 2)

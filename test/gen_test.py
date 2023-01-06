@@ -108,7 +108,7 @@ def main():
   for op in ['jal', 'beq', 'bne', 'blt', 'bge', 'bltu', 'bgeu']:
     putJmp(op)
 
-  for op in ['amoswap']:
+  for op in ['amoswap', 'amoadd', 'amoxor', 'amoand', 'amoor', 'amomin', 'amomax', 'amominu', 'amomaxu']:
     for flag in ['', 'aq', 'rl', 'aqrl']:
       putAtomic(op, 'w', flag)
       putAtomic(op, 'd', flag)
