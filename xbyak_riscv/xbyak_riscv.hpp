@@ -445,12 +445,12 @@ public:
 		}
 		top_[size_++] = static_cast<uint8_t>(code);
 	}
-	void append1B(uint64_t code, size_t codeSize)
+	void appendBytes(uint64_t code, size_t codeSize)
 	{
 		if (codeSize > 8) XBYAK_RISCV_THROW(ERR_BAD_PARAMETER)
 		for (size_t i = 0; i < codeSize; i++) append1B(static_cast<uint8_t>(code >> (i * 8)));
 	}
-	void append4B(uint32_t code) { append1B(code, 4); }
+	void append4B(uint32_t code) { appendBytes(code, 4); }
 	void dump(bool separate = false) const
 	{
 		const uint8_t *p = getCode();
@@ -503,13 +503,17 @@ public:
 		if (size > maxSize_) XBYAK_RISCV_THROW(ERR_OFFSET_IS_TOO_BIG)
 		size_ = size;
 	}
-	void write4B(size_t offset, uint32_t v)
+	void writeBytes(size_t offset, uint64_t v, size_t n)
 	{
-		assert(offset + 4 <= maxSize_);
+		assert(offset + n <= maxSize_);
 		uint8_t *const p = top_ + offset;
-		for (size_t i = 0; i < 4; i++) {
+		for (size_t i = 0; i < n; i++) {
 			p[i] = static_cast<uint8_t>(v >> (i * 8));
 		}
+	}
+	void write4B(size_t offset, uint32_t v)
+	{
+		writeBytes(offset, v, 4);
 	}
 	/**
 		change exec permission of memory
@@ -580,6 +584,14 @@ struct Jmp {
 		, isJal(false)
 	{
 	}
+	// raw address
+	Jmp(size_t addr)
+		: addr(addr)
+		, encoded(0)
+		, isJal(false)
+	{
+	}
+	bool isRawAddress() const { return encoded == 0; }
 	static inline bool isValidImm(size_t imm, size_t maskBit)
 	{
 		const size_t M = local::mask(maskBit);
@@ -660,8 +672,12 @@ class LabelManager {
 			typename UndefList::iterator itr = undefList.find(labelId);
 			if (itr == undefList.end()) break;
 			const Jmp *jmp = &itr->second;
-			uint32_t v = jmp->encode(base_->getSize());
-			base_->write4B(jmp->addr, v);
+			if (jmp->isRawAddress()) {
+				base_->writeBytes(jmp->addr, size_t(base_->getCurr()), sizeof(size_t));
+			} else {
+				uint32_t v = jmp->encode(base_->getSize());
+				base_->write4B(jmp->addr, v);
+			}
 			undefList.erase(itr);
 		}
 	}
@@ -872,12 +888,17 @@ public:
 		put address of label to buffer
 		@note the put size is 4(32-bit), 8(64-bit)
 	*/
-	// void putL(const Label &label) { putL_inner(label); }
-
-	// call(function pointer)
-//	template<class Ret, class... Params>
-//	void call(Ret(*func)(Params...)) { call(reinterpret_cast<const void*>(func)); }
-//	void call(const void *addr) { opJmpAbs(addr, T_NEAR, 0, 0xE8); }
+	void putL(const Label &label)
+	{
+		size_t offset = 0;
+		if (labelMgr_.getOffset(&offset, label)) {
+			appendBytes(offset, sizeof(size_t));
+			return;
+		}
+		appendBytes(0, sizeof(size_t));
+		Jmp jmp(size_);
+		labelMgr_.addUndefinedLabel(label, jmp);
+	}
 
 	// constructor
 	CodeGenerator(size_t maxSize = DEFAULT_MAX_CODE_SIZE, void *userPtr = DontSetProtectRWE, Allocator *allocator = 0)
