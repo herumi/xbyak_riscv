@@ -881,6 +881,16 @@ public:
 		labelMgr_.set(this);
 	}
 	bool hasUndefinedLabel() const { return labelMgr_.hasUndefClabel(); }
+	static inline void clearCache(void *p, size_t n)
+	{
+#ifdef _WIN32
+		FlushInstructionCache(GetCurrentProcess(), begin, n);
+#elif defined(__APPLE__)
+		sys_icache_invalidate(begin, n);
+#else
+		__builtin___clear_cache((char *)p, (char *)p + n);
+#endif
+	}
 	/*
 		MUST call ready() to complete generating code if you use AutoGrow mode.
 		It is not necessary for the other mode if hasUndefinedLabel() is true.
@@ -888,6 +898,7 @@ public:
 	void ready(ProtectMode mode = PROTECT_RWE)
 	{
 		if (hasUndefinedLabel()) XBYAK_RISCV_THROW(ERR_LABEL_IS_NOT_FOUND)
+		clearCache(top_, size_);
 	}
 	// set read/exec
 	void readyRE() { return ready(PROTECT_RE); }
