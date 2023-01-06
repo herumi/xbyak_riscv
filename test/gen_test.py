@@ -67,7 +67,7 @@ def main():
   for op in ['add', 'sub', 'sll', 'slt', 'sltu', 'xor_', 'srl', 'sra', 'or_', 'and_']:
     putRRR(op)
 
-  for op in ['addi', 'slti', 'sltiu', 'xori', 'ori', 'andi', 'jalr']:
+  for op in ['addi', 'slti', 'sltiu', 'xori', 'ori', 'andi', 'jalr', 'addiw']:
     putRRI(op)
 
   for op in ['lb', 'lh', 'lw', 'lbu', 'lhu', 'sb', 'sh', 'sw', 'lwu', 'ld', 'sd']:

@@ -20,7 +20,8 @@ tbl = [
  (0b011, 0b0010011, 'sltiu'),
  (0b100, 0b0010011, 'xori'),
  (0b110, 0b0010011, 'ori'),
- (0b111, 0b0010011, 'andi')
+ (0b111, 0b0010011, 'andi'),
+ (0b000, 0b0011011, 'addiw'),
 ]
 
 for (funct3, opcode, name) in tbl:
