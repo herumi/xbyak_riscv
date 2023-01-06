@@ -60,6 +60,8 @@ for (pre, funct3, opcode, name) in tbl:
 
 tbl = [
   (0b0000000, 0b001, 0b0011011, 'slliw'),
+  (0b0000000, 0b101, 0b0011011, 'srliw'),
+  (0b0100000, 0b101, 0b0011011, 'sraiw'),
 ]
 
 for (pre, funct3, opcode, name) in tbl:

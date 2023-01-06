@@ -84,7 +84,7 @@ def main():
     put(op, 'x1, x2, 1')
     put(op, 'x15, x20, 63')
 
-  for op in ['slliw']:
+  for op in ['slliw', 'srliw', 'sraiw']:
     put(op, 'x1, x2, 1')
     put(op, 'x15, x20, 31')
 

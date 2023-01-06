@@ -29,6 +29,8 @@ void slli(const Reg& rd, const Reg& rs1, uint32_t shamt) { opShift(0x0, 1, 0x13,
 void srli(const Reg& rd, const Reg& rs1, uint32_t shamt) { opShift(0x0, 5, 0x13, rd, rs1, shamt); }
 void srai(const Reg& rd, const Reg& rs1, uint32_t shamt) { opShift(0x20, 5, 0x13, rd, rs1, shamt); }
 void slliw(const Reg& rd, const Reg& rs1, uint32_t shamt) { opShift(0x0, 1, 0x1b, rd, rs1, shamt, 5); }
+void srliw(const Reg& rd, const Reg& rs1, uint32_t shamt) { opShift(0x0, 5, 0x1b, rd, rs1, shamt, 5); }
+void sraiw(const Reg& rd, const Reg& rs1, uint32_t shamt) { opShift(0x20, 5, 0x1b, rd, rs1, shamt, 5); }
 void fence_rw_rw() { append4B(0x330000f); }
 void fence_tso() { append4B(0x8330000f); }
 void fence_rw_w() { append4B(0x310000f); }
