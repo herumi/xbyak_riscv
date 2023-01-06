@@ -21,6 +21,10 @@ void div(const Reg& rd, const Reg& rs1, const Reg& rs2) { Rtype(0x33, 4, 0x1, rd
 void divu(const Reg& rd, const Reg& rs1, const Reg& rs2) { Rtype(0x33, 5, 0x1, rd, rs1, rs2); }
 void rem(const Reg& rd, const Reg& rs1, const Reg& rs2) { Rtype(0x33, 6, 0x1, rd, rs1, rs2); }
 void remu(const Reg& rd, const Reg& rs1, const Reg& rs2) { Rtype(0x33, 7, 0x1, rd, rs1, rs2); }
+void mulw(const Reg& rd, const Reg& rs1, const Reg& rs2) { Rtype(0x3b, 0, 0x1, rd, rs1, rs2); }
+void divw(const Reg& rd, const Reg& rs1, const Reg& rs2) { Rtype(0x3b, 4, 0x1, rd, rs1, rs2); }
+void remw(const Reg& rd, const Reg& rs1, const Reg& rs2) { Rtype(0x3b, 6, 0x1, rd, rs1, rs2); }
+void remuw(const Reg& rd, const Reg& rs1, const Reg& rs2) { Rtype(0x3b, 7, 0x1, rd, rs1, rs2); }
 void addi(const Reg& rd, const Reg& rs1, int imm) { Itype(0x13, 0, rd, rs1, imm); }
 void slti(const Reg& rd, const Reg& rs1, int imm) { Itype(0x13, 2, rd, rs1, imm); }
 void sltiu(const Reg& rd, const Reg& rs1, int imm) { Itype(0x13, 3, rd, rs1, imm); }

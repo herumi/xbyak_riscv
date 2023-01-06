@@ -66,6 +66,7 @@ def main():
 
   for op in ['add', 'sub', 'sll', 'slt', 'sltu', 'xor_', 'srl', 'sra', 'or_', 'and_', 'addw', 'subw', 'sllw', 'srlw', 'sraw',
     'mul', 'mulh', 'mulhsu', 'mulhu', 'div', 'divu', 'rem', 'remu',
+    'mulw','divw', 'remw', 'remuw',
   ]:
     putRRR(op)
 
