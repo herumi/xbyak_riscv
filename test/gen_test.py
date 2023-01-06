@@ -84,6 +84,10 @@ def main():
     put(op, 'x1, x2, 1')
     put(op, 'x15, x20, 63')
 
+  for op in ['slliw']:
+    put(op, 'x1, x2, 1')
+    put(op, 'x15, x20, 31')
+
   putFence()
   for op in ['jal', 'beq', 'bne', 'blt', 'bge', 'bltu', 'bgeu']:
     putJmp(op)

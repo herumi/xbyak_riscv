@@ -841,9 +841,9 @@ private:
 		uint32_t v = (imm << 12) | (rd.v << 7) | opcode.v;
 		append4B(v);
 	}
-	void opShift(Bit7 pre, Bit3 funct3, Bit7 opcode, Bit5 rd, Bit5 rs1, uint32_t shamt)
+	void opShift(Bit7 pre, Bit3 funct3, Bit7 opcode, Bit5 rd, Bit5 rs1, uint32_t shamt, int range = 0)
 	{
-		int range = isRV32_ ? 5 : 6;
+		if (range == 0) range = isRV32_ ? 5 : 6;
 		if (shamt >= (1u << range)) XBYAK_RISCV_THROW(ERR_IMM_IS_TOO_BIG)
 		uint32_t v = (pre.v << 25) | (shamt << 20) | (rs1.v << 15) | (funct3.v << 12) | (rd.v << 7) | opcode.v;
 		append4B(v);
