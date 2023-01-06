@@ -573,12 +573,12 @@ public:
 		if (size > maxSize_) XBYAK_RISCV_THROW(ERR_OFFSET_IS_TOO_BIG)
 		size_ = size;
 	}
-	void rewrite4B(size_t offset, uint32_t v)
+	void write4B(size_t offset, uint32_t v)
 	{
 		assert(offset + 4 <= maxSize_);
-		uint8_t *const data = top_ + offset;
+		uint8_t *const p = top_ + offset;
 		for (size_t i = 0; i < 4; i++) {
-			data[i] = static_cast<uint8_t>(v >> (i * 8));
+			p[i] = static_cast<uint8_t>(v >> (i * 8));
 		}
 	}
 	void save(size_t offset, size_t val, int size, inner::LabelMode mode)
@@ -637,12 +637,24 @@ public:
 };
 
 struct JmpLabel {
-	size_t endOfJmp; /* offset from top to the end address of jmp */
+	size_t addr; /* offset of the jmp mnemonic from top */
 	uint32_t encoded;
 	bool isJal;
-	explicit JmpLabel(size_t endOfJmp = 0, uint32_t encoded = 0, bool isJal = false)
-		: endOfJmp(endOfJmp), encoded(encoded), isJal(isJal)
+	explicit JmpLabel(size_t addr = 0, uint32_t encoded = 0, bool isJal = false)
+		: addr(addr), encoded(encoded), isJal(isJal)
 	{
+	}
+	bool isValidImm(size_t imm) const
+	{
+		if (isJal) return local::isValidImmJal(imm);
+		return local::isValidImmBtype(imm);
+	}
+	uint32_t encode(size_t offset) const
+	{
+		size_t imm = offset - addr;
+		if (!isValidImm(imm)) XBYAK_RISCV_THROW(ERR_INVALID_IMM_OF_JAL)
+		if (isJal) return local::encodeImmJal(imm) | encoded;
+		return local::encodeImmBtype(imm) | encoded;
 	}
 };
 
@@ -696,16 +708,8 @@ class LabelManager {
 			typename UndefList::iterator itr = undefList.find(labelId);
 			if (itr == undefList.end()) break;
 			const JmpLabel *jmp = &itr->second;
-			size_t imm = size_t(base_->getSize()) - jmp->endOfJmp + 4;
-			if (jmp->isJal) {
-				if (!local::isValidImmJal(imm)) XBYAK_RISCV_THROW(ERR_INVALID_IMM_OF_JAL)
-				uint32_t v = local::encodeImmJal(imm) | jmp->encoded;
-				base_->rewrite4B(jmp->endOfJmp - 4, v);
-			} else {
-				if (!local::isValidImmBtype(imm)) XBYAK_RISCV_THROW(ERR_INVALID_IMM_OF_BTYPE)
-				uint32_t v = local::encodeImmBtype(imm) | jmp->encoded;
-				base_->rewrite4B(jmp->endOfJmp - 4, v);
-			}
+			uint32_t v = jmp->encode(base_->getSize());
+			base_->write4B(jmp->addr, v);
 			undefList.erase(itr);
 		}
 	}
@@ -852,37 +856,15 @@ private:
 	CodeGenerator operator=(const CodeGenerator&) = delete;
 	LabelManager labelMgr_;
 	bool isRV32_;
-	void makeJmp(uint32_t disp, LabelType type, uint8_t shortCode, uint8_t longCode, uint8_t longPref)
-	{
-		const int shortJmpSize = 2;
-		const int longHeaderSize = longPref ? 2 : 1;
-		const int longJmpSize = longHeaderSize + 4;
-		if (type != T_NEAR && inner::IsInDisp8(disp - shortJmpSize)) {
-			append1B(shortCode); append1B(disp - shortJmpSize);
-		} else {
-			if (type == T_SHORT) XBYAK_RISCV_THROW(ERR_LABEL_IS_TOO_FAR)
-			if (longPref) append1B(longPref);
-			append1B(longCode); append4B(disp - longJmpSize);
-		}
-	}
 	void opJmp(const Label& label, uint32_t encoded, bool isJal)
 	{
 		size_t offset = 0;
+		JmpLabel jmp(getSize(), encoded, isJal);
 		if (labelMgr_.getOffset(&offset, label)) { /* label exists */
-			size_t imm = offset - size_;
-			uint32_t v;
-			if (isJal) {
-				if (!local::isValidImmJal(imm)) XBYAK_RISCV_THROW(ERR_INVALID_IMM_OF_JAL)
-				v = local::encodeImmJal(imm) | encoded;
-			} else {
-				if (!local::isValidImmBtype(imm)) XBYAK_RISCV_THROW(ERR_INVALID_IMM_OF_BTYPE)
-				v = local::encodeImmBtype(imm) | encoded;
-			}
-			append4B(v);
+			append4B(jmp.encode(offset));
 			return;
 		}
-		append4B(encoded);
-		JmpLabel jmp(size_, encoded, isJal);
+		append4B(0); // dummy to write4B later
 		labelMgr_.addUndefinedLabel(label, jmp);
 	}
 	void Rtype(Bit7 opcode, Bit3 funct3, Bit7 funct7, Bit5 rd, Bit5 rs1, Bit5 rs2)
