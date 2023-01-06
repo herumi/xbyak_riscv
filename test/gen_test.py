@@ -68,6 +68,18 @@ def putAtomic(name, suf, flag):
       flag = '.' + flag
     print(f'{name}.{suf}{flag} {rd}, {rs2}, ({rs1})')
 
+def putLr(suf, flag):
+  rs1 = 'x1'
+  rd = 'x20'
+  if isXbyak:
+    if flag:
+      flag = ', T_' + flag
+    print(f'lr_{suf}({rd}, {rs1}{flag});')
+  else:
+    if flag:
+      flag = '.' + flag
+    print(f'lr.{suf}{flag} {rd}, ({rs1})')
+
 def misc():
   for name in ['ret', 'ecall', 'ebreak']:
     put(name)
@@ -108,10 +120,12 @@ def main():
   for op in ['jal', 'beq', 'bne', 'blt', 'bge', 'bltu', 'bgeu']:
     putJmp(op)
 
-  for op in ['amoswap', 'amoadd', 'amoxor', 'amoand', 'amoor', 'amomin', 'amomax', 'amominu', 'amomaxu']:
-    for flag in ['', 'aq', 'rl', 'aqrl']:
+  for flag in ['', 'aq', 'rl', 'aqrl']:
+    for op in ['sc', 'amoswap', 'amoadd', 'amoxor', 'amoand', 'amoor', 'amomin', 'amomax', 'amominu', 'amomaxu']:
       putAtomic(op, 'w', flag)
       putAtomic(op, 'd', flag)
+    putLr('w', flag)
+    putLr('d', flag)
 
   misc()
 

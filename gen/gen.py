@@ -129,6 +129,7 @@ def opAtomic(funct7, name, suf, funct3):
   print(f'void {name}_{suf}(const Reg& rd, const Reg& rs2, const Reg& addr, uint32_t flag = 0) {{ opAtomic(rd, rs2, addr, {hex(funct7)}, {funct3}, flag); }}')
 
 tbl = [
+  (0b00011, 'sc'),
   (0b00001, 'amoswap'),
   (0b00000, 'amoadd'),
   (0b00100, 'amoxor'),
@@ -145,5 +146,10 @@ for (funct7, name) in tbl:
   opAtomic(funct7, name, 'd', 3)
 
 # misc
-print('void ret() { jalr(x0, x1); }')
-print('void jal(const Reg& rd, const Label& label) { Jmp jmp(getSize(), 0x6f, rd); opJmp(label, jmp); }')
+print('''
+void ret() { jalr(x0, x1); }
+void jal(const Reg& rd, const Label& label) { Jmp jmp(getSize(), 0x6f, rd); opJmp(label, jmp); }
+// lr rd, (addr)
+void lr_w(const Reg& rd, const Reg& addr, uint32_t flag = 0) { opAtomic(rd, 0, addr, 2, 2, flag); }
+void lr_d(const Reg& rd, const Reg& addr, uint32_t flag = 0) { opAtomic(rd, 0, addr, 2, 3, flag); }
+''')

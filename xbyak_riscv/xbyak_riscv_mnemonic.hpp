@@ -70,6 +70,8 @@ void bge(const Reg& rs1, const Reg& rs2, const Label& label) { Jmp jmp(getSize()
 void bltu(const Reg& rs1, const Reg& rs2, const Label& label) { Jmp jmp(getSize(), 0x63, 6, rs1, rs2); opJmp(label, jmp); }
 void bgeu(const Reg& rs1, const Reg& rs2, const Label& label) { Jmp jmp(getSize(), 0x63, 7, rs1, rs2); opJmp(label, jmp); }
 // amos**, rd, rs2, (addr)
+void sc_w(const Reg& rd, const Reg& rs2, const Reg& addr, uint32_t flag = 0) { opAtomic(rd, rs2, addr, 0x3, 2, flag); }
+void sc_d(const Reg& rd, const Reg& rs2, const Reg& addr, uint32_t flag = 0) { opAtomic(rd, rs2, addr, 0x3, 3, flag); }
 void amoswap_w(const Reg& rd, const Reg& rs2, const Reg& addr, uint32_t flag = 0) { opAtomic(rd, rs2, addr, 0x1, 2, flag); }
 void amoswap_d(const Reg& rd, const Reg& rs2, const Reg& addr, uint32_t flag = 0) { opAtomic(rd, rs2, addr, 0x1, 3, flag); }
 void amoadd_w(const Reg& rd, const Reg& rs2, const Reg& addr, uint32_t flag = 0) { opAtomic(rd, rs2, addr, 0x0, 2, flag); }
@@ -88,5 +90,10 @@ void amominu_w(const Reg& rd, const Reg& rs2, const Reg& addr, uint32_t flag = 0
 void amominu_d(const Reg& rd, const Reg& rs2, const Reg& addr, uint32_t flag = 0) { opAtomic(rd, rs2, addr, 0x18, 3, flag); }
 void amomaxu_w(const Reg& rd, const Reg& rs2, const Reg& addr, uint32_t flag = 0) { opAtomic(rd, rs2, addr, 0x1c, 2, flag); }
 void amomaxu_d(const Reg& rd, const Reg& rs2, const Reg& addr, uint32_t flag = 0) { opAtomic(rd, rs2, addr, 0x1c, 3, flag); }
+
 void ret() { jalr(x0, x1); }
 void jal(const Reg& rd, const Label& label) { Jmp jmp(getSize(), 0x6f, rd); opJmp(label, jmp); }
+// lr rd, (addr)
+void lr_w(const Reg& rd, const Reg& addr, uint32_t flag = 0) { opAtomic(rd, 0, addr, 2, 2, flag); }
+void lr_d(const Reg& rd, const Reg& addr, uint32_t flag = 0) { opAtomic(rd, 0, addr, 2, 3, flag); }
+
