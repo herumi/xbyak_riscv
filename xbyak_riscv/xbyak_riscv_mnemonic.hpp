@@ -32,14 +32,15 @@ void xori(const Reg& rd, const Reg& rs1, int imm) { Itype(0x13, 4, rd, rs1, imm)
 void ori(const Reg& rd, const Reg& rs1, int imm) { Itype(0x13, 6, rd, rs1, imm); }
 void andi(const Reg& rd, const Reg& rs1, int imm) { Itype(0x13, 7, rd, rs1, imm); }
 void addiw(const Reg& rd, const Reg& rs1, int imm) { Itype(0x1b, 0, rd, rs1, imm); }
-void jalr(const Reg& rd, const Reg& rs1, int imm = 0) { Itype(0x67, 0, rd, rs1, imm); }
-void lb(const Reg& rd, const Reg& rs1, int imm = 0) { Itype(0x3, 0, rd, rs1, imm); }
-void lh(const Reg& rd, const Reg& rs1, int imm = 0) { Itype(0x3, 1, rd, rs1, imm); }
-void lw(const Reg& rd, const Reg& rs1, int imm = 0) { Itype(0x3, 2, rd, rs1, imm); }
-void lbu(const Reg& rd, const Reg& rs1, int imm = 0) { Itype(0x3, 4, rd, rs1, imm); }
-void lhu(const Reg& rd, const Reg& rs1, int imm = 0) { Itype(0x3, 5, rd, rs1, imm); }
-void lwu(const Reg& rd, const Reg& rs1, int imm = 0) { Itype(0x3, 6, rd, rs1, imm); }
-void ld(const Reg& rd, const Reg& rs1, int imm = 0) { Itype(0x3, 3, rd, rs1, imm); }
+// load-op rd, imm(addr); rd = addr[imm];
+void jalr(const Reg& rd, const Reg& addr, int imm = 0) { Itype(0x67, 0, rd, addr, imm); }
+void lb(const Reg& rd, const Reg& addr, int imm = 0) { Itype(0x3, 0, rd, addr, imm); }
+void lh(const Reg& rd, const Reg& addr, int imm = 0) { Itype(0x3, 1, rd, addr, imm); }
+void lw(const Reg& rd, const Reg& addr, int imm = 0) { Itype(0x3, 2, rd, addr, imm); }
+void lbu(const Reg& rd, const Reg& addr, int imm = 0) { Itype(0x3, 4, rd, addr, imm); }
+void lhu(const Reg& rd, const Reg& addr, int imm = 0) { Itype(0x3, 5, rd, addr, imm); }
+void lwu(const Reg& rd, const Reg& addr, int imm = 0) { Itype(0x3, 6, rd, addr, imm); }
+void ld(const Reg& rd, const Reg& addr, int imm = 0) { Itype(0x3, 3, rd, addr, imm); }
 void lui(const Reg& rd, uint32_t imm) { Utype(0x37, rd, imm); }
 void auipc(const Reg& rd, uint32_t imm) { Utype(0x17, rd, imm); }
 void slli(const Reg& rd, const Reg& rs1, uint32_t shamt) { opShift(0x0, 1, 0x13, rd, rs1, shamt); }
@@ -57,16 +58,18 @@ void fence_w_w() { append4B(0x110000f); }
 void fence_i() { append4B(0x100f); }
 void ecall() { append4B(0x73); }
 void ebreak() { append4B(0x100073); }
-void sb(const Reg& rs2, const Reg& rs1, int imm = 0) { Stype(0x23, 0, rs1, rs2, imm); }
-void sh(const Reg& rs2, const Reg& rs1, int imm = 0) { Stype(0x23, 1, rs1, rs2, imm); }
-void sw(const Reg& rs2, const Reg& rs1, int imm = 0) { Stype(0x23, 2, rs1, rs2, imm); }
-void sd(const Reg& rs2, const Reg& rs1, int imm = 0) { Stype(0x23, 3, rs1, rs2, imm); }
-void beq(const Reg& src1, const Reg& src2, const Label& label) { Jmp jmp(getSize(), 0x63, 0, src1, src2); opJmp(label, jmp); }
-void bne(const Reg& src1, const Reg& src2, const Label& label) { Jmp jmp(getSize(), 0x63, 1, src1, src2); opJmp(label, jmp); }
-void blt(const Reg& src1, const Reg& src2, const Label& label) { Jmp jmp(getSize(), 0x63, 4, src1, src2); opJmp(label, jmp); }
-void bge(const Reg& src1, const Reg& src2, const Label& label) { Jmp jmp(getSize(), 0x63, 5, src1, src2); opJmp(label, jmp); }
-void bltu(const Reg& src1, const Reg& src2, const Label& label) { Jmp jmp(getSize(), 0x63, 6, src1, src2); opJmp(label, jmp); }
-void bgeu(const Reg& src1, const Reg& src2, const Label& label) { Jmp jmp(getSize(), 0x63, 7, src1, src2); opJmp(label, jmp); }
+// store-op rs2, imm(addr) ; addr[imm] = rs2;
+void sb(const Reg& rs2, const Reg& addr, int imm = 0) { Stype(0x23, 0, addr, rs2, imm); }
+void sh(const Reg& rs2, const Reg& addr, int imm = 0) { Stype(0x23, 1, addr, rs2, imm); }
+void sw(const Reg& rs2, const Reg& addr, int imm = 0) { Stype(0x23, 2, addr, rs2, imm); }
+void sd(const Reg& rs2, const Reg& addr, int imm = 0) { Stype(0x23, 3, addr, rs2, imm); }
+void beq(const Reg& rs1, const Reg& rs2, const Label& label) { Jmp jmp(getSize(), 0x63, 0, rs1, rs2); opJmp(label, jmp); }
+void bne(const Reg& rs1, const Reg& rs2, const Label& label) { Jmp jmp(getSize(), 0x63, 1, rs1, rs2); opJmp(label, jmp); }
+void blt(const Reg& rs1, const Reg& rs2, const Label& label) { Jmp jmp(getSize(), 0x63, 4, rs1, rs2); opJmp(label, jmp); }
+void bge(const Reg& rs1, const Reg& rs2, const Label& label) { Jmp jmp(getSize(), 0x63, 5, rs1, rs2); opJmp(label, jmp); }
+void bltu(const Reg& rs1, const Reg& rs2, const Label& label) { Jmp jmp(getSize(), 0x63, 6, rs1, rs2); opJmp(label, jmp); }
+void bgeu(const Reg& rs1, const Reg& rs2, const Label& label) { Jmp jmp(getSize(), 0x63, 7, rs1, rs2); opJmp(label, jmp); }
+// amos**, rd, rs2, (addr)
 void amoswap_w(const Reg& rd, const Reg& rs2, const Reg& addr, uint32_t flag = 0) { opAtomic(rd, rs2, addr, 0x1, 2, flag); }
 void amoswap_d(const Reg& rd, const Reg& rs2, const Reg& addr, uint32_t flag = 0) { opAtomic(rd, rs2, addr, 0x1, 3, flag); }
 void amoadd_w(const Reg& rd, const Reg& rs2, const Reg& addr, uint32_t flag = 0) { opAtomic(rd, rs2, addr, 0x0, 2, flag); }

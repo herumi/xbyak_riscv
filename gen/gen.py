@@ -58,8 +58,9 @@ tbl = [
  (0b011, 0b0000011, 'ld'),
 ]
 
+print('// load-op rd, imm(addr); rd = addr[imm];')
 for (funct3, opcode, name) in tbl:
-  print(f'void {name}(const Reg& rd, const Reg& rs1, int imm = 0) {{ Itype({hex(opcode)}, {funct3}, rd, rs1, imm); }}')
+  print(f'void {name}(const Reg& rd, const Reg& addr, int imm = 0) {{ Itype({hex(opcode)}, {funct3}, rd, addr, imm); }}')
 
 tbl = [
   (0b0110111, 'lui'),
@@ -108,8 +109,9 @@ tbl = [
  (0b011, 0b0100011, 'sd'),
 ]
 
+print('// store-op rs2, imm(addr) ; addr[imm] = rs2;')
 for (funct3, opcode, name) in tbl:
-  print(f'void {name}(const Reg& rs2, const Reg& rs1, int imm = 0) {{ Stype({hex(opcode)}, {funct3}, rs1, rs2, imm); }}')
+  print(f'void {name}(const Reg& rs2, const Reg& addr, int imm = 0) {{ Stype({hex(opcode)}, {funct3}, addr, rs2, imm); }}')
 
 tbl = [
   (0b000, 0b1100011, 'beq'),
@@ -121,7 +123,7 @@ tbl = [
 ]
 
 for (funct3, opcode, name) in tbl:
-  print(f'void {name}(const Reg& src1, const Reg& src2, const Label& label) {{ Jmp jmp(getSize(), {hex(opcode)}, {funct3}, src1, src2); opJmp(label, jmp); }}')
+  print(f'void {name}(const Reg& rs1, const Reg& rs2, const Label& label) {{ Jmp jmp(getSize(), {hex(opcode)}, {funct3}, rs1, rs2); opJmp(label, jmp); }}')
 
 def opAtomic(funct7, name, suf, funct3):
   print(f'void {name}_{suf}(const Reg& rd, const Reg& rs2, const Reg& addr, uint32_t flag = 0) {{ opAtomic(rd, rs2, addr, {hex(funct7)}, {funct3}, flag); }}')
@@ -137,6 +139,7 @@ tbl = [
   (0b11000, 'amominu'),
   (0b11100, 'amomaxu'),
 ]
+print('// amos**, rd, rs2, (addr)')
 for (funct7, name) in tbl:
   opAtomic(funct7, name, 'w', 2)
   opAtomic(funct7, name, 'd', 3)
