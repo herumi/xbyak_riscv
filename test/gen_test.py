@@ -85,8 +85,8 @@ def main():
     put(op, 'x15, x20, 63')
 
   putFence()
-  putJmp('jal')
-  putJmp('beq')
+  for op in ['jal', 'beq', 'bne', 'blt', 'bge', 'bltu', 'bgeu']:
+    putJmp(op)
 
   misc()
 

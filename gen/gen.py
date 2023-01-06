@@ -79,5 +79,18 @@ tbl = [
 for (funct3, opcode, name) in tbl:
   print(f'void {name}(const Reg& rs2, const Reg& rs1, int imm = 0) {{ Stype({hex(opcode)}, {funct3}, rs1, rs2, imm); }}')
 
+tbl = [
+  (0b000, 0b1100011, 'beq'),
+  (0b001, 0b1100011, 'bne'),
+  (0b100, 0b1100011, 'blt'),
+  (0b101, 0b1100011, 'bge'),
+  (0b110, 0b1100011, 'bltu'),
+  (0b111, 0b1100011, 'bgeu'),
+]
+
+for (funct3, opcode, name) in tbl:
+  print(f'void {name}(const Reg& src1, const Reg& src2, const Label& label) {{ Jmp jmp(getSize(), {hex(opcode)}, {funct3}, src1, src2); opJmp(label, jmp); }}')
+
 # misc
 print('void ret() { jalr(x0, x1); }')
+print('void jal(const Reg& rd, const Label& label) { Jmp jmp(getSize(), 0x6f, rd); opJmp(label, jmp); }')

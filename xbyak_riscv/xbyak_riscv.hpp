@@ -600,19 +600,19 @@ public:
 	}
 };
 
-struct JmpLabel {
+struct Jmp {
 	size_t addr; /* offset of the jmp mnemonic from top */
 	uint32_t encoded;
 	bool isJal;
 	// jal
-	JmpLabel(size_t addr, uint32_t opcode, const Reg& rd)
+	Jmp(size_t addr, uint32_t opcode, const Reg& rd)
 		: addr(addr)
 		, encoded((rd.getIdx() << 7) | opcode)
 		, isJal(true)
 	{
 	}
 	// B-type
-	JmpLabel(size_t addr, uint32_t opcode, uint32_t funct3, const Reg& src1, const Reg& src2)
+	Jmp(size_t addr, uint32_t opcode, uint32_t funct3, const Reg& src1, const Reg& src2)
 		: addr(addr)
 		, encoded((src2.getIdx() << 20) | (src1.getIdx() << 15) | (funct3 << 12) | opcode)
 		, isJal(false)
@@ -666,7 +666,7 @@ class LabelManager {
 		int refCount;
 	};
 	typedef std::unordered_map<int, ClabelVal> ClabelDefList;
-	typedef std::unordered_multimap<int, const JmpLabel> ClabelUndefList;
+	typedef std::unordered_multimap<int, Jmp> ClabelUndefList;
 	typedef std::unordered_set<Label*> LabelPtrList;
 
 	CodeArray *base_;
@@ -691,7 +691,7 @@ class LabelManager {
 		for (;;) {
 			typename UndefList::iterator itr = undefList.find(labelId);
 			if (itr == undefList.end()) break;
-			const JmpLabel *jmp = &itr->second;
+			const Jmp *jmp = &itr->second;
 			uint32_t v = jmp->encode(base_->getSize());
 			base_->write4B(jmp->addr, v);
 			undefList.erase(itr);
@@ -771,7 +771,7 @@ public:
 	{
 		return getOffset_inner(clabelDefList_, offset, getId(label));
 	}
-	void addUndefinedLabel(const Label& label, const JmpLabel& jmp)
+	void addUndefinedLabel(const Label& label, const Jmp& jmp)
 	{
 		clabelUndefList_.insert(ClabelUndefList::value_type(label.id, jmp));
 	}
@@ -840,7 +840,7 @@ private:
 	CodeGenerator operator=(const CodeGenerator&) = delete;
 	LabelManager labelMgr_;
 	bool isRV32_;
-	void opJmp(const Label& label, const JmpLabel& jmp)
+	void opJmp(const Label& label, const Jmp& jmp)
 	{
 		size_t offset = 0;
 		if (labelMgr_.getOffset(&offset, label)) { /* label exists */
@@ -927,16 +927,6 @@ public:
 #ifndef XBYAK_RISCV_DONT_READ_LIST
 #include "xbyak_riscv_mnemonic.hpp"
 #endif
-	void jal(const Reg& rd, const Label& label)
-	{
-		JmpLabel jmp(getSize(), 0x6f, rd);
-		opJmp(label, jmp);
-	}
-	void beq(const Reg& src1, const Reg& src2, const Label& label)
-	{
-		JmpLabel jmp(getSize(), 0x63, 0, src1, src2);
-		opJmp(label, jmp);
-	}
 };
 
 #ifdef _MSC_VER
