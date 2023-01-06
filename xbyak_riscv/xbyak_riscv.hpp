@@ -203,6 +203,8 @@ inline void AlignedFree(void *p)
 
 namespace local {
 
+static const size_t ALIGN_PAGE_SIZE = 4096;
+
 inline constexpr uint32_t mask(size_t n)
 {
 	XBYAK_RISCV_ASSERT(n <= 32);
@@ -222,35 +224,12 @@ inline constexpr bool inSBit(int x, int n)
 
 } // local
 
-namespace inner {
-
-static const size_t ALIGN_PAGE_SIZE = 4096;
-
-inline bool IsInDisp8(uint32_t x) { return 0xFFFFFF80 <= x || x <= 0x7F; }
-inline bool IsInInt32(uint64_t x) { return ~uint64_t(0x7fffffffu) <= x || x <= 0x7FFFFFFFU; }
-
-inline uint32_t VerifyInInt32(uint64_t x)
-{
-#if defined(XBYAK_RISCV64) && !defined(__ILP32__)
-	if (!IsInInt32(x)) XBYAK_RISCV_THROW_RET(ERR_OFFSET_IS_TOO_BIG, 0)
-#endif
-	return static_cast<uint32_t>(x);
-}
-
-enum LabelMode {
-	LasIs, // as is
-	Labs, // absolute
-	LaddTop // (addr + top) for mov(reg, label) with AutoGrow
-};
-
-} // inner
-
 /*
 	custom allocator
 */
 struct Allocator {
 	explicit Allocator(const std::string& = "") {} // same interface with MmapAllocator
-	virtual uint8_t *alloc(size_t size) { return reinterpret_cast<uint8_t*>(AlignedMalloc(size, inner::ALIGN_PAGE_SIZE)); }
+	virtual uint8_t *alloc(size_t size) { return reinterpret_cast<uint8_t*>(AlignedMalloc(size, local::ALIGN_PAGE_SIZE)); }
 	virtual void free(uint8_t *p) { AlignedFree(p); }
 	virtual ~Allocator() {}
 	/* override to return false if you call protect() manually */
@@ -298,7 +277,7 @@ public:
 	explicit MmapAllocator(const std::string& name = "xbyak") : name_(name) {}
 	uint8_t *alloc(size_t size)
 	{
-		const size_t alignedSizeM1 = inner::ALIGN_PAGE_SIZE - 1;
+		const size_t alignedSizeM1 = local::ALIGN_PAGE_SIZE - 1;
 		size = (size + alignedSizeM1) & ~alignedSizeM1;
 #if defined(MAP_ANONYMOUS)
 		int mode = MAP_PRIVATE | MAP_ANONYMOUS;
@@ -407,22 +386,6 @@ class CodeArray {
 	CodeArray(const CodeArray& rhs);
 	void operator=(const CodeArray&);
 	bool isAllocType() const { return type_ == ALLOC_BUF; }
-	struct AddrInfo {
-		size_t codeOffset; // position to write
-		size_t jmpAddr; // value to write
-		int jmpSize; // size of jmpAddr
-		inner::LabelMode mode;
-		AddrInfo(size_t _codeOffset, size_t _jmpAddr, int _jmpSize, inner::LabelMode _mode)
-			: codeOffset(_codeOffset), jmpAddr(_jmpAddr), jmpSize(_jmpSize), mode(_mode) {}
-		uint64_t getVal(const uint8_t *top) const
-		{
-			uint64_t disp = (mode == inner::LaddTop) ? jmpAddr + size_t(top) : (mode == inner::LasIs) ? jmpAddr : jmpAddr - size_t(top);
-			if (jmpSize == 4) disp = inner::VerifyInInt32(disp);
-			return disp;
-		}
-	};
-	typedef std::list<AddrInfo> AddrInfoList;
-	AddrInfoList addrInfoList_;
 	const Type type_;
 #ifdef XBYAK_RISCV_USE_MMAP_ALLOCATOR
 	MmapAllocator defaultAllocator_;
@@ -474,7 +437,6 @@ public:
 	void resetSize()
 	{
 		size_ = 0;
-		addrInfoList_.clear();
 	}
 	void append1B(int code)
 	{
@@ -623,21 +585,27 @@ struct Jmp {
 		const size_t M = local::mask(maskBit);
 		return (imm < M || ~M <= imm) && (imm & 1) == 0;
 	}
+	static inline uint32_t encodeImmJal(uint32_t imm)
+	{
+		//      1   10  1     8
+		// imm[20|10:1|11|19:12]
+		return ((imm >> 20) << 31) | (((imm >> 1) & local::mask(10)) << 21) | (((imm >> 11) & 1) << 20) | (imm & (local::mask(8) << 12));
+	}
+	static inline uint32_t encodeImmBtype(uint32_t imm)
+	{
+		//          25            7
+		// imm[12|10:5]  imm[4:1|11]
+		return ((imm >> 12) << 31) | (((imm >> 5) & local::mask(6)) << 25) | (((imm >> 1) & local::mask(4)) << 8) | (((imm >> 11) & 1) << 7);
+	}
 	uint32_t encode(size_t offset) const
 	{
 		const size_t imm = offset - addr;
 		if (isJal) {
 			if (!isValidImm(imm, 20)) XBYAK_RISCV_THROW(ERR_INVALID_IMM_OF_JAL)
-			//      1   10  1     8
-			// imm[20|10:1|11|19:12]
-			uint32_t v = ((imm >> 20) << 31) | (((imm >> 1) & local::mask(10)) << 21) | (((imm >> 11) & 1) << 20) | (imm & (local::mask(8) << 12));
-			return v | encoded;
+			return encodeImmJal(imm) | encoded;
 		} else {
 			if (!isValidImm(imm, 12)) XBYAK_RISCV_THROW(ERR_INVALID_IMM_OF_JAL)
-			//          25            7
-			// imm[12|10:5]  imm[4:1|11]
-			uint32_t v = ((imm >> 12) << 31) | (((imm >> 5) & local::mask(6)) << 25) | (((imm >> 1) & local::mask(4)) << 8) | (((imm >> 11) & 1) << 7);
-			return v | encoded;
+			return encodeImmBtype(imm) | encoded;
 		}
 	}
 };
