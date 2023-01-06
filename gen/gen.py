@@ -123,6 +123,16 @@ tbl = [
 for (funct3, opcode, name) in tbl:
   print(f'void {name}(const Reg& src1, const Reg& src2, const Label& label) {{ Jmp jmp(getSize(), {hex(opcode)}, {funct3}, src1, src2); opJmp(label, jmp); }}')
 
+def opAtomic(funct7, name, suf, funct3):
+  print(f'void {name}_{suf}(const Reg& rd, const Reg& rs2, const Reg& addr, uint32_t flag = 0) {{ opAtomic(rd, rs2, addr, {hex(funct7)}, {funct3}, flag); }}')
+
+tbl = [
+  (0b00001, 'amoswap'),
+]
+for (funct7, name) in tbl:
+  opAtomic(funct7, name, 'w', 2)
+  opAtomic(funct7, name, 'd', 3)
+
 # misc
 print('void ret() { jalr(x0, x1); }')
 print('void jal(const Reg& rd, const Label& label) { Jmp jmp(getSize(), 0x6f, rd); opJmp(label, jmp); }')

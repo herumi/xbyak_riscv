@@ -53,7 +53,20 @@ def putJmp(name):
     else:
       put(name, f'x{i},x5, B{name}')
       put(name, f'x{i},x2, F{name}')
-  putEach(f'L(F{name});', f'F{name}:')
+  putEach(f'L(F{name})', f'F{name}:')
+
+def putAtomic(name, suf, flag):
+  rs1 = 'x1'
+  rs2 = 'x10'
+  rd = 'x20'
+  if isXbyak:
+    if flag:
+      flag = ', T_' + flag
+    print(f'{name}_{suf}({rd}, {rs2}, {rs1}{flag});')
+  else:
+    if flag:
+      flag = '.' + flag
+    print(f'{name}.{suf}{flag} {rd}, {rs2}, ({rs1})')
 
 def misc():
   for name in ['ret', 'ecall', 'ebreak']:
@@ -94,6 +107,11 @@ def main():
   putFence()
   for op in ['jal', 'beq', 'bne', 'blt', 'bge', 'bltu', 'bgeu']:
     putJmp(op)
+
+  for op in ['amoswap']:
+    for flag in ['', 'aq', 'rl', 'aqrl']:
+      putAtomic(op, 'w', flag)
+      putAtomic(op, 'd', flag)
 
   misc()
 

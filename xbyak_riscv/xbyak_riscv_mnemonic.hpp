@@ -67,5 +67,7 @@ void blt(const Reg& src1, const Reg& src2, const Label& label) { Jmp jmp(getSize
 void bge(const Reg& src1, const Reg& src2, const Label& label) { Jmp jmp(getSize(), 0x63, 5, src1, src2); opJmp(label, jmp); }
 void bltu(const Reg& src1, const Reg& src2, const Label& label) { Jmp jmp(getSize(), 0x63, 6, src1, src2); opJmp(label, jmp); }
 void bgeu(const Reg& src1, const Reg& src2, const Label& label) { Jmp jmp(getSize(), 0x63, 7, src1, src2); opJmp(label, jmp); }
+void amoswap_w(const Reg& rd, const Reg& rs2, const Reg& addr, uint32_t flag = 0) { opAtomic(rd, rs2, addr, 0x1, 2, flag); }
+void amoswap_d(const Reg& rd, const Reg& rs2, const Reg& addr, uint32_t flag = 0) { opAtomic(rd, rs2, addr, 0x1, 3, flag); }
 void ret() { jalr(x0, x1); }
 void jal(const Reg& rd, const Label& label) { Jmp jmp(getSize(), 0x6f, rd); opJmp(label, jmp); }

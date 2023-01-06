@@ -800,6 +800,11 @@ public:
 		T_FAR, // far jump
 		T_AUTO // T_SHORT if possible
 	};
+	enum AqRlType {
+		T_aq = 2,
+		T_rl = 1,
+		T_aqrl = 3,
+	};
 	typedef local::Bit<3> Bit3;
 	typedef local::Bit<5> Bit5;
 	typedef local::Bit<7> Bit7;
@@ -847,6 +852,11 @@ private:
 		if (shamt >= (1u << range)) XBYAK_RISCV_THROW(ERR_IMM_IS_TOO_BIG)
 		uint32_t v = (pre.v << 25) | (shamt << 20) | (rs1.v << 15) | (funct3.v << 12) | (rd.v << 7) | opcode.v;
 		append4B(v);
+	}
+	void opAtomic(Bit5 rd, Bit5 rs2, Bit5 addr, Bit5 funct5, Bit3 funct3, uint32_t flag)
+	{
+		assert(flag <= 3);
+		Rtype(0x2f, funct3.v, (funct5.v << 2) | flag, rd, addr, rs2);
 	}
 public:
 	void L(Label& label) { labelMgr_.defineClabel(label); }
