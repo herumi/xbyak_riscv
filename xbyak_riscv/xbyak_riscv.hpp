@@ -890,13 +890,13 @@ public:
 	*/
 	void putL(const Label &label)
 	{
+		Jmp jmp(size_);
 		size_t offset = 0;
 		if (labelMgr_.getOffset(&offset, label)) {
-			appendBytes(offset, sizeof(size_t));
+			appendBytes((size_t)getCurr(), sizeof(size_t));
 			return;
 		}
 		appendBytes(0, sizeof(size_t));
-		Jmp jmp(size_);
 		labelMgr_.addUndefinedLabel(label, jmp);
 	}
 
