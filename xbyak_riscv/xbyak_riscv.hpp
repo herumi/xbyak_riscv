@@ -868,16 +868,19 @@ public:
 		src : used by L()
 	*/
 	void assignL(Label& dst, const Label& src) { labelMgr_.assign(dst, src); }
+	/*
+		put address of label to buffer
+		@note the put size is 4(32-bit), 8(64-bit)
+	*/
+	// void putL(const Label &label) { putL_inner(label); }
 
 	// call(function pointer)
 //	template<class Ret, class... Params>
 //	void call(Ret(*func)(Params...)) { call(reinterpret_cast<const void*>(func)); }
 //	void call(const void *addr) { opJmpAbs(addr, T_NEAR, 0, 0xE8); }
 
-
-	enum { NONE = 256 };
 	// constructor
-	CodeGenerator(size_t maxSize = DEFAULT_MAX_CODE_SIZE, void *userPtr = 0, Allocator *allocator = 0)
+	CodeGenerator(size_t maxSize = DEFAULT_MAX_CODE_SIZE, void *userPtr = DontSetProtectRWE, Allocator *allocator = 0)
 		: CodeArray(maxSize, userPtr, allocator)
 		, isRV32_(false)
 	{
@@ -908,6 +911,7 @@ public:
 	void ready(ProtectMode mode = PROTECT_RWE)
 	{
 		if (hasUndefinedLabel()) XBYAK_RISCV_THROW(ERR_LABEL_IS_NOT_FOUND)
+		if (useProtect()) setProtectMode(mode);
 		clearCache(top_, size_);
 	}
 	// set read/exec
