@@ -39,6 +39,7 @@ void ebreak() { append4B(0x100073); }
 void sb(const Reg& rs2, const Reg& rs1, int imm = 0) { Stype(0x23, 0, rs1, rs2, imm); }
 void sh(const Reg& rs2, const Reg& rs1, int imm = 0) { Stype(0x23, 1, rs1, rs2, imm); }
 void sw(const Reg& rs2, const Reg& rs1, int imm = 0) { Stype(0x23, 2, rs1, rs2, imm); }
+void sd(const Reg& rs2, const Reg& rs1, int imm = 0) { Stype(0x23, 3, rs1, rs2, imm); }
 void beq(const Reg& src1, const Reg& src2, const Label& label) { Jmp jmp(getSize(), 0x63, 0, src1, src2); opJmp(label, jmp); }
 void bne(const Reg& src1, const Reg& src2, const Label& label) { Jmp jmp(getSize(), 0x63, 1, src1, src2); opJmp(label, jmp); }
 void blt(const Reg& src1, const Reg& src2, const Label& label) { Jmp jmp(getSize(), 0x63, 4, src1, src2); opJmp(label, jmp); }
