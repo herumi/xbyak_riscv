@@ -220,38 +220,6 @@ inline constexpr bool inSBit(int x, int n)
 	return -(1 << (n-1)) <= x && x < (1 << (n-1));
 }
 
-template<int maskBit>
-inline constexpr bool isValidImm(size_t imm)
-{
-	const size_t M = mask(maskBit);
-	return (imm < M || ~M <= imm) && (imm & 1) == 0;
-}
-inline constexpr bool isValidImmJal(size_t imm)
-{
-	return isValidImm<20>(imm);
-}
-// encode 20-bit imm to j-type imm
-inline constexpr uint32_t encodeImmJal(size_t imm)
-{
-	XBYAK_RISCV_ASSERT(isValidImmJal(imm));
-	//      1   10  1     8
-	// imm[20|10:1|11|19:12] << 12
-	uint32_t v = ((imm >> 20) << 19) | (((imm >> 1) & mask(10)) << 9) | (((imm >> 11) & 1) << 8) | ((imm >> 12) & mask(8));
-	return v << 12;
-}
-inline constexpr bool isValidImmBtype(size_t imm)
-{
-	return isValidImm<12>(imm);
-}
-
-inline constexpr uint32_t encodeImmBtype(size_t imm)
-{
-	XBYAK_RISCV_ASSERT(isValidImmBtype(imm));
-	//          25            7
-	// imm[12|10:5]  imm[4:1|11]
-	uint32_t v = ((imm >> 12) << 31) | (((imm >> 5) & mask(6)) << 25) | (((imm >> 1) & mask(4)) << 8) | (((imm >> 11) & 1) << 7);
-	return v;
-}
 } // local
 
 namespace inner {
@@ -581,10 +549,6 @@ public:
 			p[i] = static_cast<uint8_t>(v >> (i * 8));
 		}
 	}
-	void save(size_t offset, size_t val, int size, inner::LabelMode mode)
-	{
-		addrInfoList_.push_back(AddrInfo(offset, val, size, mode));
-	}
 	/**
 		change exec permission of memory
 		@param addr [in] buffer address
@@ -640,21 +604,41 @@ struct JmpLabel {
 	size_t addr; /* offset of the jmp mnemonic from top */
 	uint32_t encoded;
 	bool isJal;
-	explicit JmpLabel(size_t addr = 0, uint32_t encoded = 0, bool isJal = false)
-		: addr(addr), encoded(encoded), isJal(isJal)
+	// jal
+	JmpLabel(size_t addr, uint32_t opcode, const Reg& rd)
+		: addr(addr)
+		, encoded((rd.getIdx() << 7) | opcode)
+		, isJal(true)
 	{
 	}
-	bool isValidImm(size_t imm) const
+	// B-type
+	JmpLabel(size_t addr, uint32_t opcode, uint32_t funct3, const Reg& src1, const Reg& src2)
+		: addr(addr)
+		, encoded((src2.getIdx() << 20) | (src1.getIdx() << 15) | (funct3 << 12) | opcode)
+		, isJal(false)
 	{
-		if (isJal) return local::isValidImmJal(imm);
-		return local::isValidImmBtype(imm);
+	}
+	static inline bool isValidImm(size_t imm, size_t maskBit)
+	{
+		const size_t M = local::mask(maskBit);
+		return (imm < M || ~M <= imm) && (imm & 1) == 0;
 	}
 	uint32_t encode(size_t offset) const
 	{
-		size_t imm = offset - addr;
-		if (!isValidImm(imm)) XBYAK_RISCV_THROW(ERR_INVALID_IMM_OF_JAL)
-		if (isJal) return local::encodeImmJal(imm) | encoded;
-		return local::encodeImmBtype(imm) | encoded;
+		const size_t imm = offset - addr;
+		if (isJal) {
+			if (!isValidImm(imm, 20)) XBYAK_RISCV_THROW(ERR_INVALID_IMM_OF_JAL)
+			//      1   10  1     8
+			// imm[20|10:1|11|19:12]
+			uint32_t v = ((imm >> 20) << 31) | (((imm >> 1) & local::mask(10)) << 21) | (((imm >> 11) & 1) << 20) | (imm & (local::mask(8) << 12));
+			return v | encoded;
+		} else {
+			if (!isValidImm(imm, 12)) XBYAK_RISCV_THROW(ERR_INVALID_IMM_OF_JAL)
+			//          25            7
+			// imm[12|10:5]  imm[4:1|11]
+			uint32_t v = ((imm >> 12) << 31) | (((imm >> 5) & local::mask(6)) << 25) | (((imm >> 1) & local::mask(4)) << 8) | (((imm >> 11) & 1) << 7);
+			return v | encoded;
+		}
 	}
 };
 
@@ -856,10 +840,9 @@ private:
 	CodeGenerator operator=(const CodeGenerator&) = delete;
 	LabelManager labelMgr_;
 	bool isRV32_;
-	void opJmp(const Label& label, uint32_t encoded, bool isJal)
+	void opJmp(const Label& label, const JmpLabel& jmp)
 	{
 		size_t offset = 0;
-		JmpLabel jmp(getSize(), encoded, isJal);
 		if (labelMgr_.getOffset(&offset, label)) { /* label exists */
 			append4B(jmp.encode(offset));
 			return;
@@ -890,14 +873,6 @@ private:
 		uint32_t v = (imm << 12) | (rd.v << 7) | opcode.v;
 		append4B(v);
 	}
-/*
-	void Jtype(Bit7 opcode, Bit5 rd, uint64_t imm)
-	{
-		if (!local::isValidImmJal(imm)) XBYAK_RISCV_THROW(ERR_INVALID_IMM_OF_JAL)
-		uint32_t v = (local::encodeImmJal(imm)) | (rd.v << 7) | opcode.v;
-		append4B(v);
-	}
-*/
 	void opShift(Bit7 pre, Bit3 funct3, Bit7 opcode, Bit5 rd, Bit5 rs1, uint32_t shamt)
 	{
 		int range = isRV32_ ? 5 : 6;
@@ -954,11 +929,13 @@ public:
 #endif
 	void jal(const Reg& rd, const Label& label)
 	{
-		opJmp(label, (rd.getIdx() << 7) | 0x6f, true);
+		JmpLabel jmp(getSize(), 0x6f, rd);
+		opJmp(label, jmp);
 	}
 	void beq(const Reg& src1, const Reg& src2, const Label& label)
 	{
-		opJmp(label, (src2.getIdx() << 20) | (src1.getIdx() << 15) | (0 << 12) | 0x63, false);
+		JmpLabel jmp(getSize(), 0x63, 0, src1, src2);
+		opJmp(label, jmp);
 	}
 };
 
