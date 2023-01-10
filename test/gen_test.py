@@ -46,6 +46,7 @@ def putFence():
   putEach('fence_r_r()', 'fence r, r')
   putEach('fence_w_w()', 'fence w, w')
   putEach('fence_i()', 'fence.i')
+  put('fence')
 
 def putJmp(name):
   n = 32

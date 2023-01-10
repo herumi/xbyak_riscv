@@ -163,6 +163,7 @@ void seqz(const Reg& rd, const Reg& rs) { sltiu(rd, rs, 1); }
 void snez(const Reg& rd, const Reg& rs) { sltu(rd, x0, rs); }
 void sltz(const Reg& rd, const Reg& rs) { slt(rd, rs, x0); }
 void sgtz(const Reg& rd, const Reg& rs) { slt(rd, x0, rs); }
+void fence() { append4B(0x0ff0000f); }
 void jal(const Reg& rd, const Label& label) { Jmp jmp(getSize(), 0x6f, rd); opJmp(label, jmp); }
 // lr rd, (addr)
 void lr_w(const Reg& rd, const Reg& addr, uint32_t flag = 0) { opAtomic(rd, 0, addr, 2, 2, flag); }
