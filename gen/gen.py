@@ -148,6 +148,11 @@ for (funct7, name) in tbl:
 # misc
 print('''
 void ret() { jalr(x0, x1); }
+void nop() { addi(x0, x0, 0); }
+void mv(const Reg& rd, const Reg& rs) { addi(rd, rs, 0); }
+void not_(const Reg& rd, const Reg& rs) { xori(rd, rs, -1); }
+void neg(const Reg& rd, const Reg& rs) { sub(rd, x0, rs); }
+void negw(const Reg& rd, const Reg& rs) { subw(rd, x0, rs); }
 void jal(const Reg& rd, const Label& label) { Jmp jmp(getSize(), 0x6f, rd); opJmp(label, jmp); }
 // lr rd, (addr)
 void lr_w(const Reg& rd, const Reg& addr, uint32_t flag = 0) { opAtomic(rd, 0, addr, 2, 2, flag); }

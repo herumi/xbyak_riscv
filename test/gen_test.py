@@ -13,6 +13,9 @@ def put(name, args=""):
 def putRRR(name):
   put(name, 'x1, x2, x3')
 
+def putRR(name):
+  put(name, 'x1, x2')
+
 def putRRI(name):
   put(name, 'x1, x2, 1234')
   put(name, 'x1, x2, -1234')
@@ -81,8 +84,10 @@ def putLr(suf, flag):
     print(f'lr.{suf}{flag} {rd}, ({rs1})')
 
 def misc():
-  for name in ['ret', 'ecall', 'ebreak']:
+  for name in ['ret', 'ecall', 'ebreak', 'nop']:
     put(name)
+  for name in ['mv', 'not_', 'neg', 'negw']:
+    putRR(name)
 
 def main():
   global isXbyak
