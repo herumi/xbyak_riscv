@@ -877,12 +877,22 @@ private:
 		assert(flag <= 3);
 		Rtype(0x2f, funct3.v, (funct5.v << 2) | flag, rd, addr, rs2);
 	}
+	bool isValiCidx(uint32_t idx) const { return 8 <= idx && idx < 16; }
 	bool c_addi(const Reg& rd, const Reg& rs, uint32_t imm)
 	{
 		if (rs != sp) return false;
 		uint32_t idx = rd.getIdx();
-		if (idx < 8 || idx >= 16 || imm == 0 || (imm % 4) != 0 || imm >= 1024) return false;
-		uint32_t v = ((idx - 8) << 2) | ((imm & (3 << 4)) << 6) | ((imm & (7 << 6)) << 2) | ((imm & 4) << 4) | ((imm & 8) << 2);
+		if (!isValiCidx(idx) || imm == 0 || (imm % 4) != 0 || imm >= 1024) return false;
+		uint32_t v = ((idx - 8) << 2) | ((imm & (3 << 4)) << 7) | ((imm & (15 << 6)) << 1) | ((imm & 4) << 4) | ((imm & 8) << 2);
+		append2B(v);
+		return true;
+	}
+	bool c_lw(const Reg& rd, const Reg& rs, int imm)
+	{
+		uint32_t dIdx = rd.getIdx();
+		uint32_t sIdx = rs.getIdx();
+		if (!isValiCidx(dIdx) || !isValiCidx(sIdx) || (imm % 4) != 0 || imm < 0 || imm >= (1 << 7)) return false;
+		uint32_t v = (2 << 13) | ((imm & (7 << 3)) << 7) | ((sIdx - 8) << 7) | ((imm & 4) << 4) | ((imm & (1 << 6)) >> 1) | ((dIdx - 8) << 2);
 		append2B(v);
 		return true;
 	}
