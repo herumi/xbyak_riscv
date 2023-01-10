@@ -828,8 +828,9 @@ public:
 private:
 	CodeGenerator operator=(const CodeGenerator&) = delete;
 	LabelManager labelMgr_;
-	bool isRV32_;
 	int XLEN_;
+	bool isRV32_;
+	bool supportRVC_;
 	void opJmp(const Label& label, const Jmp& jmp)
 	{
 		size_t offset = 0;
@@ -904,8 +905,9 @@ public:
 	// constructor
 	CodeGenerator(size_t maxSize = DEFAULT_MAX_CODE_SIZE, void *userPtr = DontSetProtectRWE, Allocator *allocator = 0)
 		: CodeArray(maxSize, userPtr, allocator)
+		, XLEN_(64)
 		, isRV32_(false)
-		, XLEN_(isRV32_ ? 32 : 64)
+		, supportRVC_(false)
 	{
 		labelMgr_.set(this);
 	}
@@ -915,6 +917,18 @@ public:
 		resetSize();
 		labelMgr_.reset();
 		labelMgr_.set(this);
+		XLEN_ = 64;
+		isRV32_ = false;
+		supportRVC_ = false;
+	}
+	void setRV32(bool on = true)
+	{
+		isRV32_ = on;
+		XLEN_ = on ? 32 : 64;
+	}
+	void supportRVC(bool on = true)
+	{
+		supportRVC_ = on;
 	}
 	bool hasUndefinedLabel() const { return labelMgr_.hasUndefClabel(); }
 	static inline void clearCache(void *p, size_t n)
