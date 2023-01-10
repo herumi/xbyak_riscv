@@ -829,6 +829,7 @@ private:
 	CodeGenerator operator=(const CodeGenerator&) = delete;
 	LabelManager labelMgr_;
 	bool isRV32_;
+	int XLEN_;
 	void opJmp(const Label& label, const Jmp& jmp)
 	{
 		size_t offset = 0;
@@ -904,6 +905,7 @@ public:
 	CodeGenerator(size_t maxSize = DEFAULT_MAX_CODE_SIZE, void *userPtr = DontSetProtectRWE, Allocator *allocator = 0)
 		: CodeArray(maxSize, userPtr, allocator)
 		, isRV32_(false)
+		, XLEN_(isRV32_ ? 32 : 64)
 	{
 		labelMgr_.set(this);
 	}

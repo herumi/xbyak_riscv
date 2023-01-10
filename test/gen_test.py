@@ -8,7 +8,8 @@ def putEach(op1, op2):
     print(op2)
 
 def put(name, args=""):
-  putEach(f'{name}({args})', f'{name.strip("_")} {args}')
+  asmName = name.strip('_').replace('_', '.')
+  putEach(f'{name}({args})', f'{asmName} {args}')
 
 def putRRR(name):
   put(name, 'x1, x2, x3')
@@ -86,7 +87,7 @@ def putLr(suf, flag):
 def misc():
   for name in ['ret', 'ecall', 'ebreak', 'nop']:
     put(name)
-  for name in ['mv', 'not_', 'neg', 'negw']:
+  for name in ['mv', 'not_', 'neg', 'negw', 'sext_b', 'sext_h', 'sext_w', 'zext_b', 'zext_h', 'zext_w']:
     putRR(name)
 
 def main():
