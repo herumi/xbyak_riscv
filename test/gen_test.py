@@ -48,16 +48,20 @@ def putFence():
   putEach('fence_i()', 'fence.i')
   put('fence')
 
-def putJmp(name):
+def putJmp1(name):
   n = 32
   putEach(f'Label B{name} = L(), F{name};', f'B{name}:')
   for i in range(n):
-    if name == 'jal':
-      put(name, f'x{i}, B{name}')
-      put(name, f'x{i}, F{name}')
-    else:
-      put(name, f'x{i},x5, B{name}')
-      put(name, f'x{i},x2, F{name}')
+    put(name, f'x{i}, B{name}')
+    put(name, f'x{i}, F{name}')
+  putEach(f'L(F{name})', f'F{name}:')
+
+def putJmp2(name):
+  n = 32
+  putEach(f'Label B{name} = L(), F{name};', f'B{name}:')
+  for i in range(n):
+    put(name, f'x{i},x5, B{name}')
+    put(name, f'x{i},x2, F{name}')
   putEach(f'L(F{name})', f'F{name}:')
 
 def putAtomic(name, suf, flag):
@@ -126,8 +130,10 @@ def main():
     put(op, 'x15, x20, 31')
 
   putFence()
-  for op in ['jal', 'beq', 'bne', 'blt', 'bge', 'bltu', 'bgeu']:
-    putJmp(op)
+  for op in ['jal', 'beqz', 'bnez', 'blez', 'bgez', 'bgtz']:
+    putJmp1(op)
+  for op in ['beq', 'bne', 'blt', 'bge', 'bltu', 'bgeu', 'bgt', 'ble', 'bgtu', 'bleu']:
+    putJmp2(op)
 
   for flag in ['', 'aq', 'rl', 'aqrl']:
     for op in ['sc', 'amoswap', 'amoadd', 'amoxor', 'amoand', 'amoor', 'amomin', 'amomax', 'amominu', 'amomaxu']:

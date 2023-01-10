@@ -125,6 +125,28 @@ tbl = [
 for (funct3, opcode, name) in tbl:
   print(f'void {name}(const Reg& rs1, const Reg& rs2, const Label& label) {{ Jmp jmp(getSize(), {hex(opcode)}, {funct3}, rs1, rs2); opJmp(label, jmp); }}')
 
+tbl = [
+  ('beqz', 'beq', 'rs, x0'),
+  ('bnez', 'bne', 'rs, x0'),
+  ('blez', 'bge', 'x0, rs'),
+  ('bgez', 'bge', 'rs, x0'),
+  ('bltz', 'blt', 'rs, x0'),
+  ('bgtz', 'blt', 'x0, rs'),
+]
+
+for (alias, name, args) in tbl:
+  print(f'void {alias}(const Reg& rs, const Label& label) {{ {name}({args}, label); }}')
+
+tbl = [
+  ('bgt', 'blt', 'rt, rs'),
+  ('ble', 'bge', 'rt, rs'),
+  ('bgtu', 'bltu', 'rt, rs'),
+  ('bleu', 'bgeu', 'rt, rs'),
+]
+
+for (alias, name, args) in tbl:
+  print(f'void {alias}(const Reg& rs, const Reg& rt, const Label& label) {{ {name}({args}, label); }}')
+
 def opAtomic(funct7, name, suf, funct3):
   print(f'void {name}_{suf}(const Reg& rd, const Reg& rs2, const Reg& addr, uint32_t flag = 0) {{ opAtomic(rd, rs2, addr, {hex(funct7)}, {funct3}, flag); }}')
 

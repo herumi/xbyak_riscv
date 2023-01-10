@@ -69,6 +69,16 @@ void blt(const Reg& rs1, const Reg& rs2, const Label& label) { Jmp jmp(getSize()
 void bge(const Reg& rs1, const Reg& rs2, const Label& label) { Jmp jmp(getSize(), 0x63, 5, rs1, rs2); opJmp(label, jmp); }
 void bltu(const Reg& rs1, const Reg& rs2, const Label& label) { Jmp jmp(getSize(), 0x63, 6, rs1, rs2); opJmp(label, jmp); }
 void bgeu(const Reg& rs1, const Reg& rs2, const Label& label) { Jmp jmp(getSize(), 0x63, 7, rs1, rs2); opJmp(label, jmp); }
+void beqz(const Reg& rs, const Label& label) { beq(rs, x0, label); }
+void bnez(const Reg& rs, const Label& label) { bne(rs, x0, label); }
+void blez(const Reg& rs, const Label& label) { bge(x0, rs, label); }
+void bgez(const Reg& rs, const Label& label) { bge(rs, x0, label); }
+void bltz(const Reg& rs, const Label& label) { blt(rs, x0, label); }
+void bgtz(const Reg& rs, const Label& label) { blt(x0, rs, label); }
+void bgt(const Reg& rs, const Reg& rt, const Label& label) { blt(rt, rs, label); }
+void ble(const Reg& rs, const Reg& rt, const Label& label) { bge(rt, rs, label); }
+void bgtu(const Reg& rs, const Reg& rt, const Label& label) { bltu(rt, rs, label); }
+void bleu(const Reg& rs, const Reg& rt, const Label& label) { bgeu(rt, rs, label); }
 // amos**, rd, rs2, (addr)
 void sc_w(const Reg& rd, const Reg& rs2, const Reg& addr, uint32_t flag = 0) { opAtomic(rd, rs2, addr, 0x3, 2, flag); }
 void sc_d(const Reg& rd, const Reg& rs2, const Reg& addr, uint32_t flag = 0) { opAtomic(rd, rs2, addr, 0x3, 3, flag); }
