@@ -1,7 +1,8 @@
 # Usage
 
 Inherit `Xbyak_riscv::CodeGenerator` class and make the class method.
-```
+
+```cpp
 #include <xbyak_riscv/xbyak_riscv.hpp>
 
 using namespace Xbyak_riscv;

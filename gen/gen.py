@@ -45,7 +45,10 @@ tbl = [
 ]
 
 for (funct3, opcode, name) in tbl:
-  print(f'void {name}(const Reg& rd, const Reg& rs1, int imm) {{ Itype({hex(opcode)}, {funct3}, rd, rs1, imm); }}')
+  if name == 'addi':
+    print(f'void {name}(const Reg& rd, const Reg& rs1, int imm) {{ if (supportRVC_ && c_addi(rd, rs1, imm)) return; Itype({hex(opcode)}, {funct3}, rd, rs1, imm); }}')
+  else:
+    print(f'void {name}(const Reg& rd, const Reg& rs1, int imm) {{ Itype({hex(opcode)}, {funct3}, rd, rs1, imm); }}')
 
 tbl = [
  (0b000, 0b1100111, 'jalr'),

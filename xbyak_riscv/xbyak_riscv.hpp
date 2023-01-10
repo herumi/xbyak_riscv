@@ -451,6 +451,7 @@ public:
 		for (size_t i = 0; i < codeSize; i++) append1B(static_cast<uint8_t>(code >> (i * 8)));
 	}
 	void append4B(uint32_t code) { appendBytes(code, 4); }
+	void append2B(uint32_t code) { appendBytes(code, 2); }
 	void dump(bool separate = false) const
 	{
 		const uint8_t *p = getCode();
@@ -875,6 +876,15 @@ private:
 	{
 		assert(flag <= 3);
 		Rtype(0x2f, funct3.v, (funct5.v << 2) | flag, rd, addr, rs2);
+	}
+	bool c_addi(const Reg& rd, const Reg& rs, uint32_t imm)
+	{
+		if (rs != sp) return false;
+		uint32_t idx = rd.getIdx();
+		if (idx < 8 || idx >= 16 || imm == 0 || (imm % 4) != 0 || imm >= 1024) return false;
+		uint32_t v = ((idx - 8) << 2) | ((imm & (3 << 4)) << 6) | ((imm & (7 << 6)) << 2) | ((imm & 4) << 4) | ((imm & 8) << 2);
+		append2B(v);
+		return true;
 	}
 public:
 	void L(Label& label) { labelMgr_.defineClabel(label); }

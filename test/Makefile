@@ -2,6 +2,7 @@ HEADER=../xbyak_riscv/xbyak_riscv_mnemonic.hpp
 
 test: $(HEADER)
 	./test.sh
+#	./test.sh svc
 
 $(HEADER):
 	$(MAKE) -C ../gen
