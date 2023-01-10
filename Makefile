@@ -24,4 +24,7 @@ test:
 	$(MAKE) -C gen
 	$(MAKE) -C test test
 
+test_svc:
+	$(MAKE) -C test test_svc
+
 .PHONY: test update

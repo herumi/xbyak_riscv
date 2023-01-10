@@ -4,6 +4,9 @@ test: $(HEADER)
 	./test.sh
 #	./test.sh svc
 
+test_svc:
+	./test.sh svc
+
 $(HEADER):
 	$(MAKE) -C ../gen
 
