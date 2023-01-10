@@ -169,7 +169,6 @@ for (funct7, name) in tbl:
 
 # misc
 print('''
-void ret() { jalr(x0, x1); }
 void nop() { addi(x0, x0, 0); }
 void mv(const Reg& rd, const Reg& rs) { addi(rd, rs, 0); }
 void not_(const Reg& rd, const Reg& rs) { xori(rd, rs, -1); }
@@ -186,7 +185,11 @@ void snez(const Reg& rd, const Reg& rs) { sltu(rd, x0, rs); }
 void sltz(const Reg& rd, const Reg& rs) { slt(rd, rs, x0); }
 void sgtz(const Reg& rd, const Reg& rs) { slt(rd, x0, rs); }
 void fence() { append4B(0x0ff0000f); }
+void j_(const Label& label) { jal(x0, label); }
 void jal(const Reg& rd, const Label& label) { Jmp jmp(getSize(), 0x6f, rd); opJmp(label, jmp); }
+void jr(const Reg& rs) { jalr(x0, rs, 0); }
+void jalr(const Reg& rs) { jalr(x1, rs, 0); }
+void ret() { jalr(x0, x1); }
 // lr rd, (addr)
 void lr_w(const Reg& rd, const Reg& addr, uint32_t flag = 0) { opAtomic(rd, 0, addr, 2, 2, flag); }
 void lr_d(const Reg& rd, const Reg& addr, uint32_t flag = 0) { opAtomic(rd, 0, addr, 2, 3, flag); }

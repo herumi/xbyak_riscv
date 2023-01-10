@@ -17,6 +17,9 @@ def putRRR(name):
 def putRR(name):
   put(name, 'x1, x2')
 
+def putR(name):
+  put(name, 'x12')
+
 def putRRI(name):
   put(name, 'x1, x2, 1234')
   put(name, 'x1, x2, -1234')
@@ -48,20 +51,18 @@ def putFence():
   putEach('fence_i()', 'fence.i')
   put('fence')
 
-def putJmp1(name):
+def putJmp(name, paraN):
   n = 32
-  putEach(f'Label B{name} = L(), F{name};', f'B{name}:')
+  putEach(f'Label B{name} = L(), F{name}', f'B{name}:')
   for i in range(n):
-    put(name, f'x{i}, B{name}')
-    put(name, f'x{i}, F{name}')
-  putEach(f'L(F{name})', f'F{name}:')
-
-def putJmp2(name):
-  n = 32
-  putEach(f'Label B{name} = L(), F{name};', f'B{name}:')
-  for i in range(n):
-    put(name, f'x{i},x5, B{name}')
-    put(name, f'x{i},x2, F{name}')
+    if paraN == 0:
+      args = ''
+    elif paraN == 1:
+      args = f'x{i}, '
+    elif paraN == 2:
+      args = f'x{i}, x{(i+1)%n}, '
+    put(name, f'{args}B{name}')
+    put(name, f'{args}F{name}')
   putEach(f'L(F{name})', f'F{name}:')
 
 def putAtomic(name, suf, flag):
@@ -130,10 +131,15 @@ def main():
     put(op, 'x15, x20, 31')
 
   putFence()
+
+  putJmp('j_', 0)
   for op in ['jal', 'beqz', 'bnez', 'blez', 'bgez', 'bgtz']:
-    putJmp1(op)
+    putJmp(op, 1)
   for op in ['beq', 'bne', 'blt', 'bge', 'bltu', 'bgeu', 'bgt', 'ble', 'bgtu', 'bleu']:
-    putJmp2(op)
+    putJmp(op, 2)
+
+  for op in ['jr', 'jalr']:
+    putR(op)
 
   for flag in ['', 'aq', 'rl', 'aqrl']:
     for op in ['sc', 'amoswap', 'amoadd', 'amoxor', 'amoand', 'amoor', 'amomin', 'amomax', 'amominu', 'amomaxu']:
