@@ -87,7 +87,9 @@ def putLr(suf, flag):
 def misc():
   for name in ['ret', 'ecall', 'ebreak', 'nop']:
     put(name)
-  for name in ['mv', 'not_', 'neg', 'negw', 'sext_b', 'sext_h', 'sext_w', 'zext_b', 'zext_h', 'zext_w']:
+  for name in ['mv', 'not_', 'neg', 'negw', 'sext_b', 'sext_h', 'sext_w', 'zext_b', 'zext_h', 'zext_w',
+    'seqz', 'snez', 'sltz', 'sgtz',
+  ]:
     putRR(name)
 
 def main():
