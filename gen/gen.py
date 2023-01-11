@@ -46,10 +46,10 @@ tbl = [
 
 for (funct3, opcode, name) in tbl:
   if name == 'addi':
-    c_addi = 'if (supportRVC_ && c_addi(rd, rs1, imm)) return; '
+    rvc = 'if (supportRVC_ && c_addi(rd, rs1, imm)) return; '
   else:
-    c_addi = ''
-  print(f'void {name}(const Reg& rd, const Reg& rs1, int imm) {{ {c_addi}Itype({hex(opcode)}, {funct3}, rd, rs1, imm); }}')
+    rvc = ''
+  print(f'void {name}(const Reg& rd, const Reg& rs1, int imm) {{ {rvc}Itype({hex(opcode)}, {funct3}, rd, rs1, imm); }}')
 
 tbl = [
  (0b000, 0b1100111, 'jalr'),
@@ -64,7 +64,11 @@ tbl = [
 
 print('// load-op rd, imm(addr); rd = addr[imm];')
 for (funct3, opcode, name) in tbl:
-  print(f'void {name}(const Reg& rd, const Reg& addr, int imm = 0) {{ Itype({hex(opcode)}, {funct3}, rd, addr, imm); }}')
+  if name == 'lw':
+    rvc = 'if (supportRVC_ && c_lw(rd, addr, imm)) return; '
+  else:
+    rvc = ''
+  print(f'void {name}(const Reg& rd, const Reg& addr, int imm = 0) {{ {rvc}Itype({hex(opcode)}, {funct3}, rd, addr, imm); }}')
 
 tbl = [
   (0b0110111, 'lui'),

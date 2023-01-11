@@ -1,6 +1,13 @@
 import sys
 isXbyak = True
 
+def setXbyak(flag=True):
+  global isXbyak
+  isXbyak = flag
+
+def getXbyak():
+  return isXbyak
+
 def putEach(op1, op2):
   if isXbyak:
     print(f'{op1};')

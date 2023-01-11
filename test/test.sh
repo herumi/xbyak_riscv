@@ -27,6 +27,6 @@ $AS -c -o generated.o generated.s $ASFLAGS
 $OBJDUMP --no-addresses -d generated.o > ok.s
 awk '/        / { print $1 }' < ok.s > ok.txt
 
-diff ok.txt my.txt
+diff -urN ok.txt my.txt
 
 

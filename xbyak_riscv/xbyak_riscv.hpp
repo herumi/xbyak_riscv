@@ -870,6 +870,7 @@ private:
 		Rtype(0x2f, funct3.v, (funct5.v << 2) | flag, rd, addr, rs2);
 	}
 	bool isValiCidx(uint32_t idx) const { return 8 <= idx && idx < 16; }
+	// c.addi4spn(rd, imm) = c.addi(rd, x2, imm)
 	bool c_addi(const Reg& rd, const Reg& rs, uint32_t imm)
 	{
 		if (rs != sp) return false;

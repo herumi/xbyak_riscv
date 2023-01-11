@@ -36,7 +36,7 @@ void addiw(const Reg& rd, const Reg& rs1, int imm) { Itype(0x1b, 0, rd, rs1, imm
 void jalr(const Reg& rd, const Reg& addr, int imm = 0) { Itype(0x67, 0, rd, addr, imm); }
 void lb(const Reg& rd, const Reg& addr, int imm = 0) { Itype(0x3, 0, rd, addr, imm); }
 void lh(const Reg& rd, const Reg& addr, int imm = 0) { Itype(0x3, 1, rd, addr, imm); }
-void lw(const Reg& rd, const Reg& addr, int imm = 0) { Itype(0x3, 2, rd, addr, imm); }
+void lw(const Reg& rd, const Reg& addr, int imm = 0) { if (supportRVC_ && c_lw(rd, addr, imm)) return; Itype(0x3, 2, rd, addr, imm); }
 void lbu(const Reg& rd, const Reg& addr, int imm = 0) { Itype(0x3, 4, rd, addr, imm); }
 void lhu(const Reg& rd, const Reg& addr, int imm = 0) { Itype(0x3, 5, rd, addr, imm); }
 void lwu(const Reg& rd, const Reg& addr, int imm = 0) { Itype(0x3, 6, rd, addr, imm); }

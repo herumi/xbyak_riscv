@@ -1,15 +1,9 @@
 import sys
-isXbyak = True
+from gen_test import *
 
-def putEach(op1, op2):
-  if isXbyak:
-    print(f'{op1};')
-  else:
-    print(op2)
-
-def put(name, args=""):
-  asmName = name.strip('_').replace('_', '.')
-  putEach(f'{name}({args})', f'{asmName} {args}')
+def lwTest():
+  for i in range(32):
+    putRM('lw', f'x{i}', f'x{(i+1)%32}', 4)
 
 def addTest():
   for i in range(32):
@@ -22,12 +16,12 @@ def addTest():
     put('addi', f'a7, x2, {i}')
 
 def main():
-  global isXbyak
   if len(sys.argv) > 1 and sys.argv[1] == 'gas':
-    isXbyak = False
-  if isXbyak:
+    setXbyak(False)
+  if getXbyak():
     print('supportRVC();')
 
+  lwTest()
   addTest()
 
 if __name__ == '__main__':
