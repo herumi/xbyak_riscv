@@ -438,20 +438,24 @@ public:
 	{
 		size_ = 0;
 	}
-	void append1B(int code)
+	void writeBytes(size_t offset, uint64_t v, size_t n)
 	{
-		if (size_ >= maxSize_) {
-			XBYAK_RISCV_THROW(ERR_CODE_IS_TOO_BIG)
+		if (n > 8) XBYAK_RISCV_THROW(ERR_BAD_PARAMETER)
+		if (offset + n > maxSize_) XBYAK_RISCV_THROW(ERR_CODE_IS_TOO_BIG)
+		uint8_t *const p = top_ + offset;
+		for (size_t i = 0; i < n; i++) {
+			p[i] = static_cast<uint8_t>(v >> (i * 8));
 		}
-		top_[size_++] = static_cast<uint8_t>(code);
 	}
-	void appendBytes(uint64_t code, size_t codeSize)
+	void appendBytes(uint64_t v, size_t n)
 	{
-		if (codeSize > 8) XBYAK_RISCV_THROW(ERR_BAD_PARAMETER)
-		for (size_t i = 0; i < codeSize; i++) append1B(static_cast<uint8_t>(code >> (i * 8)));
+		writeBytes(size_, v, n);
+		size_ += n;
 	}
 	void append4B(uint32_t code) { appendBytes(code, 4); }
 	void append2B(uint32_t code) { appendBytes(code, 2); }
+	void append1B(uint32_t code) { appendBytes(code, 1); }
+	void write4B(size_t offset, uint32_t v) { writeBytes(offset, v, 4); }
 	void dump(bool separate = false) const
 	{
 		const uint8_t *p = getCode();
@@ -503,18 +507,6 @@ public:
 	{
 		if (size > maxSize_) XBYAK_RISCV_THROW(ERR_OFFSET_IS_TOO_BIG)
 		size_ = size;
-	}
-	void writeBytes(size_t offset, uint64_t v, size_t n)
-	{
-		assert(offset + n <= maxSize_);
-		uint8_t *const p = top_ + offset;
-		for (size_t i = 0; i < n; i++) {
-			p[i] = static_cast<uint8_t>(v >> (i * 8));
-		}
-	}
-	void write4B(size_t offset, uint32_t v)
-	{
-		writeBytes(offset, v, 4);
 	}
 	/**
 		change exec permission of memory
