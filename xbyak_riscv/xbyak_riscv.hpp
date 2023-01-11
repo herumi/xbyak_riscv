@@ -889,6 +889,15 @@ private:
 		append2B(v);
 		return true;
 	}
+	bool c_ld(const Reg& rd, const Reg& rs, int imm)
+	{
+		uint32_t dIdx = rd.getIdx();
+		uint32_t sIdx = rs.getIdx();
+		if (!isValiCidx(dIdx) || !isValiCidx(sIdx) || (imm % 8) != 0 || imm < 0 || imm >= (1 << 8)) return false;
+		uint32_t v = (3 << 13) | ((imm & (7 << 3)) << 7) | ((sIdx - 8) << 7) | ((imm & (3 << 6)) >> 1) | ((dIdx - 8) << 2);
+		append2B(v);
+		return true;
+	}
 public:
 	void L(Label& label) { labelMgr_.defineClabel(label); }
 	Label L() { Label label; L(label); return label; }

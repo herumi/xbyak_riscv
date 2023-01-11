@@ -66,6 +66,8 @@ print('// load-op rd, imm(addr); rd = addr[imm];')
 for (funct3, opcode, name) in tbl:
   if name == 'lw':
     rvc = 'if (supportRVC_ && c_lw(rd, addr, imm)) return; '
+  elif name == 'ld':
+    rvc = 'if (supportRVC_ && c_ld(rd, addr, imm)) return; '
   else:
     rvc = ''
   print(f'void {name}(const Reg& rd, const Reg& addr, int imm = 0) {{ {rvc}Itype({hex(opcode)}, {funct3}, rd, addr, imm); }}')
