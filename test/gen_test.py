@@ -29,7 +29,9 @@ def putR(name):
 
 def putRRI(name):
   put(name, 'x1, x2, 1234')
-  put(name, 'x1, x2, -1234')
+  put(name, 'x1, x2, -1233')
+  put(name, 'x1, x2, -2048')
+  put(name, 'x1, x2, 2047')
 
 def putRM(name, rd, rs1, offset):
   if isXbyak:
