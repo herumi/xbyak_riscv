@@ -1,3 +1,13 @@
+from bit_pattern import *
+print('private:')
+for ptn in [
+  '5:4|9:6|2|3|z5', # c.addi4spn
+  '5:3|z3|2|6|z5',  # c.lw
+  '5:3|z3|7|6|z5',  # c.ld
+]:
+  bitPattern(ptn)
+print('public:')
+
 tbl = [
  (0b0000000,0b000, 0b0110011, 'add'),
  (0b0100000,0b000, 0b0110011, 'sub'),

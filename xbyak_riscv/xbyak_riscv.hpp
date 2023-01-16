@@ -876,7 +876,7 @@ private:
 		if (rs != sp) return false;
 		uint32_t idx = rd.getIdx();
 		if (!isValiCidx(idx) || imm == 0 || (imm % 4) != 0 || imm >= 1024) return false;
-		uint32_t v = ((idx - 8) << 2) | ((imm & (3 << 4)) << 7) | ((imm & (15 << 6)) << 1) | ((imm & 4) << 4) | ((imm & 8) << 2);
+		uint32_t v = ((idx-8)<<2) | get5to4_9to6_2_3_z5(imm);
 		append2B(v);
 		return true;
 	}
@@ -885,7 +885,7 @@ private:
 		uint32_t dIdx = rd.getIdx();
 		uint32_t sIdx = rs.getIdx();
 		if (!isValiCidx(dIdx) || !isValiCidx(sIdx) || (imm % 4) != 0 || imm < 0 || imm >= (1 << 7)) return false;
-		uint32_t v = (2 << 13) | ((imm & (7 << 3)) << 7) | ((sIdx - 8) << 7) | ((imm & 4) << 4) | ((imm & (1 << 6)) >> 1) | ((dIdx - 8) << 2);
+		uint32_t v = (2<<13) | ((sIdx-8)<<7) | ((dIdx-8)<<2) | get5to3_z3_2_6_z5(imm);
 		append2B(v);
 		return true;
 	}
@@ -894,7 +894,7 @@ private:
 		uint32_t dIdx = rd.getIdx();
 		uint32_t sIdx = rs.getIdx();
 		if (!isValiCidx(dIdx) || !isValiCidx(sIdx) || (imm % 8) != 0 || imm < 0 || imm >= (1 << 8)) return false;
-		uint32_t v = (3 << 13) | ((imm & (7 << 3)) << 7) | ((sIdx - 8) << 7) | ((imm & (3 << 6)) >> 1) | ((dIdx - 8) << 2);
+		uint32_t v = (3<<13) | ((sIdx-8)<<7) | ((dIdx-8)<<2) | get5to3_z3_7_6_z5(imm);
 		append2B(v);
 		return true;
 	}
