@@ -834,34 +834,36 @@ private:
 		append4B(0); // dummy to write4B later
 		labelMgr_.addUndefinedLabel(label, jmp);
 	}
+	uint32_t enc2(uint32_t a, uint32_t b) const { return (a<<7) | (b<<15); }
+	uint32_t enc3(uint32_t a, uint32_t b, uint32_t c) const { return enc2(a, b) | (c<<20); }
 	void Rtype(Bit7 opcode, Bit3 funct3, Bit7 funct7, Bit5 rd, Bit5 rs1, Bit5 rs2)
 	{
-		uint32_t v = (funct7.v << 25) | (rs2.v << 20) | (rs1.v << 15) | (funct3.v << 12) | (rd.v << 7) | opcode.v;
+		uint32_t v = (funct7.v<<25) | (funct3.v<<12) | opcode.v | enc3(rd.v, rs1.v, rs2.v);
 		append4B(v);
 	}
 	void Itype(Bit7 opcode, Bit3 funct3, Bit5 rd, Bit5 rs1, int imm)
 	{
 		if (!local::inSBit(imm, 12)) XBYAK_RISCV_THROW(ERR_IMM_IS_TOO_BIG)
-		uint32_t v = (imm << 20) | (rs1.v << 15) | (funct3.v << 12) | (rd.v << 7) | opcode.v;
+		uint32_t v = (imm<<20) | (funct3.v<<12) | opcode.v | enc2(rd.v, rs1.v);
 		append4B(v);
 	}
 	void Stype(Bit7 opcode, Bit3 funct3, Bit5 rs1, Bit5 rs2, int imm)
 	{
 		if (!local::inSBit(imm, 12)) XBYAK_RISCV_THROW(ERR_IMM_IS_TOO_BIG)
-		uint32_t v = ((imm >> 5) << 25) | (rs2.v << 20) | (rs1.v << 15) | (funct3.v << 12) | ((imm & local::mask(5)) << 7) | opcode.v;
+		uint32_t v = ((imm>>5)<<25) | (funct3.v<<12) | opcode.v | enc3(imm & local::mask(5), rs1.v, rs2.v);
 		append4B(v);
 	}
 	void Utype(Bit7 opcode, Bit5 rd, uint32_t imm)
 	{
 		if (imm >= (1u << 20)) XBYAK_RISCV_THROW(ERR_IMM_IS_TOO_BIG)
-		uint32_t v = (imm << 12) | (rd.v << 7) | opcode.v;
+		uint32_t v = (imm<<12) | opcode.v | (rd.v<<7);
 		append4B(v);
 	}
 	void opShift(Bit7 pre, Bit3 funct3, Bit7 opcode, Bit5 rd, Bit5 rs1, uint32_t shamt, int range = 0)
 	{
 		if (range == 0) range = isRV32_ ? 5 : 6;
 		if (shamt >= (1u << range)) XBYAK_RISCV_THROW(ERR_IMM_IS_TOO_BIG)
-		uint32_t v = (pre.v << 25) | (shamt << 20) | (rs1.v << 15) | (funct3.v << 12) | (rd.v << 7) | opcode.v;
+		uint32_t v = (pre.v<<25) | (funct3.v<<12) | opcode.v | enc3(rd.v, rs1.v, shamt);
 		append4B(v);
 	}
 	void opAtomic(Bit5 rd, Bit5 rs2, Bit5 addr, Bit5 funct5, Bit3 funct3, uint32_t flag)
