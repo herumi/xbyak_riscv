@@ -560,31 +560,39 @@ public:
 };
 
 struct Jmp {
-	size_t addr; /* offset of the jmp mnemonic from top */
+	enum Type {
+		tJal,
+		tBtype,
+		tRawAddress,
+	} type;
+	size_t from; /* offset of the jmp mnemonic from top */
 	uint32_t encoded;
-	bool isJal;
+	size_t encSize() const
+	{
+		if (type == tRawAddress) return sizeof(size_t);
+		return 4;
+	}
 	// jal
-	Jmp(size_t addr, uint32_t opcode, const Reg& rd)
-		: addr(addr)
+	Jmp(size_t from, uint32_t opcode, const Reg& rd)
+		: type(tJal)
+		, from(from)
 		, encoded((rd.getIdx() << 7) | opcode)
-		, isJal(true)
 	{
 	}
 	// B-type
-	Jmp(size_t addr, uint32_t opcode, uint32_t funct3, const Reg& src1, const Reg& src2)
-		: addr(addr)
+	Jmp(size_t from, uint32_t opcode, uint32_t funct3, const Reg& src1, const Reg& src2)
+		: type(tBtype)
+		, from(from)
 		, encoded((src2.getIdx() << 20) | (src1.getIdx() << 15) | (funct3 << 12) | opcode)
-		, isJal(false)
 	{
 	}
 	// raw address
-	Jmp(size_t addr)
-		: addr(addr)
+	explicit Jmp(size_t from)
+		: type(tRawAddress)
+		, from(from)
 		, encoded(0)
-		, isJal(false)
 	{
 	}
-	bool isRawAddress() const { return encoded == 0; }
 	static inline bool isValidImm(size_t imm, size_t maskBit)
 	{
 		const size_t M = local::mask(maskBit);
@@ -602,10 +610,11 @@ struct Jmp {
 		// imm[12|10:5]  imm[4:1|11]
 		return ((imm >> 12) << 31) | (((imm >> 5) & local::mask(6)) << 25) | (((imm >> 1) & local::mask(4)) << 8) | (((imm >> 11) & 1) << 7);
 	}
-	uint32_t encode(size_t offset) const
+	size_t encode(size_t addr) const
 	{
-		const size_t imm = offset - addr;
-		if (isJal) {
+		if (type == tRawAddress) return addr;
+		const size_t imm = addr - from;
+		if (type == tJal) {
 			if (!isValidImm(imm, 20)) XBYAK_RISCV_THROW(ERR_INVALID_IMM_OF_JAL)
 			return encodeImmJal(imm) | encoded;
 		} else {
@@ -665,11 +674,10 @@ class LabelManager {
 			typename UndefList::iterator itr = undefList.find(labelId);
 			if (itr == undefList.end()) break;
 			const Jmp *jmp = &itr->second;
-			if (jmp->isRawAddress()) {
-				base_->writeBytes(jmp->addr, size_t(base_->getCurr()), sizeof(size_t));
+			if (jmp->type == Jmp::tRawAddress) {
+				base_->writeBytes(jmp->from, jmp->encode(size_t(base_->getCurr())), jmp->encSize());
 			} else {
-				uint32_t v = jmp->encode(base_->getSize());
-				base_->write4B(jmp->addr, v);
+				base_->writeBytes(jmp->from, jmp->encode(base_->getSize()), jmp->encSize());
 			}
 			undefList.erase(itr);
 		}
@@ -828,10 +836,10 @@ private:
 	{
 		size_t offset = 0;
 		if (labelMgr_.getOffset(&offset, label)) { /* label exists */
-			append4B(jmp.encode(offset));
+			appendBytes(jmp.encode(offset), jmp.encSize());
 			return;
 		}
-		append4B(0); // dummy to write4B later
+		appendBytes(0, jmp.encSize());
 		labelMgr_.addUndefinedLabel(label, jmp);
 	}
 	uint32_t enc2(uint32_t a, uint32_t b) const { return (a<<7) | (b<<15); }
@@ -919,10 +927,10 @@ public:
 		Jmp jmp(size_);
 		size_t offset = 0;
 		if (labelMgr_.getOffset(&offset, label)) {
-			appendBytes((size_t)getCurr(), sizeof(size_t));
+			appendBytes((size_t)top_ + offset, jmp.encSize());
 			return;
 		}
-		appendBytes(0, sizeof(size_t));
+		appendBytes(0, jmp.encSize());
 		labelMgr_.addUndefinedLabel(label, jmp);
 	}
 
