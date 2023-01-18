@@ -8,7 +8,7 @@ test: $(HEADER) jmp_test
 test_svc:
 	./test.sh svc
 
-jmp_test: jmp_test.cpp
+jmp_test: jmp_test.cpp $(HEADER)
 	$(CXX) -o $@ $< -Wall -Wextra -I ../ -I ./
 
 $(HEADER):
