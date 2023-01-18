@@ -16,7 +16,7 @@ esac
 CXX=g++
 AS=riscv64-linux-gnu-as
 OBJDUMP=riscv64-unknown-elf-objdump
-CFLAGS="-I../ -Wall -Wextra"
+CFLAGS="-g -I../ -Wall -Wextra"
 
 python3 $GEN > generated.cpp
 $CXX $CFLAGS out.cpp
