@@ -143,7 +143,7 @@ tbl = [
 ]
 
 for (funct3, opcode, name) in tbl:
-  print(f'void {name}(const Reg& rs1, const Reg& rs2, const Label& label) {{ Jmp jmp(getSize(), {hex(opcode)}, {funct3}, rs1, rs2); opJmp(label, jmp); }}')
+  print(f'void {name}(const Reg& rs1, const Reg& rs2, const Label& label) {{ Jmp jmp(getCurr(), {hex(opcode)}, {funct3}, rs1, rs2); opJmp(label, jmp); }}')
 
 tbl = [
   ('beqz', 'beq', 'rs, x0'),
@@ -206,7 +206,7 @@ void sltz(const Reg& rd, const Reg& rs) { slt(rd, rs, x0); }
 void sgtz(const Reg& rd, const Reg& rs) { slt(rd, x0, rs); }
 void fence() { append4B(0x0ff0000f); }
 void j_(const Label& label) { jal(x0, label); }
-void jal(const Reg& rd, const Label& label) { Jmp jmp(getSize(), 0x6f, rd); opJmp(label, jmp); }
+void jal(const Reg& rd, const Label& label) { Jmp jmp(getCurr(), 0x6f, rd); opJmp(label, jmp); }
 void jr(const Reg& rs) { jalr(x0, rs, 0); }
 void jalr(const Reg& rs) { jalr(x1, rs, 0); }
 void ret() { jalr(x0, x1); }

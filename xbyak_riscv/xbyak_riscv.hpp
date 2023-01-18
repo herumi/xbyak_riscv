@@ -447,6 +447,10 @@ public:
 			p[i] = static_cast<uint8_t>(v >> (i * 8));
 		}
 	}
+	void writeBytes(const uint8_t *addr, uint64_t v, size_t n)
+	{
+		writeBytes(addr - top_, v, n);
+	}
 	void appendBytes(uint64_t v, size_t n)
 	{
 		writeBytes(size_, v, n);
@@ -565,7 +569,7 @@ struct Jmp {
 		tBtype,
 		tRawAddress,
 	} type;
-	size_t from; /* offset of the jmp mnemonic from top */
+	const uint8_t* from; /* address of the jmp mnemonic */
 	uint32_t encoded;
 	size_t encSize() const
 	{
@@ -573,21 +577,21 @@ struct Jmp {
 		return 4;
 	}
 	// jal
-	Jmp(size_t from, uint32_t opcode, const Reg& rd)
+	Jmp(const uint8_t *from, uint32_t opcode, const Reg& rd)
 		: type(tJal)
 		, from(from)
 		, encoded((rd.getIdx() << 7) | opcode)
 	{
 	}
 	// B-type
-	Jmp(size_t from, uint32_t opcode, uint32_t funct3, const Reg& src1, const Reg& src2)
+	Jmp(const uint8_t* from, uint32_t opcode, uint32_t funct3, const Reg& src1, const Reg& src2)
 		: type(tBtype)
 		, from(from)
 		, encoded((src2.getIdx() << 20) | (src1.getIdx() << 15) | (funct3 << 12) | opcode)
 	{
 	}
 	// raw address
-	explicit Jmp(size_t from)
+	explicit Jmp(const uint8_t* from)
 		: type(tRawAddress)
 		, from(from)
 		, encoded(0)
@@ -610,9 +614,9 @@ struct Jmp {
 		// imm[12|10:5]  imm[4:1|11]
 		return ((imm >> 12) << 31) | (((imm >> 5) & local::mask(6)) << 25) | (((imm >> 1) & local::mask(4)) << 8) | (((imm >> 11) & 1) << 7);
 	}
-	size_t encode(size_t addr) const
+	size_t encode(const uint8_t* addr) const
 	{
-		if (type == tRawAddress) return addr;
+		if (type == tRawAddress) return size_t(addr);
 		const size_t imm = addr - from;
 		if (type == tJal) {
 			if (!isValidImm(imm, 20)) XBYAK_RISCV_THROW(ERR_INVALID_IMM_OF_JAL)
@@ -643,8 +647,8 @@ public:
 class LabelManager {
 	// for Label class
 	struct ClabelVal {
-		ClabelVal(size_t offset = 0) : offset(offset), refCount(1) {}
-		size_t offset;
+		ClabelVal(const uint8_t* addr = 0) : addr(addr), refCount(1) {}
+		const uint8_t* addr;
 		int refCount;
 	};
 	typedef std::unordered_map<int, ClabelVal> ClabelDefList;
@@ -663,10 +667,10 @@ class LabelManager {
 		return label.id;
 	}
 	template<class DefList, class UndefList, class T>
-	void define_inner(DefList& defList, UndefList& undefList, const T& labelId, size_t addrOffset)
+	void define_inner(DefList& defList, UndefList& undefList, const T& labelId, const uint8_t* addr)
 	{
 		// add label
-		typename DefList::value_type item(labelId, addrOffset);
+		typename DefList::value_type item(labelId, addr);
 		std::pair<typename DefList::iterator, bool> ret = defList.insert(item);
 		if (!ret.second) XBYAK_RISCV_THROW(ERR_LABEL_IS_REDEFINED)
 		// search undefined label
@@ -675,20 +679,12 @@ class LabelManager {
 			if (itr == undefList.end()) break;
 			const Jmp *jmp = &itr->second;
 			if (jmp->type == Jmp::tRawAddress) {
-				base_->writeBytes(jmp->from, jmp->encode(size_t(base_->getCurr())), jmp->encSize());
+				base_->writeBytes(jmp->from, jmp->encode(base_->getCurr()), jmp->encSize());
 			} else {
-				base_->writeBytes(jmp->from, jmp->encode(base_->getSize()), jmp->encSize());
+				base_->writeBytes(jmp->from, jmp->encode(base_->getCurr()), jmp->encSize());
 			}
 			undefList.erase(itr);
 		}
-	}
-	template<class DefList, class T>
-	bool getOffset_inner(const DefList& defList, size_t *offset, const T& label) const
-	{
-		typename DefList::const_iterator i = defList.find(label);
-		if (i == defList.end()) return false;
-		*offset = i->second.offset;
-		return true;
 	}
 	friend class Label;
 	void incRefCount(int id, Label *label)
@@ -740,7 +736,7 @@ public:
 	void set(CodeArray *base) { base_ = base; }
 	void defineClabel(Label& label)
 	{
-		define_inner(clabelDefList_, clabelUndefList_, getId(label), base_->getSize());
+		define_inner(clabelDefList_, clabelUndefList_, getId(label), base_->getCurr());
 		label.mgr = this;
 		labelPtrList_.insert(&label);
 	}
@@ -748,13 +744,16 @@ public:
 	{
 		ClabelDefList::const_iterator i = clabelDefList_.find(src.id);
 		if (i == clabelDefList_.end()) XBYAK_RISCV_THROW(ERR_LABEL_IS_NOT_SET_BY_L)
-		define_inner(clabelDefList_, clabelUndefList_, dst.id, i->second.offset);
+		define_inner(clabelDefList_, clabelUndefList_, dst.id, i->second.addr);
 		dst.mgr = this;
 		labelPtrList_.insert(&dst);
 	}
-	bool getOffset(size_t *offset, const Label& label) const
+	bool getAddr(const uint8_t** addr, const Label& label) const
 	{
-		return getOffset_inner(clabelDefList_, offset, getId(label));
+		ClabelDefList::const_iterator i = clabelDefList_.find(getId(label));
+		if (i == clabelDefList_.end()) return false;
+		*addr = i->second.addr;
+		return true;
 	}
 	void addUndefinedLabel(const Label& label, const Jmp& jmp)
 	{
@@ -785,9 +784,9 @@ inline Label::~Label()
 inline const uint8_t* Label::getAddress() const
 {
 	if (mgr == 0) return 0;
-	size_t offset;
-	if (!mgr->getOffset(&offset, *this)) return 0;
-	return mgr->getCode() + offset;
+	const uint8_t* addr;
+	if (!mgr->getAddr(&addr, *this)) return 0;
+	return addr;
 }
 
 namespace local {
@@ -834,9 +833,9 @@ private:
 	bool supportRVC_;
 	void opJmp(const Label& label, const Jmp& jmp)
 	{
-		size_t offset = 0;
-		if (labelMgr_.getOffset(&offset, label)) { /* label exists */
-			appendBytes(jmp.encode(offset), jmp.encSize());
+		const uint8_t* addr = 0;
+		if (labelMgr_.getAddr(&addr, label)) { /* label exists */
+			appendBytes(jmp.encode(addr), jmp.encSize());
 			return;
 		}
 		appendBytes(0, jmp.encSize());
@@ -924,10 +923,10 @@ public:
 	*/
 	void putL(const Label &label)
 	{
-		Jmp jmp(size_);
-		size_t offset = 0;
-		if (labelMgr_.getOffset(&offset, label)) {
-			appendBytes((size_t)top_ + offset, jmp.encSize());
+		Jmp jmp(getCurr());
+		const uint8_t* addr = 0;
+		if (labelMgr_.getAddr(&addr, label)) {
+			appendBytes(size_t(addr), jmp.encSize());
 			return;
 		}
 		appendBytes(0, jmp.encSize());

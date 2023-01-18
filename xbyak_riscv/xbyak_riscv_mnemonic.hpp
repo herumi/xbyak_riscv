@@ -68,12 +68,12 @@ void sb(const Reg& rs2, const Reg& addr, int imm = 0) { Stype(0x23, 0, addr, rs2
 void sh(const Reg& rs2, const Reg& addr, int imm = 0) { Stype(0x23, 1, addr, rs2, imm); }
 void sw(const Reg& rs2, const Reg& addr, int imm = 0) { Stype(0x23, 2, addr, rs2, imm); }
 void sd(const Reg& rs2, const Reg& addr, int imm = 0) { Stype(0x23, 3, addr, rs2, imm); }
-void beq(const Reg& rs1, const Reg& rs2, const Label& label) { Jmp jmp(getSize(), 0x63, 0, rs1, rs2); opJmp(label, jmp); }
-void bne(const Reg& rs1, const Reg& rs2, const Label& label) { Jmp jmp(getSize(), 0x63, 1, rs1, rs2); opJmp(label, jmp); }
-void blt(const Reg& rs1, const Reg& rs2, const Label& label) { Jmp jmp(getSize(), 0x63, 4, rs1, rs2); opJmp(label, jmp); }
-void bge(const Reg& rs1, const Reg& rs2, const Label& label) { Jmp jmp(getSize(), 0x63, 5, rs1, rs2); opJmp(label, jmp); }
-void bltu(const Reg& rs1, const Reg& rs2, const Label& label) { Jmp jmp(getSize(), 0x63, 6, rs1, rs2); opJmp(label, jmp); }
-void bgeu(const Reg& rs1, const Reg& rs2, const Label& label) { Jmp jmp(getSize(), 0x63, 7, rs1, rs2); opJmp(label, jmp); }
+void beq(const Reg& rs1, const Reg& rs2, const Label& label) { Jmp jmp(getCurr(), 0x63, 0, rs1, rs2); opJmp(label, jmp); }
+void bne(const Reg& rs1, const Reg& rs2, const Label& label) { Jmp jmp(getCurr(), 0x63, 1, rs1, rs2); opJmp(label, jmp); }
+void blt(const Reg& rs1, const Reg& rs2, const Label& label) { Jmp jmp(getCurr(), 0x63, 4, rs1, rs2); opJmp(label, jmp); }
+void bge(const Reg& rs1, const Reg& rs2, const Label& label) { Jmp jmp(getCurr(), 0x63, 5, rs1, rs2); opJmp(label, jmp); }
+void bltu(const Reg& rs1, const Reg& rs2, const Label& label) { Jmp jmp(getCurr(), 0x63, 6, rs1, rs2); opJmp(label, jmp); }
+void bgeu(const Reg& rs1, const Reg& rs2, const Label& label) { Jmp jmp(getCurr(), 0x63, 7, rs1, rs2); opJmp(label, jmp); }
 void beqz(const Reg& rs, const Label& label) { beq(rs, x0, label); }
 void bnez(const Reg& rs, const Label& label) { bne(rs, x0, label); }
 void blez(const Reg& rs, const Label& label) { bge(x0, rs, label); }
@@ -123,7 +123,7 @@ void sltz(const Reg& rd, const Reg& rs) { slt(rd, rs, x0); }
 void sgtz(const Reg& rd, const Reg& rs) { slt(rd, x0, rs); }
 void fence() { append4B(0x0ff0000f); }
 void j_(const Label& label) { jal(x0, label); }
-void jal(const Reg& rd, const Label& label) { Jmp jmp(getSize(), 0x6f, rd); opJmp(label, jmp); }
+void jal(const Reg& rd, const Label& label) { Jmp jmp(getCurr(), 0x6f, rd); opJmp(label, jmp); }
 void jr(const Reg& rs) { jalr(x0, rs, 0); }
 void jalr(const Reg& rs) { jalr(x1, rs, 0); }
 void ret() { jalr(x0, x1); }
