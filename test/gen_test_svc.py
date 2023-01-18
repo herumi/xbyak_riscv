@@ -12,6 +12,11 @@ def lwTest():
   for i in range(0, 256+8, 8):
     putRM('ld', 'x8', 'x10', i)
 
+  for i in range(32):
+    putRM('sw', f'x{i}', 'x9', 4)
+  for i in range(0, 128+4, 4):
+    putRM('sw', 'x8', 'x10', i)
+
 
 def addTest():
   for i in range(32):

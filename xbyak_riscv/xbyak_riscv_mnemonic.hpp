@@ -36,7 +36,7 @@ void addiw(const Reg& rd, const Reg& rs1, int imm) { Itype(0x1b, 0, rd, rs1, imm
 void jalr(const Reg& rd, const Reg& addr, int imm = 0) { Itype(0x67, 0, rd, addr, imm); }
 void lb(const Reg& rd, const Reg& addr, int imm = 0) { Itype(0x3, 0, rd, addr, imm); }
 void lh(const Reg& rd, const Reg& addr, int imm = 0) { Itype(0x3, 1, rd, addr, imm); }
-void lw(const Reg& rd, const Reg& addr, int imm = 0) { if (supportRVC_ && c_lw(rd, addr, imm)) return; Itype(0x3, 2, rd, addr, imm); }
+void lw(const Reg& rd, const Reg& addr, int imm = 0) { if (supportRVC_ && c_lsw(rd, addr, imm, 2)) return; Itype(0x3, 2, rd, addr, imm); }
 void lbu(const Reg& rd, const Reg& addr, int imm = 0) { Itype(0x3, 4, rd, addr, imm); }
 void lhu(const Reg& rd, const Reg& addr, int imm = 0) { Itype(0x3, 5, rd, addr, imm); }
 void lwu(const Reg& rd, const Reg& addr, int imm = 0) { Itype(0x3, 6, rd, addr, imm); }
@@ -61,7 +61,7 @@ void ebreak() { append4B(0x100073); }
 // store-op rs2, imm(addr) ; addr[imm] = rs2;
 void sb(const Reg& rs2, const Reg& addr, int imm = 0) { Stype(0x23, 0, addr, rs2, imm); }
 void sh(const Reg& rs2, const Reg& addr, int imm = 0) { Stype(0x23, 1, addr, rs2, imm); }
-void sw(const Reg& rs2, const Reg& addr, int imm = 0) { Stype(0x23, 2, addr, rs2, imm); }
+void sw(const Reg& rs2, const Reg& addr, int imm = 0) { if (supportRVC_ && c_lsw(rs2, addr, imm, 6)) return; Stype(0x23, 2, addr, rs2, imm); }
 void sd(const Reg& rs2, const Reg& addr, int imm = 0) { Stype(0x23, 3, addr, rs2, imm); }
 void beq(const Reg& rs1, const Reg& rs2, const Label& label) { Jmp jmp(getCurr(), 0x63, 0, rs1, rs2); opJmp(label, jmp); }
 void bne(const Reg& rs1, const Reg& rs2, const Label& label) { Jmp jmp(getCurr(), 0x63, 1, rs1, rs2); opJmp(label, jmp); }

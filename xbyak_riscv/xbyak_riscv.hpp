@@ -799,13 +799,6 @@ struct Bit {
 
 class CodeGenerator : public CodeArray {
 public:
-	enum LabelType {
-		T_jal,
-		T_SHORT,
-		T_NEAR,
-		T_FAR, // far jump
-		T_AUTO // T_SHORT if possible
-	};
 	enum AqRlType {
 		T_aq = 2,
 		T_rl = 1,
@@ -879,12 +872,14 @@ private:
 		append2B(v);
 		return true;
 	}
-	bool c_lw(const Reg& rd, const Reg& rs, int imm)
+	uint32_t creg2(uint32_t a, uint32_t b) { return ((a-8)<<7) | ((b-8)<<2); }
+	// c_lw, c_sw
+	bool c_lsw(const Reg& rd, const Reg& rs, int imm, uint32_t funct3)
 	{
 		uint32_t dIdx = rd.getIdx();
 		uint32_t sIdx = rs.getIdx();
 		if (!isValiCidx(dIdx) || !isValiCidx(sIdx) || (imm % 4) != 0 || imm < 0 || imm >= (1 << 7)) return false;
-		uint32_t v = (2<<13) | ((sIdx-8)<<7) | ((dIdx-8)<<2) | local::get5to3_z3_2_6_z5(imm);
+		uint32_t v = (funct3<<13) | creg2(sIdx, dIdx) | local::get5to3_z3_2_6_z5(imm);
 		append2B(v);
 		return true;
 	}
@@ -893,7 +888,7 @@ private:
 		uint32_t dIdx = rd.getIdx();
 		uint32_t sIdx = rs.getIdx();
 		if (!isValiCidx(dIdx) || !isValiCidx(sIdx) || (imm % 8) != 0 || imm < 0 || imm >= (1 << 8)) return false;
-		uint32_t v = (3<<13) | ((sIdx-8)<<7) | ((dIdx-8)<<2) | local::get5to3_z3_7_6_z5(imm);
+		uint32_t v = (3<<13) | creg2(sIdx, dIdx) | local::get5to3_z3_7_6_z5(imm);
 		append2B(v);
 		return true;
 	}
