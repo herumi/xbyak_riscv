@@ -222,6 +222,14 @@ inline constexpr bool inSBit(int x, int n)
 	return -(1 << (n-1)) <= x && x < (1 << (n-1));
 }
 
+// @@@ embedded by bit_pattern.py (DON'T DELETE THIS LINE)
+inline size_t get20_10to1_11_19to12_z12(size_t v) { return ((v & (1<<20)) << 11)| ((v & (1023<<1)) << 20)| ((v & (1<<11)) << 9)| (v & (255<<12)); }
+inline size_t get12_10to5_z13_4to1_11_z7(size_t v) { return ((v & (1<<12)) << 19)| ((v & (63<<5)) << 20)| ((v & (15<<1)) << 7)| ((v & (1<<11)) >> 4); }
+inline size_t get5to4_9to6_2_3_z5(size_t v) { return ((v & (3<<4)) << 7)| ((v & (15<<6)) << 1)| ((v & (1<<2)) << 4)| ((v & (1<<3)) << 2); }
+inline size_t get5to3_z3_2_6_z5(size_t v) { return ((v & (7<<3)) << 7)| ((v & (1<<2)) << 4)| ((v & (1<<6)) >> 1); }
+inline size_t get5to3_z3_7_6_z5(size_t v) { return ((v & (7<<3)) << 7)| ((v & (1<<7)) >> 1)| ((v & (1<<6)) >> 1); }
+// @@@ embedded by bit_pattern.py (DON'T DELETE THIS LINE)
+
 } // local
 
 /*
@@ -573,8 +581,7 @@ struct Jmp {
 	uint32_t encoded;
 	size_t encSize() const
 	{
-		if (type == tRawAddress) return sizeof(size_t);
-		return 4;
+		return (type == tRawAddress) ? sizeof(size_t) : 4;
 	}
 	// jal
 	Jmp(const uint8_t *from, uint32_t opcode, const Reg& rd)
@@ -602,28 +609,16 @@ struct Jmp {
 		const size_t M = local::mask(maskBit);
 		return (imm < M || ~M <= imm) && (imm & 1) == 0;
 	}
-	static inline uint32_t encodeImmJal(uint32_t imm)
-	{
-		//      1   10  1     8
-		// imm[20|10:1|11|19:12]
-		return ((imm >> 20) << 31) | (((imm >> 1) & local::mask(10)) << 21) | (((imm >> 11) & 1) << 20) | (imm & (local::mask(8) << 12));
-	}
-	static inline uint32_t encodeImmBtype(uint32_t imm)
-	{
-		//          25            7
-		// imm[12|10:5]  imm[4:1|11]
-		return ((imm >> 12) << 31) | (((imm >> 5) & local::mask(6)) << 25) | (((imm >> 1) & local::mask(4)) << 8) | (((imm >> 11) & 1) << 7);
-	}
 	size_t encode(const uint8_t* addr) const
 	{
 		if (type == tRawAddress) return size_t(addr);
 		const size_t imm = addr - from;
 		if (type == tJal) {
 			if (!isValidImm(imm, 20)) XBYAK_RISCV_THROW(ERR_INVALID_IMM_OF_JAL)
-			return encodeImmJal(imm) | encoded;
+			return local::get20_10to1_11_19to12_z12(imm) | encoded;
 		} else {
 			if (!isValidImm(imm, 12)) XBYAK_RISCV_THROW(ERR_INVALID_IMM_OF_JAL)
-			return encodeImmBtype(imm) | encoded;
+			return local::get12_10to5_z13_4to1_11_z7(imm) | encoded;
 		}
 	}
 };
@@ -880,7 +875,7 @@ private:
 		if (rs != sp) return false;
 		uint32_t idx = rd.getIdx();
 		if (!isValiCidx(idx) || imm == 0 || (imm % 4) != 0 || imm >= 1024) return false;
-		uint32_t v = ((idx-8)<<2) | get5to4_9to6_2_3_z5(imm);
+		uint32_t v = ((idx-8)<<2) | local::get5to4_9to6_2_3_z5(imm);
 		append2B(v);
 		return true;
 	}
@@ -889,7 +884,7 @@ private:
 		uint32_t dIdx = rd.getIdx();
 		uint32_t sIdx = rs.getIdx();
 		if (!isValiCidx(dIdx) || !isValiCidx(sIdx) || (imm % 4) != 0 || imm < 0 || imm >= (1 << 7)) return false;
-		uint32_t v = (2<<13) | ((sIdx-8)<<7) | ((dIdx-8)<<2) | get5to3_z3_2_6_z5(imm);
+		uint32_t v = (2<<13) | ((sIdx-8)<<7) | ((dIdx-8)<<2) | local::get5to3_z3_2_6_z5(imm);
 		append2B(v);
 		return true;
 	}
@@ -898,7 +893,7 @@ private:
 		uint32_t dIdx = rd.getIdx();
 		uint32_t sIdx = rs.getIdx();
 		if (!isValiCidx(dIdx) || !isValiCidx(sIdx) || (imm % 8) != 0 || imm < 0 || imm >= (1 << 8)) return false;
-		uint32_t v = (3<<13) | ((sIdx-8)<<7) | ((dIdx-8)<<2) | get5to3_z3_7_6_z5(imm);
+		uint32_t v = (3<<13) | ((sIdx-8)<<7) | ((dIdx-8)<<2) | local::get5to3_z3_7_6_z5(imm);
 		append2B(v);
 		return true;
 	}
@@ -913,7 +908,7 @@ public:
 	*/
 	void assignL(Label& dst, const Label& src) { labelMgr_.assign(dst, src); }
 	/*
-		put address of label to buffer
+		put the absolute address of label to buffer
 		@note the put size is 4(32-bit), 8(64-bit)
 	*/
 	void putL(const Label &label)
