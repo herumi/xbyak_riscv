@@ -39,6 +39,7 @@ CYBOZU_TEST_AUTO(putL)
 		}
 	} c;
 	c.ready();
+	std::cout << std::hex;
 	const size_t codeSize = 4 /*nop*/ * 3 + sizeof(size_t)/*label*/ * 2;
 	CYBOZU_TEST_EQUAL(c.getSize(), codeSize);
 	uint32_t nop = 0x00000013;
@@ -48,6 +49,7 @@ CYBOZU_TEST_AUTO(putL)
 	CYBOZU_TEST_EQUAL(readBytesLE(p + 8), c.Faddr);
 	CYBOZU_TEST_EQUAL(read4ByteLE(p + 8 + sizeof(size_t)), nop);
 	CYBOZU_TEST_EQUAL(readBytesLE(p + 8 + sizeof(size_t) + 4), c.Baddr);
+	std::cout << std::dec;
 }
 
 
