@@ -666,23 +666,18 @@ class LabelManager {
 		if (label.id == 0) label.id = labelId_++;
 		return label.id;
 	}
-	template<class DefList, class UndefList, class T>
-	void define_inner(DefList& defList, UndefList& undefList, const T& labelId, const uint8_t* addr)
+	void define_inner(ClabelDefList& defList, ClabelUndefList& undefList, int labelId, const uint8_t* addr)
 	{
 		// add label
-		typename DefList::value_type item(labelId, addr);
-		std::pair<typename DefList::iterator, bool> ret = defList.insert(item);
+		ClabelDefList::value_type item(labelId, addr);
+		std::pair<ClabelDefList::iterator, bool> ret = defList.insert(item);
 		if (!ret.second) XBYAK_RISCV_THROW(ERR_LABEL_IS_REDEFINED)
 		// search undefined label
 		for (;;) {
-			typename UndefList::iterator itr = undefList.find(labelId);
+			ClabelUndefList::iterator itr = undefList.find(labelId);
 			if (itr == undefList.end()) break;
-			const Jmp *jmp = &itr->second;
-			if (jmp->type == Jmp::tRawAddress) {
-				base_->writeBytes(jmp->from, jmp->encode(base_->getCurr()), jmp->encSize());
-			} else {
-				base_->writeBytes(jmp->from, jmp->encode(base_->getCurr()), jmp->encSize());
-			}
+			const Jmp& jmp = itr->second;
+			base_->writeBytes(jmp.from, jmp.encode(base_->getCurr()), jmp.encSize());
 			undefList.erase(itr);
 		}
 	}
@@ -924,13 +919,7 @@ public:
 	void putL(const Label &label)
 	{
 		Jmp jmp(getCurr());
-		const uint8_t* addr = 0;
-		if (labelMgr_.getAddr(&addr, label)) {
-			appendBytes(size_t(addr), jmp.encSize());
-			return;
-		}
-		appendBytes(0, jmp.encSize());
-		labelMgr_.addUndefinedLabel(label, jmp);
+		opJmp(label, jmp);
 	}
 
 	// constructor
