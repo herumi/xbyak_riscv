@@ -7,7 +7,7 @@ def bitPattern(ptn):
   z{a}    => a-bit zero
   5:2|7:6 => (mask(5-2+1)<<2) concat (mask(5-6+1)<<6)
   """
-  print(f'size_t get{ptn.replace("|", "_").replace(":", "to")}(size_t v) {{ return ', end='')
+  ret=f'inline size_t get{ptn.replace("|", "_").replace(":", "to")}(size_t v) {{ return '
   v = []
   pos = 0
   for e in reversed(ptn.split('|')):
@@ -29,25 +29,30 @@ def bitPattern(ptn):
     if first:
       first = False
     else:
-      print('| ', end='')
+      ret += '| '
     shift = pos - b
     if b == 0:
       mask = f'(v & {2**(a-b+1)-1})'
     else:
       mask = f'(v & ({2**(a-b+1)-1}<<{b}))'
     if shift == 0:
-      print(mask, end='')
+      ret += mask
     elif shift > 0:
-      print(f'({mask} << {shift})', end='')
+      ret += f'({mask} << {shift})'
     else:
-      print(f'({mask} >> {-shift})', end='')
-  print(';}')
+      ret += f'({mask} >> {-shift})'
+  ret += '; }'
+  return ret
 
 def main():
-  bitPattern('3')
-  bitPattern('3:1')
-  bitPattern('3:1|5:2|8:4')
-  bitPattern('1|z4|0')
+  tbl = [
+    '3',
+    '3:1',
+    '3:1|9:8',
+    '5|z3|2',
+  ]
+  for ptn in tbl:
+    print(bitPattern(ptn))
 
 if __name__ == '__main__':
   main()
