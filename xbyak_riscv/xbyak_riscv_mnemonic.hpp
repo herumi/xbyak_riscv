@@ -101,7 +101,7 @@ void amominu_d(const Reg& rd, const Reg& rs2, const Reg& addr, uint32_t flag = 0
 void amomaxu_w(const Reg& rd, const Reg& rs2, const Reg& addr, uint32_t flag = 0) { opAtomic(rd, rs2, addr, 0x1c, 2, flag); }
 void amomaxu_d(const Reg& rd, const Reg& rs2, const Reg& addr, uint32_t flag = 0) { opAtomic(rd, rs2, addr, 0x1c, 3, flag); }
 
-void nop() { addi(x0, x0, 0); }
+void nop() { if (supportRVC_) { append2B(0x0001); return;} addi(x0, x0, 0); }
 void mv(const Reg& rd, const Reg& rs) { addi(rd, rs, 0); }
 void not_(const Reg& rd, const Reg& rs) { xori(rd, rs, -1); }
 void neg(const Reg& rd, const Reg& rs) { sub(rd, x0, rs); }

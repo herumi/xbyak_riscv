@@ -31,6 +31,7 @@ def addTest():
     put('addi', f'a3, x2, {1<<i}')
   for i in range(0, 1028, 4):
     put('addi', f'a7, x2, {i}')
+  put('nop')
 
 def main():
   if len(sys.argv) > 1 and sys.argv[1] == 'gas':

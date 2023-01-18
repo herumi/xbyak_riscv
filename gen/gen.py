@@ -185,7 +185,7 @@ for (funct7, name) in tbl:
 
 # misc
 print('''
-void nop() { addi(x0, x0, 0); }
+void nop() { if (supportRVC_) { append2B(0x0001); return;} addi(x0, x0, 0); }
 void mv(const Reg& rd, const Reg& rs) { addi(rd, rs, 0); }
 void not_(const Reg& rd, const Reg& rs) { xori(rd, rs, -1); }
 void neg(const Reg& rd, const Reg& rs) { sub(rd, x0, rs); }
