@@ -23,6 +23,7 @@ def lwTest():
     putRM('sd', 'x8', 'x10', i)
 
 def addTest():
+  #c.addi4spn
   for i in range(32):
     put('addi', f'x{i}, x2, 4')
   for i in range(32):
@@ -32,6 +33,11 @@ def addTest():
   for i in range(0, 1028, 4):
     put('addi', f'a7, x2, {i}')
   put('nop')
+  # c.addi
+  for i in range(32):
+    put('addi', f'x{i}, x{i}, 4')
+  for i in range(-33, 33):
+    put('addi', f'a3, a3, {i}')
 
 def main():
   if len(sys.argv) > 1 and sys.argv[1] == 'gas':
