@@ -40,7 +40,7 @@ void lw(const Reg& rd, const Reg& addr, int imm = 0) { if (supportRVC_ && c_lsw(
 void lbu(const Reg& rd, const Reg& addr, int imm = 0) { Itype(0x3, 4, rd, addr, imm); }
 void lhu(const Reg& rd, const Reg& addr, int imm = 0) { Itype(0x3, 5, rd, addr, imm); }
 void lwu(const Reg& rd, const Reg& addr, int imm = 0) { Itype(0x3, 6, rd, addr, imm); }
-void ld(const Reg& rd, const Reg& addr, int imm = 0) { if (supportRVC_ && c_ld(rd, addr, imm)) return; Itype(0x3, 3, rd, addr, imm); }
+void ld(const Reg& rd, const Reg& addr, int imm = 0) { if (supportRVC_ && c_lsd(rd, addr, imm, 3)) return; Itype(0x3, 3, rd, addr, imm); }
 void lui(const Reg& rd, uint32_t imm) { Utype(0x37, rd, imm); }
 void auipc(const Reg& rd, uint32_t imm) { Utype(0x17, rd, imm); }
 void slli(const Reg& rd, const Reg& rs1, uint32_t shamt) { opShift(0x0, 1, 0x13, rd, rs1, shamt); }
@@ -58,11 +58,11 @@ void fence_w_w() { append4B(0x110000f); }
 void fence_i() { append4B(0x100f); }
 void ecall() { append4B(0x73); }
 void ebreak() { append4B(0x100073); }
-// store-op rs2, imm(addr) ; addr[imm] = rs2;
-void sb(const Reg& rs2, const Reg& addr, int imm = 0) { Stype(0x23, 0, addr, rs2, imm); }
-void sh(const Reg& rs2, const Reg& addr, int imm = 0) { Stype(0x23, 1, addr, rs2, imm); }
-void sw(const Reg& rs2, const Reg& addr, int imm = 0) { if (supportRVC_ && c_lsw(rs2, addr, imm, 6)) return; Stype(0x23, 2, addr, rs2, imm); }
-void sd(const Reg& rs2, const Reg& addr, int imm = 0) { Stype(0x23, 3, addr, rs2, imm); }
+// store-op rs, imm(addr) ; addr[imm] = rs;
+void sb(const Reg& rs, const Reg& addr, int imm = 0) { Stype(0x23, 0, addr, rs, imm); }
+void sh(const Reg& rs, const Reg& addr, int imm = 0) { Stype(0x23, 1, addr, rs, imm); }
+void sw(const Reg& rs, const Reg& addr, int imm = 0) { if (supportRVC_ && c_lsw(rs, addr, imm, 6)) return; Stype(0x23, 2, addr, rs, imm); }
+void sd(const Reg& rs, const Reg& addr, int imm = 0) { if (supportRVC_ && c_lsd(rs, addr, imm, 7)) return; Stype(0x23, 3, addr, rs, imm); }
 void beq(const Reg& rs1, const Reg& rs2, const Label& label) { Jmp jmp(getCurr(), 0x63, 0, rs1, rs2); opJmp(label, jmp); }
 void bne(const Reg& rs1, const Reg& rs2, const Label& label) { Jmp jmp(getCurr(), 0x63, 1, rs1, rs2); opJmp(label, jmp); }
 void blt(const Reg& rs1, const Reg& rs2, const Label& label) { Jmp jmp(getCurr(), 0x63, 4, rs1, rs2); opJmp(label, jmp); }

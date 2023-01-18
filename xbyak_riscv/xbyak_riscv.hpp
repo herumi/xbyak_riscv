@@ -883,12 +883,13 @@ private:
 		append2B(v);
 		return true;
 	}
-	bool c_ld(const Reg& rd, const Reg& rs, int imm)
+	// c_ld, c_sd
+	bool c_lsd(const Reg& rd, const Reg& rs, int imm, uint32_t funct3)
 	{
 		uint32_t dIdx = rd.getIdx();
 		uint32_t sIdx = rs.getIdx();
 		if (!isValiCidx(dIdx) || !isValiCidx(sIdx) || (imm % 8) != 0 || imm < 0 || imm >= (1 << 8)) return false;
-		uint32_t v = (3<<13) | creg2(sIdx, dIdx) | local::get5to3_z3_7_6_z5(imm);
+		uint32_t v = (funct3<<13) | creg2(sIdx, dIdx) | local::get5to3_z3_7_6_z5(imm);
 		append2B(v);
 		return true;
 	}

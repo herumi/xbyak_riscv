@@ -67,7 +67,7 @@ for (funct3, opcode, name) in tbl:
   if name == 'lw':
     rvc = 'if (supportRVC_ && c_lsw(rd, addr, imm, 2)) return; '
   elif name == 'ld':
-    rvc = 'if (supportRVC_ && c_ld(rd, addr, imm)) return; '
+    rvc = 'if (supportRVC_ && c_lsd(rd, addr, imm, 3)) return; '
   else:
     rvc = ''
   print(f'void {name}(const Reg& rd, const Reg& addr, int imm = 0) {{ {rvc}Itype({hex(opcode)}, {funct3}, rd, addr, imm); }}')
@@ -119,13 +119,15 @@ tbl = [
  (0b011, 0b0100011, 'sd'),
 ]
 
-print('// store-op rs2, imm(addr) ; addr[imm] = rs2;')
+print('// store-op rs, imm(addr) ; addr[imm] = rs;')
 for (funct3, opcode, name) in tbl:
   if name == 'sw':
-    rvc = 'if (supportRVC_ && c_lsw(rs2, addr, imm, 6)) return; '
+    rvc = 'if (supportRVC_ && c_lsw(rs, addr, imm, 6)) return; '
+  elif name == 'sd':
+    rvc = 'if (supportRVC_ && c_lsd(rs, addr, imm, 7)) return; '
   else:
     rvc = ''
-  print(f'void {name}(const Reg& rs2, const Reg& addr, int imm = 0) {{ {rvc}Stype({hex(opcode)}, {funct3}, addr, rs2, imm); }}')
+  print(f'void {name}(const Reg& rs, const Reg& addr, int imm = 0) {{ {rvc}Stype({hex(opcode)}, {funct3}, addr, rs, imm); }}')
 
 tbl = [
   (0b000, 0b1100011, 'beq'),
