@@ -229,6 +229,7 @@ inline size_t get5to4_9to6_2_3_z5(size_t v) { return ((v & (3<<4)) << 7)| ((v & 
 inline size_t get9_z5_4_6_8to7_5_z2(size_t v) { return ((v & (1<<9)) << 3)| ((v & (1<<4)) << 2)| ((v & (1<<6)) >> 1)| ((v & (3<<7)) >> 4)| ((v & (1<<5)) >> 3); }
 inline size_t get5to3_z3_2_6_z5(size_t v) { return ((v & (7<<3)) << 7)| ((v & (1<<2)) << 4)| ((v & (1<<6)) >> 1); }
 inline size_t get5to3_z3_7_6_z5(size_t v) { return ((v & (7<<3)) << 7)| ((v & (1<<7)) >> 1)| ((v & (1<<6)) >> 1); }
+inline size_t get5_z5_4to0_z2(size_t v) { return ((v & (1<<5)) << 7)| ((v & 31) << 2); }
 // @@@ embedded by bit_pattern.py (DON'T DELETE THIS LINE)
 
 } // local
@@ -868,6 +869,7 @@ private:
 	{
 		uint32_t dIdx = rd.getIdx();
 		uint32_t sIdx = rs.getIdx();
+		if (sIdx == 0 && c_li(rd, imm)) return true;
 		if (dIdx == 0 || dIdx != sIdx || !local::inSBit(imm, 6)) return false;
 		uint32_t v = (funct3<<13) | ((imm & (1<<5))<<7)  | (dIdx<<7) | ((imm & 31)<<2)| 1;
 		append2B(v);
@@ -877,6 +879,13 @@ private:
 	{
 		if (rd != sp || rs != sp || (imm % 16) != 0 || (496 < imm && imm < ~512u) || imm == 0) return false;
 		uint32_t v = (3<<13) | (2<<7) | 1 | local::get9_z5_4_6_8to7_5_z2(imm);
+		append2B(v);
+		return true;
+	}
+	bool c_li(const Reg& rd, uint32_t imm)
+	{
+		if (rd == x0 || !local::inSBit(imm, 6)) return false;
+		uint32_t v = (2<<13) | (rd.getIdx() << 7) | 1 | local::get5_z5_4to0_z2(imm);
 		append2B(v);
 		return true;
 	}

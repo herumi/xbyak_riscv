@@ -16,6 +16,7 @@ tbl = [
   '9|z5|4|6|8:7|5|z2',     # c.addi16sp
   '5:3|z3|2|6|z5',         # c.lw, c.sw
   '5:3|z3|7|6|z5',         # c.ld
+  '5|z5|4:0|z2',           # c.li
 ]
 for ptn in tbl:
   ptnText += bitPattern(ptn) + '\n'
