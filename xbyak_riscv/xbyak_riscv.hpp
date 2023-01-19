@@ -862,16 +862,19 @@ private:
 		Rtype(0x2f, funct3.v, (funct5.v << 2) | flag, rd, addr, rs2);
 	}
 	bool isValiCidx(uint32_t idx) const { return 8 <= idx && idx < 16; }
-	bool c_addi(const Reg& rd, const Reg& rs, uint32_t imm)
+	bool c_addi_inner(const Reg& rd, const Reg& rs, uint32_t imm, uint32_t funct3)
 	{
 		uint32_t dIdx = rd.getIdx();
 		uint32_t sIdx = rs.getIdx();
-		// c.addi
-		if (dIdx == sIdx && dIdx != 0 && local::inSBit(imm, 6)) {
-			uint32_t v = (0<<13) | ((imm & (1<<5))<<7)  | (dIdx<<7) | ((imm & 31)<<2)| 1;
-			append2B(v);
-			return true;
-		}
+		if (dIdx != sIdx || !local::inSBit(imm, 6)) return false;
+		uint32_t v = (funct3<<13) | ((imm & (1<<5))<<7)  | (dIdx<<7) | ((imm & 31)<<2)| 1;
+		append2B(v);
+		return true;
+	}
+	bool c_addi(const Reg& rd, const Reg& rs, uint32_t imm)
+	{
+		uint32_t dIdx = rd.getIdx();
+		if (dIdx != 0 && c_addi_inner(rd, rs, imm, 0)) return true;
 		// c.addi4spn(rd, imm) = c.addi(rd, x2, imm)
 		if (rs != sp || !isValiCidx(dIdx) || imm == 0 || (imm % 4) != 0 || imm >= 1024) return false;
 		uint32_t v = ((dIdx-8)<<2) | local::get5to4_9to6_2_3_z5(imm);
