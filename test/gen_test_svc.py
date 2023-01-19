@@ -38,6 +38,9 @@ def addTest():
     put('addi', f'x{i}, x{i}, 4')
   for i in range(-33, 33):
     put('addi', f'a3, a3, {i}')
+  # c.addi16sp
+  for i in range(-512-16, 496 + 16*2, 16):
+    put('addi', f'x2, x2, {i}')
   # c.addiw
   for i in range(32):
     put('addiw', f'x{i}, x{i}, 4')

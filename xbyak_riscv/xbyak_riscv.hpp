@@ -226,6 +226,7 @@ inline constexpr bool inSBit(int x, int n)
 inline size_t get20_10to1_11_19to12_z12(size_t v) { return ((v & (1<<20)) << 11)| ((v & (1023<<1)) << 20)| ((v & (1<<11)) << 9)| (v & (255<<12)); }
 inline size_t get12_10to5_z13_4to1_11_z7(size_t v) { return ((v & (1<<12)) << 19)| ((v & (63<<5)) << 20)| ((v & (15<<1)) << 7)| ((v & (1<<11)) >> 4); }
 inline size_t get5to4_9to6_2_3_z5(size_t v) { return ((v & (3<<4)) << 7)| ((v & (15<<6)) << 1)| ((v & (1<<2)) << 4)| ((v & (1<<3)) << 2); }
+inline size_t get9_z5_4_6_8to7_5_z2(size_t v) { return ((v & (1<<9)) << 3)| ((v & (1<<4)) << 2)| ((v & (1<<6)) >> 1)| ((v & (3<<7)) >> 4)| ((v & (1<<5)) >> 3); }
 inline size_t get5to3_z3_2_6_z5(size_t v) { return ((v & (7<<3)) << 7)| ((v & (1<<2)) << 4)| ((v & (1<<6)) >> 1); }
 inline size_t get5to3_z3_7_6_z5(size_t v) { return ((v & (7<<3)) << 7)| ((v & (1<<7)) >> 1)| ((v & (1<<6)) >> 1); }
 // @@@ embedded by bit_pattern.py (DON'T DELETE THIS LINE)
@@ -872,10 +873,18 @@ private:
 		append2B(v);
 		return true;
 	}
+	bool c_addi16sp(const Reg& rd, const Reg& rs, uint32_t imm)
+	{
+		if (rd != sp || rs != sp || (imm % 16) != 0 || (496 < imm && imm < ~512u) || imm == 0) return false;
+		uint32_t v = (3<<13) | (2<<7) | 1 | local::get9_z5_4_6_8to7_5_z2(imm);
+		append2B(v);
+		return true;
+	}
 	bool c_addi(const Reg& rd, const Reg& rs, uint32_t imm)
 	{
 		uint32_t dIdx = rd.getIdx();
 		if (c_addi_inner(rd, rs, imm, 0)) return true;
+		if (c_addi16sp(rd, rs, imm)) return true;
 		// c.addi4spn(rd, imm) = c.addi(rd, x2, imm)
 		if (rs != sp || !isValiCidx(dIdx) || imm == 0 || (imm % 4) != 0 || imm >= 1024) return false;
 		uint32_t v = ((dIdx-8)<<2) | local::get5to4_9to6_2_3_z5(imm);
