@@ -230,6 +230,7 @@ inline size_t get9_z5_4_6_8to7_5_z2(size_t v) { return ((v & (1<<9)) << 3)| ((v 
 inline size_t get5to3_z3_2_6_z5(size_t v) { return ((v & (7<<3)) << 7)| ((v & (1<<2)) << 4)| ((v & (1<<6)) >> 1); }
 inline size_t get5to3_z3_7_6_z5(size_t v) { return ((v & (7<<3)) << 7)| ((v & (1<<7)) >> 1)| ((v & (1<<6)) >> 1); }
 inline size_t get5_z5_4to0_z2(size_t v) { return ((v & (1<<5)) << 7)| ((v & 31) << 2); }
+inline size_t get11_4_9to8_10_6_7_3to1_5_z2(size_t v) { return ((v & (1<<11)) << 1)| ((v & (1<<4)) << 7)| ((v & (3<<8)) << 1)| ((v & (1<<10)) >> 2)| ((v & (1<<6)) << 1)| ((v & (1<<7)) >> 1)| ((v & (7<<1)) << 2)| ((v & (1<<5)) >> 3); }
 // @@@ embedded by bit_pattern.py (DON'T DELETE THIS LINE)
 
 } // local
@@ -613,6 +614,7 @@ struct Jmp {
 	}
 	size_t encode(const uint8_t* addr) const
 	{
+		if (addr == 0) return 0;
 		if (type == tRawAddress) return size_t(addr);
 		const size_t imm = addr - from;
 		if (type == tJal) {
@@ -622,6 +624,16 @@ struct Jmp {
 			if (!isValidImm(imm, 12)) XBYAK_RISCV_THROW(ERR_INVALID_IMM_OF_JAL)
 			return local::get12_10to5_z13_4to1_11_z7(imm) | encoded;
 		}
+	}
+	// update jmp address by base->getCurr()
+	void update(CodeArray *base) const
+	{
+		base->writeBytes(from, encode(base->getCurr()), encSize());
+	}
+	// append jmp opcode with addr
+	void appendCode(CodeArray *base, const uint8_t *addr) const
+	{
+		base->appendBytes(encode(addr), encSize());
 	}
 };
 
@@ -674,7 +686,7 @@ class LabelManager {
 			ClabelUndefList::iterator itr = undefList.find(labelId);
 			if (itr == undefList.end()) break;
 			const Jmp& jmp = itr->second;
-			base_->writeBytes(jmp.from, jmp.encode(base_->getCurr()), jmp.encSize());
+			jmp.update(base_);
 			undefList.erase(itr);
 		}
 	}
@@ -740,12 +752,12 @@ public:
 		dst.mgr = this;
 		labelPtrList_.insert(&dst);
 	}
-	bool getAddr(const uint8_t** addr, const Label& label) const
+	// return 0 unless label exists
+	const uint8_t* getAddr(const Label& label) const
 	{
 		ClabelDefList::const_iterator i = clabelDefList_.find(getId(label));
-		if (i == clabelDefList_.end()) return false;
-		*addr = i->second.addr;
-		return true;
+		if (i == clabelDefList_.end()) return 0;
+		return i->second.addr;
 	}
 	void addUndefinedLabel(const Label& label, const Jmp& jmp)
 	{
@@ -776,9 +788,7 @@ inline Label::~Label()
 inline const uint8_t* Label::getAddress() const
 {
 	if (mgr == 0) return 0;
-	const uint8_t* addr;
-	if (!mgr->getAddr(&addr, *this)) return 0;
-	return addr;
+	return mgr->getAddr(*this);
 }
 
 namespace local {
@@ -818,12 +828,9 @@ private:
 	bool supportRVC_;
 	void opJmp(const Label& label, const Jmp& jmp)
 	{
-		const uint8_t* addr = 0;
-		if (labelMgr_.getAddr(&addr, label)) { /* label exists */
-			appendBytes(jmp.encode(addr), jmp.encSize());
-			return;
-		}
-		appendBytes(0, jmp.encSize());
+		const uint8_t* addr = labelMgr_.getAddr(label);
+		jmp.appendCode(this, addr);
+		if (addr) return;
 		labelMgr_.addUndefinedLabel(label, jmp);
 	}
 	uint32_t enc2(uint32_t a, uint32_t b) const { return (a<<7) | (b<<15); }
