@@ -49,6 +49,11 @@ def addTest():
   # c.li
   for i in range(-33,33):
     put('li', f'x5, {i}')
+  # c.lui
+  for i in range(0,34):
+    put('lui', f'x5, {i}')
+  for i in range((1<<20)-33,(1<<20)):
+    put('lui', f'x5, {i}')
 
 def main():
   if len(sys.argv) > 1 and sys.argv[1] == 'gas':

@@ -899,7 +899,7 @@ private:
 	}
 	bool c_lui(const Reg& rd, uint32_t imm)
 	{
-		if (rd == x0 || rd == x2 || imm == 0 || 32 <= imm) return false;
+		if (rd == x0 || rd == x2 || imm == 0 || (32 <= imm && imm < (1<<20)-32)) return false;
 		uint32_t v = (3<<13) | (rd.getIdx()<<7) | 1 | local::get5_z5_4to0_z2(imm);
 		append2B(v);
 		return true;
