@@ -41,8 +41,8 @@ void lbu(const Reg& rd, const Reg& addr, int imm = 0) { Itype(0x3, 4, rd, addr, 
 void lhu(const Reg& rd, const Reg& addr, int imm = 0) { Itype(0x3, 5, rd, addr, imm); }
 void lwu(const Reg& rd, const Reg& addr, int imm = 0) { Itype(0x3, 6, rd, addr, imm); }
 void ld(const Reg& rd, const Reg& addr, int imm = 0) { if (supportRVC_ && c_lsd(rd, addr, imm, 3)) return; Itype(0x3, 3, rd, addr, imm); }
-void lui(const Reg& rd, uint32_t imm) { Utype(0x37, rd, imm); }
 void auipc(const Reg& rd, uint32_t imm) { Utype(0x17, rd, imm); }
+void lui(const Reg& rd, uint32_t imm) { if (supportRVC_ && c_lui(rd, imm)) return; Utype(0x37, rd, imm); }
 void slli(const Reg& rd, const Reg& rs1, uint32_t shamt) { opShift(0x0, 1, 0x13, rd, rs1, shamt); }
 void srli(const Reg& rd, const Reg& rs1, uint32_t shamt) { opShift(0x0, 5, 0x13, rd, rs1, shamt); }
 void srai(const Reg& rd, const Reg& rs1, uint32_t shamt) { opShift(0x20, 5, 0x13, rd, rs1, shamt); }
@@ -102,6 +102,7 @@ void amomaxu_w(const Reg& rd, const Reg& rs2, const Reg& addr, uint32_t flag = 0
 void amomaxu_d(const Reg& rd, const Reg& rs2, const Reg& addr, uint32_t flag = 0) { opAtomic(rd, rs2, addr, 0x1c, 3, flag); }
 
 void nop() { if (supportRVC_) { append2B(0x0001); return;} addi(x0, x0, 0); }
+void li(const Reg& rd, int imm) { addi(rd, x0, imm); }
 void mv(const Reg& rd, const Reg& rs) { addi(rd, rs, 0); }
 void not_(const Reg& rd, const Reg& rs) { xori(rd, rs, -1); }
 void neg(const Reg& rd, const Reg& rs) { sub(rd, x0, rs); }

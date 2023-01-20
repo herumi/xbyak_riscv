@@ -231,6 +231,7 @@ inline size_t get5to3_z3_2_6_z5(size_t v) { return ((v & (7<<3)) << 7)| ((v & (1
 inline size_t get5to3_z3_7_6_z5(size_t v) { return ((v & (7<<3)) << 7)| ((v & (1<<7)) >> 1)| ((v & (1<<6)) >> 1); }
 inline size_t get5_z5_4to0_z2(size_t v) { return ((v & (1<<5)) << 7)| ((v & 31) << 2); }
 inline size_t get11_4_9to8_10_6_7_3to1_5_z2(size_t v) { return ((v & (1<<11)) << 1)| ((v & (1<<4)) << 7)| ((v & (3<<8)) << 1)| ((v & (1<<10)) >> 2)| ((v & (1<<6)) << 1)| ((v & (1<<7)) >> 1)| ((v & (7<<1)) << 2)| ((v & (1<<5)) >> 3); }
+inline size_t get17_z5_16to12_z2(size_t v) { return ((v & (1<<17)) >> 5)| ((v & (31<<12)) >> 10); }
 // @@@ embedded by bit_pattern.py (DON'T DELETE THIS LINE)
 
 } // local
@@ -893,6 +894,13 @@ private:
 	{
 		if (rd == x0 || !local::inSBit(imm, 6)) return false;
 		uint32_t v = (2<<13) | (rd.getIdx() << 7) | 1 | local::get5_z5_4to0_z2(imm);
+		append2B(v);
+		return true;
+	}
+	bool c_lui(const Reg& rd, uint32_t imm)
+	{
+		if (rd == x0 || rd == x2 || imm == 0 || 32 <= imm) return false;
+		uint32_t v = (3<<13) | (rd.getIdx()<<7) | 1 | local::get5_z5_4to0_z2(imm);
 		append2B(v);
 		return true;
 	}

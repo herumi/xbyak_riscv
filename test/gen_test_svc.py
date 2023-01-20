@@ -46,6 +46,9 @@ def addTest():
     put('addiw', f'x{i}, x{i}, 4')
   for i in range(-33, 33):
     put('addiw', f'a3, a3, {i}')
+  # c.li
+  for i in range(-33,33):
+    put('li', f'x5, {i}')
 
 def main():
   if len(sys.argv) > 1 and sys.argv[1] == 'gas':

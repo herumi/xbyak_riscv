@@ -75,12 +75,13 @@ for (funct3, opcode, name) in tbl:
   print(f'void {name}(const Reg& rd, const Reg& addr, int imm = 0) {{ {rvc}Itype({hex(opcode)}, {funct3}, rd, addr, imm); }}')
 
 tbl = [
-  (0b0110111, 'lui'),
+#  (0b0110111, 'lui'),
   (0b0010111, 'auipc'),
 ]
 
 for (opcode, name) in tbl:
   print(f'void {name}(const Reg& rd, uint32_t imm) {{ Utype({hex(opcode)}, rd, imm); }}')
+print(f'void lui(const Reg& rd, uint32_t imm) {{ if (supportRVC_ && c_lui(rd, imm)) return; Utype({hex(0b0110111)}, rd, imm); }}')
 
 tbl = [
   (0b0000000, 0b001, 0b0010011, 'slli'),
@@ -188,6 +189,7 @@ for (funct7, name) in tbl:
 # misc
 print('''
 void nop() { if (supportRVC_) { append2B(0x0001); return;} addi(x0, x0, 0); }
+void li(const Reg& rd, int imm) { addi(rd, x0, imm); }
 void mv(const Reg& rd, const Reg& rs) { addi(rd, rs, 0); }
 void not_(const Reg& rd, const Reg& rs) { xori(rd, rs, -1); }
 void neg(const Reg& rd, const Reg& rs) { sub(rd, x0, rs); }
