@@ -7,6 +7,9 @@
 	@note modified new BSD license
 	http://opensource.org/licenses/BSD-3-Clause
 */
+
+// Copyright (C), 2023, KNS Group LLC (YADRO)
+
 #include <stdio.h>
 #include <stdint.h>
 #include <assert.h>
@@ -72,6 +75,8 @@
 	#pragma warning(disable : 4127) /* constant expresison */
 #endif
 
+#include "xbyak_riscv_csr.hpp"
+
 namespace Xbyak_riscv {
 
 enum {
@@ -82,7 +87,7 @@ enum {
 inline uint32_t getVersion() { return VERSION; }
 
 enum {
-	ERR_NONE = 0,
+	ERR_NONE = 1,
 	ERR_OFFSET_IS_TOO_BIG,
 	ERR_CODE_IS_TOO_BIG,
 	ERR_IMM_IS_TOO_BIG,
@@ -118,6 +123,7 @@ inline const char *ConvertErrorToString(int err)
 		"can't alloc",
 		"bad parameter",
 		"munmap",
+		"internal error"
 	};
 	assert(ERR_INTERNAL == sizeof(errTbl) / sizeof(*errTbl));
 	return err <= ERR_INTERNAL ? errTbl[err] : "unknown err";
@@ -341,51 +347,97 @@ public:
 #endif
 
 class Reg {
-	uint32_t idx_;
 public:
-	constexpr Reg(uint32_t idx = 0)
-		: idx_(idx)
+	enum Kind {
+		GPR = 1,         // General purpose register
+		FReg = 1 << 1,   // Floating-point register
+		VECTOR = 1 << 2, // Vector register
+	};
+private:
+	uint32_t idx_;
+	Kind kind_;
+public:
+	constexpr Reg(uint32_t idx = 0, Kind kind = GPR)
+		: idx_(idx), kind_(kind)
 	{
 		XBYAK_RISCV_ASSERT(local::inBit(idx, 5));
 	}
 	constexpr int getIdx() const { return idx_; }
 	const char *toString() const
 	{
-		static const char tbl[][4] = {
-			"x0", "x1", "x2", "x3", "x4", "x5", "x6", "x7",
-			"x8", "x9", "x10", "x11", "x12", "x13", "x14", "x15",
-			"x16", "x17", "x18", "x19", "x20", "x21", "x22", "x23",
-			"x24", "x25", "x26", "x27", "x28", "x29", "x30", "x31",
-		};
-		return tbl[idx_];
+		if (kind_ == GPR) {
+			static const char tbl[][4] = {
+				"x0", "x1", "x2", "x3", "x4", "x5", "x6", "x7",
+				"x8", "x9", "x10", "x11", "x12", "x13", "x14", "x15",
+				"x16", "x17", "x18", "x19", "x20", "x21", "x22", "x23",
+				"x24", "x25", "x26", "x27", "x28", "x29", "x30", "x31",
+			};
+			return tbl[idx_];
+		} else if (kind_ ==  FReg) {
+			static const char tbl[][4] = {
+				"f0", "f1", "f2", "f3", "f4", "f5", "f6", "f7",
+				"f8", "f9", "f10", "f11", "f12", "f13", "f14", "f15",
+				"f16", "f17", "f18", "f19", "f20", "f21", "f22", "f23",
+				"f24", "f25", "f26", "f27", "f28", "f29", "f30", "f31",
+			};
+			return tbl[idx_];
+		} else if (kind_ == VECTOR) {
+			static const char tbl[][4] = {
+				"v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7",
+				"v8", "v9", "v10", "v11", "v12", "v13", "v14", "v15",
+				"v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23",
+				"v24", "v25", "v26", "v27", "v28", "v29", "v30", "v31",
+			};
+			return tbl[idx_];
+		}
+		XBYAK_RISCV_THROW_RET(ERR_INTERNAL, 0);
 	}
 	bool operator==(const Reg& rhs) const
 	{
-		return idx_ == rhs.idx_;
+		return idx_ == rhs.idx_ && kind_ == rhs.kind_;
 	}
 	bool operator!=(const Reg& rhs) const { return !operator==(rhs); }
 };
 
-static const constexpr Reg x0(0), x1(1), x2(2), x3(3), x4(4), x5(5), x6(6), x7(7);
-static const constexpr Reg x8(8), x9(9), x10(10), x11(11), x12(12), x13(13), x14(14), x15(15);
-static const constexpr Reg x16(16), x17(17), x18(18), x19(19), x20(20), x21(21), x22(22), x23(23);
-static const constexpr Reg x24(24), x25(25), x26(26), x27(27), x28(28), x29(29), x30(30), x31(31);
+static constexpr Reg x0(0), x1(1), x2(2), x3(3), x4(4), x5(5), x6(6), x7(7);
+static constexpr Reg x8(8), x9(9), x10(10), x11(11), x12(12), x13(13), x14(14), x15(15);
+static constexpr Reg x16(16), x17(17), x18(18), x19(19), x20(20), x21(21), x22(22), x23(23);
+static constexpr Reg x24(24), x25(25), x26(26), x27(27), x28(28), x29(29), x30(30), x31(31);
 
-static const constexpr Reg zero(x0);
-static const constexpr Reg ra(x1);
-static const constexpr Reg sp(x2);
-static const constexpr Reg gp(x3);
-static const constexpr Reg tp(x4);
-static const constexpr Reg t0(x5);
-static const constexpr Reg t1(x6);
-static const constexpr Reg t2(x7);
-static const constexpr Reg fp(x8);
-static const constexpr Reg s0(x8);
-static const constexpr Reg s1(x9);
-static const constexpr Reg a0(x10), a1(x11), a2(x12), a3(x13), a4(x14), a5(x15), a6(x16), a7(x17);
-static const constexpr Reg s2(x18), s3(x19), s4(x20), s5(x21), s6(x22), s7(x23), s8(x24), s9(x25);
-static const constexpr Reg s10(x26), s11(x27);
-static const constexpr Reg t3(x28), t4(x29), t5(x30), t6(x31);
+static constexpr Reg zero(x0);
+static constexpr Reg ra(x1);
+static constexpr Reg sp(x2);
+static constexpr Reg gp(x3);
+static constexpr Reg tp(x4);
+static constexpr Reg t0(x5);
+static constexpr Reg t1(x6);
+static constexpr Reg t2(x7);
+static constexpr Reg fp(x8);
+static constexpr Reg s0(x8);
+static constexpr Reg s1(x9);
+static constexpr Reg a0(x10), a1(x11), a2(x12), a3(x13), a4(x14), a5(x15), a6(x16), a7(x17);
+static constexpr Reg s2(x18), s3(x19), s4(x20), s5(x21), s6(x22), s7(x23), s8(x24), s9(x25);
+static constexpr Reg s10(x26), s11(x27);
+static constexpr Reg t3(x28), t4(x29), t5(x30), t6(x31);
+
+struct  FReg : public Reg {
+	explicit constexpr  FReg(int idx = 0, Kind kind = Reg::Kind:: FReg) : Reg(idx, kind) { }
+};
+
+static constexpr  FReg f0(0), f1(1), f2(2), f3(3), f4(4), f5(5), f6(6), f7(7);
+static constexpr  FReg f8(8), f9(9), f10(10), f11(11), f12(12), f13(13), f14(14), f15(15);
+static constexpr  FReg f16(16), f17(17), f18(18), f19(19), f20(20), f21(21), f22(22), f23(23);
+static constexpr  FReg f24(24), f25(25), f26(26), f27(27), f28(28), f29(29), f30(30), f31(31);
+
+
+struct VReg : public Reg {
+	explicit constexpr VReg(int idx = 0, Kind kind = Reg::Kind::VECTOR) : Reg(idx, kind) { }
+};
+
+static constexpr VReg v0(0), v1(1), v2(2), v3(3), v4(4), v5(5), v6(6), v7(7);
+static constexpr VReg v8(8), v9(9), v10(10), v11(11), v12(12), v13(13), v14(14), v15(15);
+static constexpr VReg v16(16), v17(17), v18(18), v19(19), v20(20), v21(21), v22(22), v23(23);
+static constexpr VReg v24(24), v25(25), v26(26), v27(27), v28(28), v29(29), v30(30), v31(31);
 
 // 2nd parameter for constructor of CodeArray(maxSize, userPtr, alloc)
 void *const DontSetProtectRWE = (void*)2; //-V566
@@ -806,6 +858,14 @@ struct Bit {
 		: v(r.getIdx())
 	{
 	}
+	Bit(const VM& vm)
+		: v(static_cast<uint32_t>(vm))
+	{
+	}
+	Bit(const CSR& csr)
+		: v(static_cast<uint32_t>(csr))
+	{
+	}
 };
 
 } // local
@@ -817,10 +877,14 @@ public:
 		T_rl = 1,
 		T_aqrl = 3,
 	};
+	typedef local::Bit<1> Bit1;
+	typedef local::Bit<2> Bit2;
 	typedef local::Bit<3> Bit3;
 	typedef local::Bit<5> Bit5;
+	typedef local::Bit<6> Bit6;
 	typedef local::Bit<7> Bit7;
 	typedef local::Bit<12> Bit12;
+	typedef local::Bit<32> Bit32;
 private:
 	CodeGenerator operator=(const CodeGenerator&) = delete;
 	LabelManager labelMgr_;
@@ -870,6 +934,126 @@ private:
 	{
 		assert(flag <= 3);
 		Rtype(0x2f, funct3.v, (funct5.v << 2) | flag, rd, addr, rs2);
+	}
+	void opIVV(Bit32 baseValue, Bit1 vm, Bit5 vs2, Bit5 vs1, Bit5 vd)
+	{
+		/*
+		    31 .. 26 | 25 | 24 .. 20 | 19 .. 15 | 14 .. 12 | 11 .. 7 | 6 .. 0
+			  func6    vm      vs2       vs1        func3       vd     opcode
+
+			func6, func3, and opcode must be encoded in the baseValue
+		*/
+		uint32_t v = (vm.v<<25) | (vs2.v<<20) | (vs1.v<<15) | (vd.v<<7);
+		v |= baseValue.v; // force-encode base value
+		append4B(v);
+	}
+	void opFVV(Bit32 baseValue, Bit1 vm, Bit5 vs2, Bit5 vs1, Bit5 d)
+	{
+		/*
+		    31 .. 26 | 25 | 24 .. 20 | 19 .. 15 | 14 .. 12 | 11 .. 7 | 6 .. 0
+			  func6    vm      vs2       vs1        func3     vd/rd    opcode
+
+			func6, func3, and opcode must be encoded in the baseValue
+		*/
+		uint32_t v = (vm.v<<25) | (vs2.v<<20) | (vs1.v<<15) | (d.v<<7);
+		v |= baseValue.v; // force-encode base value
+		append4B(v);
+	}
+	void opMVV(Bit32 baseValue, Bit1 vm, Bit5 vs2, Bit5 vs1, Bit5 d)
+	{
+		/*
+		    31 .. 26 | 25 | 24 .. 20 | 19 .. 15 | 14 .. 12 | 11 .. 7 | 6 .. 0
+			  func6    vm      vs2       vs1        func3     vd/rd    opcode
+
+			func6, func3, and opcode must be encoded in the baseValue
+		*/
+		uint32_t v = (vm.v<<25) | (vs2.v<<20) | (vs1.v<<15) | (d.v<<7);
+		v |= baseValue.v; // force-encode base value
+		append4B(v);
+	}
+	void opIVI(Bit32 baseValue, Bit1 vm, Bit5 vs2, uint32_t imm, Bit5 vd)
+	{
+		/*
+		    31 .. 26 | 25 | 24 .. 20 | 19 .. 15 | 14 .. 12 | 11 .. 7 | 6 .. 0
+			  func6    vm      vs2       imm       func3       vd     opcode
+
+			func6, func3, and opcode must be encoded in the baseValue
+		*/
+		uint32_t v = (vm.v<<25) | (vs2.v<<20) | ((imm & local::mask(5))<<15) | (vd.v<<7);
+		v |= baseValue.v; // force-encode base value
+		append4B(v);
+	}
+	void opIVX(Bit32 baseValue, Bit1 vm, Bit5 vs2, Bit5 rs1, Bit5 vd)
+	{
+		/*
+		    31 .. 26 | 25 | 24 .. 20 | 19 .. 15 | 14 .. 12 | 11 .. 7 | 6 .. 0
+			  func6    vm      vs2       rs1        func3       vd     opcode
+
+			func6, func3, and opcode must be encoded in the baseValue
+		*/
+		uint32_t v = (vm.v<<25) | (vs2.v<<20) | (rs1.v<<15) | (vd.v<<7);
+		v |= baseValue.v; // force-encode base value
+		append4B(v);
+	}
+	void opFVF(Bit32 baseValue, Bit1 vm, Bit5 vs2, Bit5 rs1, Bit5 vd)
+	{
+		/*
+		    31 .. 26 | 25 | 24 .. 20 | 19 .. 15 | 14 .. 12 | 11 .. 7 | 6 .. 0
+			  func6    vm      vs2       rs1        func3       vd     opcode
+
+			func6, func3, and opcode must be encoded in the baseValue
+		*/
+		uint32_t v = (vm.v<<25) | (vs2.v<<20) | (rs1.v<<15) | (vd.v<<7);
+		v |= baseValue.v; // force-encode base value
+		append4B(v);
+	}
+	void opMVX(Bit32 baseValue, Bit1 vm, Bit5 vs2, Bit5 rs1, Bit5 d)
+	{
+		/*
+		    31 .. 26 | 25 | 24 .. 20 | 19 .. 15 | 14 .. 12 | 11 .. 7 | 6 .. 0
+			  func6    vm      vs2       rs1        func3     vd/rd    opcode
+
+			func6, func3, and opcode must be encoded in the baseValue
+		*/
+		uint32_t v = (vm.v<<25) | (vs2.v<<20) | (rs1.v<<15) | (d.v<<7);
+		v |= baseValue.v; // force-encode base value
+		append4B(v);
+	}
+	void opVectorLoad(Bit32 baseValue, Bit1 vm, Bit5 rs2_vs2, Bit5 rs1, Bit5 vd)
+	{
+		/*
+		    31 .. 29 | 28 | 27 .. 26 | 25 |     24 .. 20     | 19 .. 15 | 14 .. 12 | 11 .. 7 | 6 .. 0
+			   nf      mew     mop     vm     lumop/rs2/vs2      rs1        width       vd     opcode
+
+			mew, mop, width, lumop, and opcode must be encoded in the baseValue
+		*/
+		uint32_t v = (vm.v<<25) | (rs2_vs2.v<<20) | (rs1.v<<15) | (vd.v<<7);
+		v |= baseValue.v; // force-encode base value
+		append4B(v);
+	}
+	void opVectorStore(Bit32 baseValue, Bit1 vm, Bit5 rs2_vs2, Bit5 rs1, Bit5 vs3)
+	{
+		/*
+		    31 .. 29 | 28 | 27 .. 26 | 25 |     24 .. 20     | 19 .. 15 | 14 .. 12 | 11 .. 7 | 6 .. 0
+			   nf      mew     mop     vm     sumop/rs2/vs2       rs1        width     vd      opcode
+
+			mew, mop, width, sumop, and opcode must be encoded in the baseValue
+		*/
+		uint32_t v = (vm.v<<25) | (rs2_vs2.v<<20) | (rs1.v<<15) | (vs3.v<<7);
+		v |= baseValue.v; // force-encode base value
+		append4B(v);
+	}
+	void opCSR(Bit32 baseValue, Bit12 csr, Bit5 rs1_uimm, Bit5 rd)
+	{
+		/*
+		    31 .. 20 | 19 .. 15 | 14 .. 12 | 11 .. 7 | 6 .. 0
+			   csr     rs1_uimm     func3       rd     opcode
+
+			func3 and opcode must be encoded in the baseValue
+		*/
+		uint32_t v = (csr.v<<20) | (rs1_uimm.v<<15) | (rd.v<<7);
+		v |= baseValue.v; // force-encode base value
+		append4B(v);
 	}
 	bool isValiCidx(uint32_t idx) const { return 8 <= idx && idx < 16; }
 	// c_addi, c_addiw
