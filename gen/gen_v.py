@@ -89,7 +89,7 @@ def generate_instruction_signature(instr_name: str,
             opv_instrs_with_reversed_order = [
                 'vmacc', 'vnmsac', 'vmadd', 'vnmsub', 'vwmacc', 'vwmaccu',
                 'vwmaccsu', 'vwmaccus', 'vfmacc', 'vfnmacc', 'vfmsac', 'vfnmsac',
-                'vfmadd', 'vfnmadd', 'vfmsub', 'vfnmsub', 'vfwmacc', 'vfwnmacc', 
+                'vfmadd', 'vfnmadd', 'vfmsub', 'vfnmsub', 'vfwmacc', 'vfwnmacc',
                 'vfwmsac', 'vfwnmsac'
             ]
 
@@ -122,15 +122,15 @@ def generate_instruction_signature(instr_name: str,
     return f'{instr_name}({signature_args_joined})'
 
 
-def generate_emitter_call(instr_encoding: str, 
+def generate_emitter_call(instr_encoding: str,
                           instr_args: List[str],
-                          emitter_name: str, 
+                          emitter_name: str,
                           emitter_args: List[str]
 ) -> str:
     '''
         Produce a call to an underlying C++ emitter from
         the `CodeGenerator` class defined in xbyak_riscv.hpp
-    '''    
+    '''
     def is_dest_register(r): return bool(re.match('.*d.*', r))
     def has_dest_register(args): return any(is_dest_register(arg) for arg in args)
 
@@ -149,7 +149,7 @@ def generate_emitter_call(instr_encoding: str,
                 __emitter_args[i] = instr_args[-1]
         else:
             if '_' in arg:
-                # handle argument variants like lumop/lumop, rs2, vs2 in load/store instructions 
+                # handle argument variants like lumop/lumop, rs2, vs2 in load/store instructions
                 arg_variants = arg.split(sep='_')
                 # try to find any of the variants in the instruction's arguments
                 index = None
@@ -165,7 +165,7 @@ def generate_emitter_call(instr_encoding: str,
             else:
                 if not arg in instr_args:
                     # the argument had been encoded in the `encoding` string of the instruction specification
-                    __emitter_args[i] = 'ENCODED' 
+                    __emitter_args[i] = 'ENCODED'
 
     # join arguments into a single string and return the resulting emitter call
     emitter_args_joined = ', '.join(__emitter_args)
@@ -174,9 +174,9 @@ def generate_emitter_call(instr_encoding: str,
 
 
 def generate_OPV(instr_name: str,
-                 instr_encoding: str, 
+                 instr_encoding: str,
                  instr_args: List[str],
-                 emitter_name: str, 
+                 emitter_name: str,
                  emitter_args: List[str]
 ) -> None:
     '''
@@ -191,12 +191,12 @@ def generate_OPV(instr_name: str,
 
 
 def generate_OPIVV(instr_name: str, instr_encoding: str, instr_args: List[str]) -> None:
-    generate_OPV(instr_name, instr_encoding, instr_args, 
+    generate_OPV(instr_name, instr_encoding, instr_args,
                  emitter_name='opIVV', emitter_args=['vm', 'vs2', 'vs1', 'vd'])
 
 
 def generate_OPFVV(instr_name: str, instr_encoding: str, instr_args: List[str]) -> None:
-    generate_OPV(instr_name, instr_encoding, instr_args, 
+    generate_OPV(instr_name, instr_encoding, instr_args,
                  emitter_name='opFVV', emitter_args=['vm', 'vs2', 'vs1', 'd'])
 
 
@@ -216,7 +216,7 @@ def generate_OPIVX(instr_name: str, instr_encoding: str, instr_args: List[str]) 
 
 
 def generate_OPFVF(instr_name: str, instr_encoding: str, instr_args: List[str]) -> None:
-    generate_OPV(instr_name, instr_encoding, instr_args, 
+    generate_OPV(instr_name, instr_encoding, instr_args,
                  emitter_name='opFVF', emitter_args=['vm', 'vs2', 'rs1', 'vd'])
 
 
@@ -312,7 +312,7 @@ void vsetivli(const Reg& rd, uint32_t uimm, SEW sew, LMUL lmul=LMUL::m1, VTA vta
     append4B(v);
 }
 
-void vsetvli(const Reg& rd, const Reg& rs1, SEW sew, LMUL lmul=LMUL::m1, VTA vta=VTA::tu, VMA vma=VMA::mu) { 
+void vsetvli(const Reg& rd, const Reg& rs1, SEW sew, LMUL lmul=LMUL::m1, VTA vta=VTA::tu, VMA vma=VMA::mu) {
     uint32_t zimm = (static_cast<uint32_t>(vma)<<7) |
                     (static_cast<uint32_t>(vta)<<6) |
                     (static_cast<uint32_t>(sew)<<3) |

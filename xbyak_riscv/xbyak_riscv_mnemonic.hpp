@@ -874,7 +874,7 @@ void vsetivli(const Reg& rd, uint32_t uimm, SEW sew, LMUL lmul=LMUL::m1, VTA vta
     append4B(v);
 }
 
-void vsetvli(const Reg& rd, const Reg& rs1, SEW sew, LMUL lmul=LMUL::m1, VTA vta=VTA::tu, VMA vma=VMA::mu) { 
+void vsetvli(const Reg& rd, const Reg& rs1, SEW sew, LMUL lmul=LMUL::m1, VTA vta=VTA::tu, VMA vma=VMA::mu) {
     uint32_t zimm = (static_cast<uint32_t>(vma)<<7) |
                     (static_cast<uint32_t>(vta)<<6) |
                     (static_cast<uint32_t>(sew)<<3) |
