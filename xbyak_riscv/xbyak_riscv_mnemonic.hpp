@@ -1,11 +1,10 @@
 
-/******************************************************************************
-* Copyright (c), 2023, MITSUNARI Shigeo
-* Copyright (C), 2023, KNS Group LLC (YADRO)
-*
-* Licensed under the 3-Clause BSD License
-* You may obtain a copy of the License at https://opensource.org/license/bsd-3-clause/
-*******************************************************************************/
+/*
+	Copyright (C), 2023, MITSUNARI Shigeo
+	Copyright (C), 2023, KNS Group LLC (YADRO)
+	Licensed under the 3-Clause BSD License
+	You may obtain a copy of the License at https://opensource.org/license/bsd-3-clause/
+*/
 
 void add(const Reg& rd, const Reg& rs1, const Reg& rs2) { Rtype(0x33, 0, 0x0, rd, rs1, rs2); }
 void sub(const Reg& rd, const Reg& rs1, const Reg& rs2) { Rtype(0x33, 0, 0x20, rd, rs1, rs2); }
