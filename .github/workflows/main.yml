@@ -18,3 +18,4 @@ jobs:
     - run: apt -y update
     - run: apt -y install make g++ binutils-riscv64-linux-gnu binutils-riscv64-unknown-elf python3
     - run: make test
+    - run: env CXX="g++ -std=c++11 -DNDEBUG --pedantic" make test
