@@ -170,7 +170,8 @@ def generate_emitter_call(instr_encoding: str,
     # join arguments into a single string and return the resulting emitter call
     # replace ENCODED with 0 to avoid a macro ENCODED
     emitter_args_joined = ', '.join(__emitter_args).replace("ENCODED", "0")
-    baseValue = '0b' + instr_encoding.replace('-', '0')
+    # Use hexadecimal literal instead of binary literal because it is not supported in C++11.
+    baseValue = hex(int('0b' + instr_encoding.replace('-', '0'), 2))
     return f'{emitter_name}({baseValue}, {emitter_args_joined});'
 
 
