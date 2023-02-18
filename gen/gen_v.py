@@ -168,7 +168,8 @@ def generate_emitter_call(instr_encoding: str,
                     __emitter_args[i] = 'ENCODED'
 
     # join arguments into a single string and return the resulting emitter call
-    emitter_args_joined = ', '.join(__emitter_args)
+    # replace ENCODED with 0 to avoid a macro ENCODED
+    emitter_args_joined = ', '.join(__emitter_args).replace("ENCODED", "0")
     baseValue = '0b' + instr_encoding.replace('-', '0')
     return f'{emitter_name}({baseValue}, {emitter_args_joined});'
 
@@ -269,7 +270,7 @@ def generate_vector_store(instr_name: str, instr_encoding: str, instr_args: List
 
 
 def generate_RVV():
-    print('#define ENCODED uint32_t(0b0)')
+#    print('#define ENCODED uint32_t(0b0)')
 
     # read RVV intructions dictionary
     with open('rvv_instr_dict.yaml') as f:
