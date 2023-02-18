@@ -869,7 +869,7 @@ void vsetivli(const Reg& rd, uint32_t uimm, SEW sew, LMUL lmul=LMUL::m1, VTA vta
                     (static_cast<uint32_t>(vta)<<6) |
                     (static_cast<uint32_t>(sew)<<3) |
                     (static_cast<uint32_t>(lmul));
-    uint32_t v = (0b11<<30) | (zimm<<20) | (uimm<<15) | (0b111<<12) | (rd.getIdx()<<7) | (0b1010111);
+    uint32_t v = (0x3<<30) | (zimm<<20) | (uimm<<15) | (0x7<<12) | (rd.getIdx()<<7) | (0x57);
     append4B(v);
 }
 
@@ -878,20 +878,20 @@ void vsetvli(const Reg& rd, const Reg& rs1, SEW sew, LMUL lmul=LMUL::m1, VTA vta
                     (static_cast<uint32_t>(vta)<<6) |
                     (static_cast<uint32_t>(sew)<<3) |
                     (static_cast<uint32_t>(lmul));
-    uint32_t v = (0b0<<31) | (zimm<<20) | (rs1.getIdx()<<15) | (0b111<<12) | (rd.getIdx()<<7) | (0b1010111);
+    uint32_t v = (0x0<<31) | (zimm<<20) | (rs1.getIdx()<<15) | (0x7<<12) | (rd.getIdx()<<7) | (0x57);
     append4B(v);
 }
 
 void vsetvl(const Reg& rd, const Reg& rs1, const Reg& rs2) {
-    uint32_t v = (0b1000000<<25) | (rs2.getIdx()<<20) | (rs1.getIdx()<<15) | (0b111<<12) | (rd.getIdx()<<7) | (0b1010111);
+    uint32_t v = (0x40<<25) | (rs2.getIdx()<<20) | (rs1.getIdx()<<15) | (0x7<<12) | (rd.getIdx()<<7) | (0x57);
     append4B(v);
 }
 
 
-void csrrw(const Reg& rd, CSR csr, const Reg& rs1) { opCSR(0b00000000000000000001000001110011, csr, rs1, rd); }
-void csrrs(const Reg& rd, CSR csr, const Reg& rs1) { opCSR(0b00000000000000000010000001110011, csr, rs1, rd); }
-void csrrc(const Reg& rd, CSR csr, const Reg& rs1) { opCSR(0b00000000000000000011000001110011, csr, rs1, rd); }
-void csrrwi(const Reg& rd, CSR csr, uint32_t imm) { opCSR(0b00000000000000000101000001110011, csr, imm, rd); }
-void csrrsi(const Reg& rd, CSR csr, uint32_t imm) { opCSR(0b00000000000000000110000001110011, csr, imm, rd); }
-void csrrci(const Reg& rd, CSR csr, uint32_t imm) { opCSR(0b00000000000000000111000001110011, csr, imm, rd); }
+void csrrw(const Reg& rd, CSR csr, const Reg& rs1) { opCSR(0x1073, csr, rs1, rd); }
+void csrrs(const Reg& rd, CSR csr, const Reg& rs1) { opCSR(0x2073, csr, rs1, rd); }
+void csrrc(const Reg& rd, CSR csr, const Reg& rs1) { opCSR(0x3073, csr, rs1, rd); }
+void csrrwi(const Reg& rd, CSR csr, uint32_t imm) { opCSR(0x5073, csr, imm, rd); }
+void csrrsi(const Reg& rd, CSR csr, uint32_t imm) { opCSR(0x6073, csr, imm, rd); }
+void csrrci(const Reg& rd, CSR csr, uint32_t imm) { opCSR(0x7073, csr, imm, rd); }
 

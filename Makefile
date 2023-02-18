@@ -24,6 +24,11 @@ test:
 	$(MAKE) -C gen
 	$(MAKE) -C test test
 
+bin2hex:
+	python3 gen/bin2hex.py xbyak_riscv/xbyak_riscv.hpp
+	python3 gen/bin2hex.py xbyak_riscv/xbyak_riscv_csr.hpp
+	python3 gen/bin2hex.py xbyak_riscv/xbyak_riscv_mnemonic.hpp
+
 test_svc:
 	$(MAKE) -C test test_svc
 

@@ -5,4 +5,3 @@ $(HEADER): gen.py bit_pattern.py replace.py gen_v.py
 	python3 gen_v.py >> $(HEADER)
 	python3 replace.py
 
-
