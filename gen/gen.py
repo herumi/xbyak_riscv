@@ -1,3 +1,10 @@
+print('''/*
+	Copyright (C), 2023, MITSUNARI Shigeo
+	Copyright (C), 2023, KNS Group LLC (YADRO)
+	Licensed under the 3-Clause BSD License
+	You may obtain a copy of the License at https://opensource.org/license/bsd-3-clause/
+*/''')
+
 tbl = [
  (0b0000000,0b000, 0b0110011, 'add'),
  (0b0100000,0b000, 0b0110011, 'sub'),
@@ -214,3 +221,26 @@ void ret() { jalr(x0, x1); }
 void lr_w(const Reg& rd, const Reg& addr, uint32_t flag = 0) { opAtomic(rd, 0, addr, 2, 2, flag); }
 void lr_d(const Reg& rd, const Reg& addr, uint32_t flag = 0) { opAtomic(rd, 0, addr, 2, 3, flag); }
 ''')
+
+# encode Zicsr instructions
+tbl = [
+  (0b00000000000000000001000001110011, 'csrrw', 0),
+  (0b00000000000000000010000001110011, 'csrrs', 0),
+  (0b00000000000000000011000001110011, 'csrrc', 0),
+  (0b00000000000000000101000001110011, 'csrrwi', 1),
+  (0b00000000000000000110000001110011, 'csrrsi', 1),
+  (0b00000000000000000111000001110011, 'csrrci', 1),
+]
+for (code, name, imm) in tbl:
+  if imm == 0:
+    print(f'void {name}(const Reg& rd, CSR csr, const Reg& rs1) {{ opCSR({hex(code)}, csr, rs1, rd); }}')
+  else:
+    print(f'void {name}(const Reg& rd, CSR csr, uint32_t imm) {{ opCSR({hex(code)}, csr, imm, rd); }}')
+print('''
+void csrr(const Reg& rd, CSR csr) { csrrs(rd, csr, x0); }
+void csrw(CSR csr, const Reg& rs) { csrrw(x0, csr, rs); }
+void csrs(CSR csr, const Reg& rs) { csrrs(x0, csr, rs); }
+void csrc(CSR csr, const Reg& rs) { csrrc(x0, csr, rs); }
+void csrwi(CSR csr, uint32_t imm) { csrrwi(x0, csr, imm); }
+void csrsi(CSR csr, uint32_t imm) { csrrsi(x0, csr, imm); }
+void csrci(CSR csr, uint32_t imm) { csrrci(x0, csr, imm); }''')

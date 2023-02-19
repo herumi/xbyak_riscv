@@ -1,3 +1,9 @@
+/*
+	Copyright (C), 2023, MITSUNARI Shigeo
+	Copyright (C), 2023, KNS Group LLC (YADRO)
+	Licensed under the 3-Clause BSD License
+	You may obtain a copy of the License at https://opensource.org/license/bsd-3-clause/
+*/
 void add(const Reg& rd, const Reg& rs1, const Reg& rs2) { Rtype(0x33, 0, 0x0, rd, rs1, rs2); }
 void sub(const Reg& rd, const Reg& rs1, const Reg& rs2) { Rtype(0x33, 0, 0x20, rd, rs1, rs2); }
 void sll(const Reg& rd, const Reg& rs1, const Reg& rs2) { Rtype(0x33, 1, 0x0, rd, rs1, rs2); }
@@ -127,3 +133,17 @@ void ret() { jalr(x0, x1); }
 void lr_w(const Reg& rd, const Reg& addr, uint32_t flag = 0) { opAtomic(rd, 0, addr, 2, 2, flag); }
 void lr_d(const Reg& rd, const Reg& addr, uint32_t flag = 0) { opAtomic(rd, 0, addr, 2, 3, flag); }
 
+void csrrw(const Reg& rd, CSR csr, const Reg& rs1) { opCSR(0x1073, csr, rs1, rd); }
+void csrrs(const Reg& rd, CSR csr, const Reg& rs1) { opCSR(0x2073, csr, rs1, rd); }
+void csrrc(const Reg& rd, CSR csr, const Reg& rs1) { opCSR(0x3073, csr, rs1, rd); }
+void csrrwi(const Reg& rd, CSR csr, uint32_t imm) { opCSR(0x5073, csr, imm, rd); }
+void csrrsi(const Reg& rd, CSR csr, uint32_t imm) { opCSR(0x6073, csr, imm, rd); }
+void csrrci(const Reg& rd, CSR csr, uint32_t imm) { opCSR(0x7073, csr, imm, rd); }
+
+void csrr(const Reg& rd, CSR csr) { csrrs(rd, csr, x0); }
+void csrw(CSR csr, const Reg& rs) { csrrw(x0, csr, rs); }
+void csrs(CSR csr, const Reg& rs) { csrrs(x0, csr, rs); }
+void csrc(CSR csr, const Reg& rs) { csrrc(x0, csr, rs); }
+void csrwi(CSR csr, uint32_t imm) { csrrwi(x0, csr, imm); }
+void csrsi(CSR csr, uint32_t imm) { csrrsi(x0, csr, imm); }
+void csrci(CSR csr, uint32_t imm) { csrrci(x0, csr, imm); }

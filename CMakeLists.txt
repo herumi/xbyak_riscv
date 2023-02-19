@@ -53,3 +53,5 @@ install(
 	FILES ${headers}
 	DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/xbyak_riscv
 )
+
+add_subdirectory(sample)
