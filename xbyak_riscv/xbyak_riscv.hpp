@@ -429,7 +429,7 @@ static constexpr  FReg f8(8), f9(9), f10(10), f11(11), f12(12), f13(13), f14(14)
 static constexpr  FReg f16(16), f17(17), f18(18), f19(19), f20(20), f21(21), f22(22), f23(23);
 static constexpr  FReg f24(24), f25(25), f26(26), f27(27), f28(28), f29(29), f30(30), f31(31);
 
-
+#if defined(XBYAK_RISCV_V) && XBYAK_RISCV_V == 1
 struct VReg : public Reg {
 	explicit constexpr VReg(int idx = 0, Kind kind = Reg::Kind::VECTOR) : Reg(idx, kind) { }
 };
@@ -438,6 +438,7 @@ static constexpr VReg v0(0), v1(1), v2(2), v3(3), v4(4), v5(5), v6(6), v7(7);
 static constexpr VReg v8(8), v9(9), v10(10), v11(11), v12(12), v13(13), v14(14), v15(15);
 static constexpr VReg v16(16), v17(17), v18(18), v19(19), v20(20), v21(21), v22(22), v23(23);
 static constexpr VReg v24(24), v25(25), v26(26), v27(27), v28(28), v29(29), v30(30), v31(31);
+#endif
 
 // 2nd parameter for constructor of CodeArray(maxSize, userPtr, alloc)
 void *const DontSetProtectRWE = (void*)2; //-V566
@@ -1192,8 +1193,9 @@ public:
 	// set read/exec
 	void readyRE() { return ready(PROTECT_RE); }
 
-#ifndef XBYAK_RISCV_DONT_READ_LIST
 #include "xbyak_riscv_mnemonic.hpp"
+#if defined(XBYAK_RISCV_V) && XBYAK_RISCV_V == 1
+#include "xbyak_riscv_v.hpp"
 #endif
 };
 

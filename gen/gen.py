@@ -1,15 +1,9 @@
-import gen_v
-
-print(
-'''
-/*
+print('''/*
 	Copyright (C), 2023, MITSUNARI Shigeo
 	Copyright (C), 2023, KNS Group LLC (YADRO)
 	Licensed under the 3-Clause BSD License
 	You may obtain a copy of the License at https://opensource.org/license/bsd-3-clause/
-*/
-'''
-)
+*/''')
 
 tbl = [
  (0b0000000,0b000, 0b0110011, 'add'),
@@ -228,16 +222,17 @@ void lr_w(const Reg& rd, const Reg& addr, uint32_t flag = 0) { opAtomic(rd, 0, a
 void lr_d(const Reg& rd, const Reg& addr, uint32_t flag = 0) { opAtomic(rd, 0, addr, 2, 3, flag); }
 ''')
 
-gen_v.generate_RVV()
-
 # encode Zicsr instructions
-print(
-'''
-void csrrw(const Reg& rd, CSR csr, const Reg& rs1) { opCSR(0b00000000000000000001000001110011, csr, rs1, rd); }
-void csrrs(const Reg& rd, CSR csr, const Reg& rs1) { opCSR(0b00000000000000000010000001110011, csr, rs1, rd); }
-void csrrc(const Reg& rd, CSR csr, const Reg& rs1) { opCSR(0b00000000000000000011000001110011, csr, rs1, rd); }
-void csrrwi(const Reg& rd, CSR csr, uint32_t imm) { opCSR(0b00000000000000000101000001110011, csr, imm, rd); }
-void csrrsi(const Reg& rd, CSR csr, uint32_t imm) { opCSR(0b00000000000000000110000001110011, csr, imm, rd); }
-void csrrci(const Reg& rd, CSR csr, uint32_t imm) { opCSR(0b00000000000000000111000001110011, csr, imm, rd); }
-'''
-)
+tbl = [
+  (0b00000000000000000001000001110011, 'csrrw', 0),
+  (0b00000000000000000010000001110011, 'csrrs', 0),
+  (0b00000000000000000011000001110011, 'csrrc', 0),
+  (0b00000000000000000101000001110011, 'csrrwi', 1),
+  (0b00000000000000000110000001110011, 'csrrsi', 1),
+  (0b00000000000000000111000001110011, 'csrrci', 1),
+]
+for (code, name, imm) in tbl:
+  if imm == 0:
+    print(f'void {name}(const Reg& rd, CSR csr, const Reg& rs1) {{ opCSR({hex(code)}, csr, rs1, rd); }}')
+  else:
+    print(f'void {name}(const Reg& rd, CSR csr, uint32_t imm) {{ opCSR({hex(code)}, csr, imm, rd); }}')

@@ -16,4 +16,5 @@ def main():
   with open(name, 'w') as f:
     f.write(text)
 
-main()
+if __name__ == '__main__':
+  main()

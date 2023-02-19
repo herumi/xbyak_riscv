@@ -327,5 +327,10 @@ void vsetvl(const Reg& rd, const Reg& rs1, const Reg& rs2) {
     uint32_t v = (0b1000000<<25) | (rs2.getIdx()<<20) | (rs1.getIdx()<<15) | (0b111<<12) | (rd.getIdx()<<7) | (0b1010111);
     append4B(v);
 }
-'''
-    )
+''')
+
+def main():
+  generate_RVV()
+
+if __name__ == '__main__':
+  main()
