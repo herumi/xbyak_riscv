@@ -139,3 +139,11 @@ void csrrc(const Reg& rd, CSR csr, const Reg& rs1) { opCSR(0x3073, csr, rs1, rd)
 void csrrwi(const Reg& rd, CSR csr, uint32_t imm) { opCSR(0x5073, csr, imm, rd); }
 void csrrsi(const Reg& rd, CSR csr, uint32_t imm) { opCSR(0x6073, csr, imm, rd); }
 void csrrci(const Reg& rd, CSR csr, uint32_t imm) { opCSR(0x7073, csr, imm, rd); }
+
+void csrr(const Reg& rd, CSR csr) { csrrs(rd, csr, x0); }
+void csrw(CSR csr, const Reg& rs) { csrrw(x0, csr, rs); }
+void csrs(CSR csr, const Reg& rs) { csrrs(x0, csr, rs); }
+void csrc(CSR csr, const Reg& rs) { csrrc(x0, csr, rs); }
+void csrwi(CSR csr, uint32_t imm) { csrrwi(x0, csr, imm); }
+void csrsi(CSR csr, uint32_t imm) { csrrsi(x0, csr, imm); }
+void csrci(CSR csr, uint32_t imm) { csrrci(x0, csr, imm); }

@@ -109,6 +109,12 @@ def csr():
   for op in ['csrrwi', 'csrrsi', 'csrrci']:
     put(op, f'x10, {castCSR(9)}, 13')
 
+  put('csrr', f'x2, {castCSR(1)}')
+  for op in ['csrw', 'csrs', 'csrc']:
+    put(op, f'{castCSR(2)}, x3')
+  for op in ['csrwi', 'csrsi', 'csrci']:
+    put(op, f'{castCSR(4)}, 9')
+
 def misc():
   for name in ['ret', 'ecall', 'ebreak', 'nop']:
     put(name)

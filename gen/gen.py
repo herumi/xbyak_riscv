@@ -236,3 +236,11 @@ for (code, name, imm) in tbl:
     print(f'void {name}(const Reg& rd, CSR csr, const Reg& rs1) {{ opCSR({hex(code)}, csr, rs1, rd); }}')
   else:
     print(f'void {name}(const Reg& rd, CSR csr, uint32_t imm) {{ opCSR({hex(code)}, csr, imm, rd); }}')
+print('''
+void csrr(const Reg& rd, CSR csr) { csrrs(rd, csr, x0); }
+void csrw(CSR csr, const Reg& rs) { csrrw(x0, csr, rs); }
+void csrs(CSR csr, const Reg& rs) { csrrs(x0, csr, rs); }
+void csrc(CSR csr, const Reg& rs) { csrrc(x0, csr, rs); }
+void csrwi(CSR csr, uint32_t imm) { csrrwi(x0, csr, imm); }
+void csrsi(CSR csr, uint32_t imm) { csrrsi(x0, csr, imm); }
+void csrci(CSR csr, uint32_t imm) { csrrci(x0, csr, imm); }''')
