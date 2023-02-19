@@ -99,6 +99,16 @@ def putLr(suf, flag):
       flag = '.' + flag
     print(f'lr.{suf}{flag} {rd}, ({rs1})')
 
+def csr():
+  def castCSR(x):
+    return f'CSR({x})' if isXbyak else f'{x}'
+
+  for op in ['csrrw', 'csrrs', 'csrrc']:
+    put(op, f'x1, {castCSR(5)}, x7')
+
+  for op in ['csrrwi', 'csrrsi', 'csrrci']:
+    put(op, f'x10, {castCSR(9)}, 13')
+
 def misc():
   for name in ['ret', 'ecall', 'ebreak', 'nop']:
     put(name)
@@ -157,6 +167,7 @@ def main():
     putLr('w', flag)
     putLr('d', flag)
 
+  csr()
   misc()
 
 
