@@ -1,3 +1,9 @@
+/*
+	Copyright (C), 2023, MITSUNARI Shigeo
+	Copyright (C), 2023, KNS Group LLC (YADRO)
+	Licensed under the 3-Clause BSD License
+	You may obtain a copy of the License at https://opensource.org/license/bsd-3-clause/
+*/
 void vaadd_vv(VReg vd, VReg vs2, VReg vs1, VM vm=VM::unmasked) { opMVV(0x24002057, vm, vs2, vs1, vd); }
 void vaadd_vx(VReg vd, VReg vs2, Reg rs1, VM vm=VM::unmasked) { opMVX(0x24006057, vm, vs2, rs1, vd); }
 void vaaddu_vv(VReg vd, VReg vs2, VReg vs1, VM vm=VM::unmasked) { opMVV(0x20002057, vm, vs2, vs1, vd); }

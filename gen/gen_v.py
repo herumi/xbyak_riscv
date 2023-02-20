@@ -11,6 +11,7 @@ from typing import List
 from collections import defaultdict
 from copy import deepcopy
 import re
+import copyright
 
 # LOAD-FP major opcode for Vector Load Instructions
 LOAD_FP_MAJOR = '0000111'
@@ -330,6 +331,7 @@ void vsetvl(const Reg& rd, const Reg& rs1, const Reg& rs2) {
 ''')
 
 def main():
+  copyright.put()
   generate_RVV()
 
 if __name__ == '__main__':
