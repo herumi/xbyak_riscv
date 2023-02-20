@@ -52,3 +52,7 @@ x18-27|s2-11
 x28-31|t3-6
 
 These names are defined in the `Xbyak_riscv` namespace.
+
+# Macros
+
+- Define `XBYAK_RISCV_V = 1` to enable Vector Operations.
