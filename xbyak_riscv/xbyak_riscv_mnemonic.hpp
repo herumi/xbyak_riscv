@@ -106,6 +106,12 @@ void amominu_w(const Reg& rd, const Reg& rs2, const Reg& addr, uint32_t flag = 0
 void amominu_d(const Reg& rd, const Reg& rs2, const Reg& addr, uint32_t flag = 0) { opAtomic(rd, rs2, addr, 0x18, 3, flag); }
 void amomaxu_w(const Reg& rd, const Reg& rs2, const Reg& addr, uint32_t flag = 0) { opAtomic(rd, rs2, addr, 0x1c, 2, flag); }
 void amomaxu_d(const Reg& rd, const Reg& rs2, const Reg& addr, uint32_t flag = 0) { opAtomic(rd, rs2, addr, 0x1c, 3, flag); }
+void csrrw(const Reg& rd, CSR csr, const Reg& rs1) { opCSR(0x1073, csr, rs1, rd); }
+void csrrs(const Reg& rd, CSR csr, const Reg& rs1) { opCSR(0x2073, csr, rs1, rd); }
+void csrrc(const Reg& rd, CSR csr, const Reg& rs1) { opCSR(0x3073, csr, rs1, rd); }
+void csrrwi(const Reg& rd, CSR csr, uint32_t imm) { opCSR(0x5073, csr, imm, rd); }
+void csrrsi(const Reg& rd, CSR csr, uint32_t imm) { opCSR(0x6073, csr, imm, rd); }
+void csrrci(const Reg& rd, CSR csr, uint32_t imm) { opCSR(0x7073, csr, imm, rd); }
 
 void nop() { if (supportRVC_) { append2B(0x0001); return;} addi(x0, x0, 0); }
 void li(const Reg& rd, int imm) { addi(rd, x0, imm); }
@@ -132,14 +138,6 @@ void ret() { jalr(x0, x1); }
 // lr rd, (addr)
 void lr_w(const Reg& rd, const Reg& addr, uint32_t flag = 0) { opAtomic(rd, 0, addr, 2, 2, flag); }
 void lr_d(const Reg& rd, const Reg& addr, uint32_t flag = 0) { opAtomic(rd, 0, addr, 2, 3, flag); }
-
-void csrrw(const Reg& rd, CSR csr, const Reg& rs1) { opCSR(0x1073, csr, rs1, rd); }
-void csrrs(const Reg& rd, CSR csr, const Reg& rs1) { opCSR(0x2073, csr, rs1, rd); }
-void csrrc(const Reg& rd, CSR csr, const Reg& rs1) { opCSR(0x3073, csr, rs1, rd); }
-void csrrwi(const Reg& rd, CSR csr, uint32_t imm) { opCSR(0x5073, csr, imm, rd); }
-void csrrsi(const Reg& rd, CSR csr, uint32_t imm) { opCSR(0x6073, csr, imm, rd); }
-void csrrci(const Reg& rd, CSR csr, uint32_t imm) { opCSR(0x7073, csr, imm, rd); }
-
 void csrr(const Reg& rd, CSR csr) { csrrs(rd, csr, x0); }
 void csrw(CSR csr, const Reg& rs) { csrrw(x0, csr, rs); }
 void csrs(CSR csr, const Reg& rs) { csrrs(x0, csr, rs); }
@@ -147,3 +145,4 @@ void csrc(CSR csr, const Reg& rs) { csrrc(x0, csr, rs); }
 void csrwi(CSR csr, uint32_t imm) { csrrwi(x0, csr, imm); }
 void csrsi(CSR csr, uint32_t imm) { csrrsi(x0, csr, imm); }
 void csrci(CSR csr, uint32_t imm) { csrrci(x0, csr, imm); }
+
