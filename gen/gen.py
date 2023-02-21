@@ -93,7 +93,13 @@ tbl = [
 ]
 
 for (pre, funct3, opcode, name) in tbl:
-  print(f'void {name}(const Reg& rd, const Reg& rs1, uint32_t shamt) {{ opShift({hex(pre)}, {funct3}, {hex(opcode)}, rd, rs1, shamt); }}')
+  if name == 'srli':
+    rvc = f'if (supportRVC_ && c_srli(rd, rs1, shamt, 0)) return; '
+  elif name == 'srai':
+    rvc = f'if (supportRVC_ && c_srli(rd, rs1, shamt, 1)) return; '
+  else:
+    rvc = ''
+  print(f'void {name}(const Reg& rd, const Reg& rs1, uint32_t shamt) {{ {rvc}opShift({hex(pre)}, {funct3}, {hex(opcode)}, rd, rs1, shamt); }}')
 
 tbl = [
   (0b0000000, 0b001, 0b0011011, 'slliw'),

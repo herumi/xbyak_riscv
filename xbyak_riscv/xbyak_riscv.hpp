@@ -1121,6 +1121,16 @@ private:
 		append2B(v);
 		return true;
 	}
+	// c_srli, csrai
+	bool c_srli(const Reg& rd, const Reg& rs, int imm, uint32_t funct2)
+	{
+		uint32_t dIdx = rd.getIdx();
+		uint32_t sIdx = rs.getIdx();
+		if (dIdx != sIdx || !isValiCidx(dIdx) || imm >= (1 << 6)) return false;
+		uint32_t v = (4<<13) | (funct2<<10) | ((dIdx-8)<<7) | local::get5_z5_4to0_z2(imm) | 1;
+		append2B(v);
+		return true;
+	}
 public:
 	void L(Label& label) { labelMgr_.defineClabel(label); }
 	Label L() { Label label; L(label); return label; }

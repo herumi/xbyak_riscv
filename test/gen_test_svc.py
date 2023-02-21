@@ -22,7 +22,7 @@ def lwTest():
   for i in range(0, 256+8, 8):
     putRM('sd', 'x8', 'x10', i)
 
-def addTest():
+def immTest():
   #c.addi4spn
   for i in range(32):
     put('addi', f'x{i}, x2, 4')
@@ -50,10 +50,15 @@ def addTest():
   for i in range(-33,33):
     put('li', f'x5, {i}')
   # c.lui
-  for i in range(0,34):
+  for i in range(34):
     put('lui', f'x5, {i}')
   for i in range((1<<20)-33,(1<<20)):
     put('lui', f'x5, {i}')
+  # c.srli
+  for i in range(10):
+    put('srli', f'a3, a3, {i}')
+  for i in range(4,10):
+    put('srli', f'x{i}, x{i}, 4')
 
 def main():
   if len(sys.argv) > 1 and sys.argv[1] == 'gas':
@@ -62,7 +67,7 @@ def main():
     print('supportRVC();')
 
   lwTest()
-  addTest()
+  immTest()
 
 if __name__ == '__main__':
   main()
