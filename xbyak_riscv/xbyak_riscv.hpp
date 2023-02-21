@@ -1062,7 +1062,7 @@ private:
 	{
 		uint32_t dIdx = rd.getIdx();
 		uint32_t sIdx = rs.getIdx();
-		if (sIdx == 0 && c_li(rd, imm)) return true;
+		if (sIdx == 0 && c_li(rd, imm, 2, 1)) return true;
 		if (dIdx == 0 || dIdx != sIdx || !local::inSBit(imm, 6)) return false;
 		uint32_t v = (funct3<<13) | ((imm & (1<<5))<<7)  | (dIdx<<7) | ((imm & 31)<<2)| 1;
 		append2B(v);
@@ -1075,10 +1075,10 @@ private:
 		append2B(v);
 		return true;
 	}
-	bool c_li(const Reg& rd, uint32_t imm)
+	bool c_li(const Reg& rd, uint32_t imm, uint32_t funct3, uint32_t op)
 	{
 		if (rd == x0 || !local::inSBit(imm, 6)) return false;
-		uint32_t v = (2<<13) | (rd.getIdx() << 7) | 1 | local::get5_z5_4to0_z2(imm);
+		uint32_t v = (funct3<<13) | (rd.getIdx() << 7) | op | local::get5_z5_4to0_z2(imm);
 		append2B(v);
 		return true;
 	}
@@ -1126,7 +1126,7 @@ private:
 	{
 		uint32_t dIdx = rd.getIdx();
 		uint32_t sIdx = rs.getIdx();
-		if (dIdx != sIdx || !isValiCidx(dIdx) || imm >= (1 << 6)) return false;
+		if (dIdx != sIdx || !isValiCidx(dIdx) || imm == 0 || imm >= (1 << 6)) return false;
 		uint32_t v = (4<<13) | (funct2<<10) | ((dIdx-8)<<7) | local::get5_z5_4to0_z2(imm) | 1;
 		append2B(v);
 		return true;

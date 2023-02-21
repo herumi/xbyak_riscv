@@ -54,11 +54,12 @@ def immTest():
     put('lui', f'x5, {i}')
   for i in range((1<<20)-33,(1<<20)):
     put('lui', f'x5, {i}')
-  # c.srli
-  for i in range(10):
-    put('srli', f'a3, a3, {i}')
-  for i in range(4,10):
-    put('srli', f'x{i}, x{i}, 4')
+  # c.srli, c.srai, c.slli
+  for op in ['srli', 'srai', 'slli']:
+    for i in range(10):
+      put(op, f'a3, a3, {i}')
+    for i in range(4,10):
+      put(op, f'x{i}, x{i}, 4')
 
 def main():
   if len(sys.argv) > 1 and sys.argv[1] == 'gas':
