@@ -867,6 +867,10 @@ struct Bit {
 		: v(static_cast<uint32_t>(csr))
 	{
 	}
+	Bit(const RM& rm)
+		: v(static_cast<uint32_t>(rm))
+	{
+	}
 };
 
 } // local
@@ -1053,6 +1057,56 @@ private:
 			func3 and opcode must be encoded in the baseValue
 		*/
 		uint32_t v = (csr.v<<20) | (rs1_uimm.v<<15) | (rd.v<<7);
+		v |= baseValue.v; // force-encode base value
+		append4B(v);
+	}
+	void opLoadFP(Bit32 baseValue, Bit12 imm, Bit5 rs1, Bit5 rd)
+	{
+		/*
+			31 .. 20 | 19 .. 15 | 14 .. 12 | 11 .. 7 | 6 .. 0
+			imm[11:0]     rs1       width       rd      opcode
+
+			width and opcode must be encoded in the baseValue
+		*/
+		uint32_t v = (imm.v<<20) | (rs1.v<<15) | (rd.v<<7);
+		v |= baseValue.v; // force-encode base value
+		append4B(v);
+	}
+	void opStoreFP(Bit32 baseValue, Bit12 imm, Bit5 rs2, Bit5 rs1)
+	{
+		/*
+			31 .. 25 | 24 .. 20 | 19 .. 15 | 14 .. 12 | 11 .. 7 | 6 .. 0
+			imm[11:5]     rs2        rs1       width    imm[4:0]   opcode
+
+			width and opcode must be encoded in the baseValue
+		*/
+		uint32_t imm_11_5 = imm.v & (local::mask(7)<<5);
+		uint32_t imm_4_0 = imm.v & local::mask(5);
+		uint32_t v = (imm_11_5<<25) | (rs2.v<<20) | (rs1.v<<15) | (imm_4_0<<7);
+		v |= baseValue.v; // force-encode base value
+		append4B(v);
+	}
+	void opFP(Bit32 baseValue, Bit5 rs2, Bit5 rs1, Bit3 rm, Bit5 rd)
+	{
+		/*
+			31 .. 27 | 26 .. 25 | 24 .. 20 | 19 .. 15 | 14 .. 12 | 11 .. 7 | 6 .. 0
+			  func5       fmt        rs2        rs1        rm         rd      opcode
+
+			func5, fmt, and opcode must be encoded in the baseValue
+		*/
+		uint32_t v = (rs2.v<<20) | (rs1.v<<15) | (rm.v<<12) | (rd.v<<7);
+		v |= baseValue.v; // force-encode base value
+		append4B(v);
+	}
+	void opR4(Bit32 baseValue, Bit5 rs3, Bit5 rs2, Bit5 rs1, Bit3 rm, Bit5 rd)
+	{
+		/*
+			31 .. 27 | 26 .. 25 | 24 .. 20 | 19 .. 15 | 14 .. 12 | 11 .. 7 | 6 .. 0
+			   rs3        fmt        rs2        rs1        rm         rd      opcode
+
+			fmt and opcode must be encoded in the baseValue
+		*/
+		uint32_t v = (rs3.v<<27) | (rs2.v<<20) | (rs1.v<<15) | (rm.v<<12) | (rd.v<<7);
 		v |= baseValue.v; // force-encode base value
 		append4B(v);
 	}

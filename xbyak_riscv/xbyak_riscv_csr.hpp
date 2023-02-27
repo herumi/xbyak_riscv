@@ -20,6 +20,7 @@ enum class CSR : uint32_t {
     vlenb  = 0xC22, // VLEN/8 (vector register length in bytes)
 };
 
+
 // Selected Element Width
 enum class SEW : uint32_t {
     e8  = 0x0,
@@ -84,6 +85,16 @@ enum class WidthEncoding : uint32_t {
 enum class VM : uint32_t {
     unmasked = 1,
     masked = 0
+};
+
+enum class RM : uint32_t {
+    RNE = 0x0, // Round to Nearest, ties to Even
+    RTZ = 0x1, // Round towards Zero
+    RDN = 0x2, // Round Down (towards −∞)
+    RUP = 0x3, // Round Up (towards +∞)
+    RMM = 0x4, // Round to Nearest, ties to Max Magnitude
+    DYN = 0x7  // In instruction’s rm field, selects dynamic rounding mode;
+               // In Rounding Mode register, reserved.
 };
 
 } // Xbyak_riscv

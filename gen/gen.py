@@ -210,6 +210,128 @@ for (code, name, imm) in tbl:
   else:
     print(f'void {name}(const Reg& rd, CSR csr, uint32_t imm) {{ opCSR({hex(code)}, csr, imm, rd); }}')
 
+# encode RV32F, RV64F instructions with OP-FP opcode
+tbl = [
+  # RV32_F extension
+  (0b00000000000000000000000001010011, 'rs2', 'rm', 'fadd_s'),
+  (0b11100000000000000001000001010011, '-', '-', 'fclass_s'),
+  (0b11010000000000000000000001010011, '-', 'rm', 'fcvt_s_w'),
+  (0b11010000000100000000000001010011, '-', 'rm', 'fcvt_s_wu'),
+  (0b11000000000000000000000001010011, '-', 'rm', 'fcvt_w_s'),
+  (0b11000000000100000000000001010011, '-', 'rm', 'fcvt_wu_s'),
+  (0b00011000000000000000000001010011, 'rs2', 'rm', 'fdiv_s'),
+  (0b10100000000000000010000001010011, 'rs2', '-', 'feq_s'),
+  (0b10100000000000000000000001010011, 'rs2', '-', 'fle_s'),
+  (0b10100000000000000001000001010011, 'rs2', '-', 'flt_s'),
+  (0b00101000000000000001000001010011, 'rs2', '-', 'fmax_s'),
+  (0b00101000000000000000000001010011, 'rs2', '-', 'fmin_s'),
+  (0b00010000000000000000000001010011, 'rs2', 'rm', 'fmul_s'),
+  (0b11110000000000000000000001010011, '-', '-', 'fmv_w_x'),
+  (0b11100000000000000000000001010011, '-', '-', 'fmv_x_w'),
+  (0b00100000000000000000000001010011, 'rs2', '-', 'fsgnj_s'),
+  (0b00100000000000000001000001010011, 'rs2', '-', 'fsgnjn_s'),
+  (0b00100000000000000010000001010011, 'rs2', '-', 'fsgnjx_s'),
+  (0b01011000000000000000000001010011, '-', 'rm', 'fsqrt_s'),
+  (0b00001000000000000000000001010011, 'rs2', 'rm', 'fsub_s'),
+  # RV64_F extension
+  (0b11000000001000000000000001010011, '-', 'rm', 'fcvt_l_s'),
+  (0b11000000001100000000000001010011, '-', 'rm', 'fcvt_lu_s'),
+  (0b11010000001000000000000001010011, '-', 'rm', 'fcvt_s_l'),
+  (0b11010000001100000000000001010011, '-', 'rm', 'fcvt_s_lu'),
+  # RV32_Zfh extension
+  (0b00000100000000000000000001010011, 'rs2', 'rm', 'fadd_h'),
+  (0b11100100000000000001000001010011, '-', '-', 'fclass_h'),
+  (0b01000100000000000000000001010011, '-', 'rm', 'fcvt_h_s'),
+  (0b11010100000000000000000001010011, '-', 'rm', 'fcvt_h_w'),
+  (0b11010100000100000000000001010011, '-', 'rm', 'fcvt_h_wu'),
+  (0b01000000001000000000000001010011, '-', 'rm', 'fcvt_s_h'),
+  (0b11000100000000000000000001010011, '-', 'rm', 'fcvt_w_h'),
+  (0b11000100000100000000000001010011, '-', 'rm', 'fcvt_wu_h'),
+  (0b00011100000000000000000001010011, 'rs2', 'rm', 'fdiv_h'),
+  (0b10100100000000000010000001010011, 'rs2', '-', 'feq_h'),
+  (0b10100100000000000000000001010011, 'rs2', '-', 'fle_h'),
+  (0b10100100000000000001000001010011, 'rs2', '-', 'flt_h'),
+  (0b00101100000000000001000001010011, 'rs2', '-', 'fmax_h'),
+  (0b00101100000000000000000001010011, 'rs2', '-', 'fmin_h'),
+  (0b00010100000000000000000001010011, 'rs2', 'rm', 'fmul_h'),
+  (0b11110100000000000000000001010011, '-', '-', 'fmv_h_x'),
+  (0b11100100000000000000000001010011, '-', '-', 'fmv_x_h'),
+  (0b00100100000000000000000001010011, 'rs2', '-', 'fsgnj_h'),
+  (0b00100100000000000001000001010011, 'rs2', '-', 'fsgnjn_h'),
+  (0b00100100000000000010000001010011, 'rs2', '-', 'fsgnjx_h'),
+  (0b01011100000000000000000001010011, '-', 'rm', 'fsqrt_h'),
+  (0b00001100000000000000000001010011, 'rs2', 'rm', 'fsub_h'),
+  # RV64_Zfh extension
+  (0b11010100001000000000000001010011, '-', 'rm', 'fcvt_h_l'),
+  (0b11010100001100000000000001010011, '-', 'rm', 'fcvt_h_lu'),
+  (0b11000100001000000000000001010011, '-', 'rm', 'fcvt_l_h'),
+  (0b11000100001100000000000001010011, '-', 'rm', 'fcvt_lu_h'),
+]
+
+
+def opFP(baseValue, rs2, rm, name):
+  # nested helper functions
+  def is_encoded(arg): return arg == '-'
+  def is_not_encoded(arg): return arg != '-'
+
+  # generate C++ signature
+  rd_type, rs1_type = 'FReg', 'FReg'
+  if any([name.startswith(p) for p in ['fcvt', 'fmv', 'fclass']]):
+    if name not in ['fcvt_s_w', 'fcvt_s_wu', 'fcvt_s_l', 'fcvt_s_lu', 'fmv_w_x',
+                    'fcvt_h_w', 'fcvt_h_wu', 'fcvt_h_l', 'fcvt_h_lu', 'fmv_h_x']:
+      rd_type = 'Reg'
+
+    if name not in ['fcvt_w_s', 'fcvt_wu_s', 'fcvt_l_s', 'fcvt_lu_s', 'fmv_x_w', 'fclass_s',
+                                'fcvt_w_h', 'fcvt_wu_h', 'fcvt_l_h', 'fcvt_lu_h', 'fmv_x_h', 'fclass_h']:
+      rs1_type = 'Reg'
+
+  if any([name.startswith(p) for p in ['feq', 'flt', 'fle']]):
+    rd_type = 'Reg'
+
+  signature_args = [f'const {rd_type}& rd', f'const {rs1_type}& rs1']
+  if is_not_encoded(rs2):
+    signature_args.append('const FReg& rs2')
+  if is_not_encoded(rm):
+    signature_args.append('RM rm=RM::DYN')
+  signature_args_joined = ', '.join(signature_args)
+  signature = f'{name}({signature_args_joined})'
+  # generate emitter call
+  emitter_args = [hex(baseValue), 'rs2', 'rs1', 'rm', 'rd']
+  if is_encoded(rs2):
+    emitter_args = ['0' if arg == 'rs2' else arg for arg in emitter_args]
+  if is_encoded(rm):
+    emitter_args = ['0' if arg == 'rm' else arg for arg in emitter_args]
+  emitter_args_joined = ', '.join(emitter_args)
+  emitter_call = f'opFP({emitter_args_joined});'
+  # generate final implementation
+  print(f'void {signature} {{ {emitter_call} }}')
+
+
+for (baseValue, rs2, rm, name) in tbl:
+  opFP(baseValue, rs2, rm, name)
+
+
+# encode F[N]MADD/F[N]MSUB instructions
+print('''
+void fmadd_s(const FReg& rd, const FReg& rs1, const FReg& rs2, const FReg& rs3, RM rm=RM::DYN) { opR4(0x43, rs3, rs2, rs1, rm, rd); }
+void fmsub_s(const FReg& rd, const FReg& rs1, const FReg& rs2, const FReg& rs3, RM rm=RM::DYN) { opR4(0x47, rs3, rs2, rs1, rm, rd); }
+void fnmsub_s(const FReg& rd, const FReg& rs1, const FReg& rs2, const FReg& rs3, RM rm=RM::DYN) { opR4(0x4b, rs3, rs2, rs1, rm, rd); }
+void fnmadd_s(const FReg& rd, const FReg& rs1, const FReg& rs2, const FReg& rs3, RM rm=RM::DYN) { opR4(0x4f, rs3, rs2, rs1, rm, rd); }
+
+void fmadd_h(const FReg& rd, const FReg& rs1, const FReg& rs2, const FReg& rs3, RM rm=RM::DYN) { opR4(0x4000043, rs3, rs2, rs1, rm, rd); }
+void fmsub_h(const FReg& rd, const FReg& rs1, const FReg& rs2, const FReg& rs3, RM rm=RM::DYN) { opR4(0x4000047, rs3, rs2, rs1, rm, rd); }
+void fnmsub_h(const FReg& rd, const FReg& rs1, const FReg& rs2, const FReg& rs3, RM rm=RM::DYN) { opR4(0x400004b, rs3, rs2, rs1, rm, rd); }
+void fnmadd_h(const FReg& rd, const FReg& rs1, const FReg& rs2, const FReg& rs3, RM rm=RM::DYN) { opR4(0x400004f, rs3, rs2, rs1, rm, rd); }
+''')
+
+# encode LOAD-FP, STORE-FP instructions
+print('''
+void flw(const FReg& rd, int32_t imm12, const Reg& rs1) { opLoadFP(0x2007, imm12, rs1, rd); }
+void fsw(const FReg& rs2, int32_t imm12, const Reg& rs1) { opStoreFP(0x2027, imm12, rs2, rs1); }
+void flh(const FReg& rd, int32_t imm12, const Reg& rs1) { opLoadFP(0x1007, imm12, rs1, rd); }
+void fsh(const FReg& rs2, int32_t imm12, const Reg& rs1) { opStoreFP(0x1027, imm12, rs2, rs1); }
+''')
+
 # misc
 print('''
 void nop() { if (supportRVC_) { append2B(0x0001); return;} addi(x0, x0, 0); }
