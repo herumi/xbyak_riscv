@@ -43,6 +43,8 @@ make -C sample
 #### 光成滋生 Mitsunari Shigeo
  [GitHub](https://github.com/herumi) | [Website (Japanese)](http://herumi.in.coocan.jp/) | [herumi@nifty.com](mailto:herumi@nifty.com)
 
+Thanks to [pazamelin](https://github.com/pazamelin) for the tremendous contribution.
+
 ## Sponsors welcome
 [GitHub Sponsor](https://github.com/sponsors/herumi)
 
