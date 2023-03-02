@@ -373,7 +373,7 @@ public:
 				"x24", "x25", "x26", "x27", "x28", "x29", "x30", "x31",
 			};
 			return tbl[idx_];
-		} else if (kind_ ==  FReg) {
+		} else if (kind_ == FReg) {
 			static const char tbl[][4] = {
 				"f0", "f1", "f2", "f3", "f4", "f5", "f6", "f7",
 				"f8", "f9", "f10", "f11", "f12", "f13", "f14", "f15",
@@ -420,14 +420,14 @@ static constexpr Reg s2(x18), s3(x19), s4(x20), s5(x21), s6(x22), s7(x23), s8(x2
 static constexpr Reg s10(x26), s11(x27);
 static constexpr Reg t3(x28), t4(x29), t5(x30), t6(x31);
 
-struct  FReg : public Reg {
-	explicit constexpr  FReg(int idx = 0, Kind kind = Reg::Kind:: FReg) : Reg(idx, kind) { }
+struct FReg : public Reg {
+	explicit constexpr FReg(int idx = 0, Kind kind = Reg::Kind:: FReg) : Reg(idx, kind) { }
 };
 
-static constexpr  FReg f0(0), f1(1), f2(2), f3(3), f4(4), f5(5), f6(6), f7(7);
-static constexpr  FReg f8(8), f9(9), f10(10), f11(11), f12(12), f13(13), f14(14), f15(15);
-static constexpr  FReg f16(16), f17(17), f18(18), f19(19), f20(20), f21(21), f22(22), f23(23);
-static constexpr  FReg f24(24), f25(25), f26(26), f27(27), f28(28), f29(29), f30(30), f31(31);
+static constexpr FReg f0(0), f1(1), f2(2), f3(3), f4(4), f5(5), f6(6), f7(7);
+static constexpr FReg f8(8), f9(9), f10(10), f11(11), f12(12), f13(13), f14(14), f15(15);
+static constexpr FReg f16(16), f17(17), f18(18), f19(19), f20(20), f21(21), f22(22), f23(23);
+static constexpr FReg f24(24), f25(25), f26(26), f27(27), f28(28), f29(29), f30(30), f31(31);
 
 #if defined(XBYAK_RISCV_V) && XBYAK_RISCV_V == 1
 struct VReg : public Reg {
@@ -1118,7 +1118,7 @@ private:
 		uint32_t sIdx = rs.getIdx();
 		if (sIdx == 0 && c_li(rd, imm, 2, 1)) return true;
 		if (dIdx == 0 || dIdx != sIdx || !local::inSBit(imm, 6)) return false;
-		uint32_t v = (funct3<<13) | ((imm & (1<<5))<<7)  | (dIdx<<7) | ((imm & 31)<<2)| 1;
+		uint32_t v = (funct3<<13) | ((imm & (1<<5))<<7) | (dIdx<<7) | ((imm & 31)<<2)| 1;
 		append2B(v);
 		return true;
 	}

@@ -33,7 +33,7 @@ bool areF32VectorsEqual(const std::vector<float>& lhs, const std::vector<float>&
     const auto mismatchPair = std::mismatch(lhs.cbegin(), lhs.cend(), rhs.cbegin());
     if (mismatchPair.first != lhs.cend()) {
         std::cout << "Incorrect result:\n";
-        std::cout << "Expected " << *mismatchPair.first << ", but got "<< *mismatchPair.second << "!\n"; 
+        std::cout << "Expected " << *mismatchPair.first << ", but got "<< *mismatchPair.second << "!\n";
         return false;
     }
 
