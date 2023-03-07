@@ -115,6 +115,15 @@ def csr():
   for op in ['csrwi', 'csrsi', 'csrci']:
     put(op, f'{castCSR(4)}, 9')
 
+def fpu():
+  opTbl = ['fadd_s']
+  rmTbl = ['rne', 'rtz', 'rdn', 'rup', 'rmm', 'dyn']
+  for op in opTbl:
+    for rm in rmTbl:
+      if isXbyak:
+        rm = 'RM::' + rm
+      put(op, f'f1, f2, f3, {rm}')
+
 def misc():
   for name in ['ret', 'ecall', 'ebreak', 'nop']:
     put(name)
@@ -174,6 +183,7 @@ def main():
     putLr('d', flag)
 
   csr()
+  fpu()
   misc()
 
 
