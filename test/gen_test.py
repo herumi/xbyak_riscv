@@ -116,13 +116,19 @@ def csr():
     put(op, f'{castCSR(4)}, 9')
 
 def fpu():
-  opTbl = ['fadd_s']
   rmTbl = ['rne', 'rtz', 'rdn', 'rup', 'rmm', 'dyn']
-  for op in opTbl:
-    for rm in rmTbl:
-      if isXbyak:
-        rm = 'RM::' + rm
+  for rm in rmTbl:
+    if isXbyak:
+      rm = 'RM::' + rm
+    op4Tbl = ['fmadd_s', 'fmsub_s', 'fnmsub_s', 'fnmadd_s'] #, 'fmadd_h', 'fmsub_h', 'fnmsub_h', 'fnmadd_h']
+    for op in op4Tbl:
+      put(op, f'f1, f2, f3, f4, {rm}')
+    op3Tbl = ['fadd_s', 'fsub_s', 'fmul_s', 'fdiv_s']
+    for op in op3Tbl:
       put(op, f'f1, f2, f3, {rm}')
+    op2Tbl = ['fsqrt_s']
+    for op in op2Tbl:
+      put(op, f'f1, f2, {rm}')
 
 def misc():
   for name in ['ret', 'ecall', 'ebreak', 'nop']:
