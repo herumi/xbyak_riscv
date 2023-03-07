@@ -88,12 +88,12 @@ enum class VM : uint32_t {
 };
 
 enum class RM : uint32_t {
-    RNE = 0x0, // Round to Nearest, ties to Even
-    RTZ = 0x1, // Round towards Zero
-    RDN = 0x2, // Round Down (towards −∞)
-    RUP = 0x3, // Round Up (towards +∞)
-    RMM = 0x4, // Round to Nearest, ties to Max Magnitude
-    DYN = 0x7  // In instruction’s rm field, selects dynamic rounding mode;
+    rne = 0x0, // Round to Nearest, ties to Even
+    rtz = 0x1, // Round towards Zero
+    rdn = 0x2, // Round Down (towards -infinity)
+    rup = 0x3, // Round Up (towards + infinity)
+    rmm = 0x4, // Round to Nearest, ties to Max Magnitude
+    dyn = 0x7  // In instruction’s rm field, selects dynamic rounding mode;
                // In Rounding Mode register, reserved.
 };
 

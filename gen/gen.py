@@ -292,7 +292,7 @@ def opFP(baseValue, rs2, rm, name):
   if is_not_encoded(rs2):
     signature_args.append('const FReg& rs2')
   if is_not_encoded(rm):
-    signature_args.append('RM rm=RM::DYN')
+    signature_args.append('RM rm=RM::dyn')
   signature_args_joined = ', '.join(signature_args)
   signature = f'{name}({signature_args_joined})'
   # generate emitter call
@@ -313,15 +313,15 @@ for (baseValue, rs2, rm, name) in tbl:
 
 # encode F[N]MADD/F[N]MSUB instructions
 print('''
-void fmadd_s(const FReg& rd, const FReg& rs1, const FReg& rs2, const FReg& rs3, RM rm=RM::DYN) { opR4(0x43, rs3, rs2, rs1, rm, rd); }
-void fmsub_s(const FReg& rd, const FReg& rs1, const FReg& rs2, const FReg& rs3, RM rm=RM::DYN) { opR4(0x47, rs3, rs2, rs1, rm, rd); }
-void fnmsub_s(const FReg& rd, const FReg& rs1, const FReg& rs2, const FReg& rs3, RM rm=RM::DYN) { opR4(0x4b, rs3, rs2, rs1, rm, rd); }
-void fnmadd_s(const FReg& rd, const FReg& rs1, const FReg& rs2, const FReg& rs3, RM rm=RM::DYN) { opR4(0x4f, rs3, rs2, rs1, rm, rd); }
+void fmadd_s(const FReg& rd, const FReg& rs1, const FReg& rs2, const FReg& rs3, RM rm=RM::dyn) { opR4(0x43, rs3, rs2, rs1, rm, rd); }
+void fmsub_s(const FReg& rd, const FReg& rs1, const FReg& rs2, const FReg& rs3, RM rm=RM::dyn) { opR4(0x47, rs3, rs2, rs1, rm, rd); }
+void fnmsub_s(const FReg& rd, const FReg& rs1, const FReg& rs2, const FReg& rs3, RM rm=RM::dyn) { opR4(0x4b, rs3, rs2, rs1, rm, rd); }
+void fnmadd_s(const FReg& rd, const FReg& rs1, const FReg& rs2, const FReg& rs3, RM rm=RM::dyn) { opR4(0x4f, rs3, rs2, rs1, rm, rd); }
 
-void fmadd_h(const FReg& rd, const FReg& rs1, const FReg& rs2, const FReg& rs3, RM rm=RM::DYN) { opR4(0x4000043, rs3, rs2, rs1, rm, rd); }
-void fmsub_h(const FReg& rd, const FReg& rs1, const FReg& rs2, const FReg& rs3, RM rm=RM::DYN) { opR4(0x4000047, rs3, rs2, rs1, rm, rd); }
-void fnmsub_h(const FReg& rd, const FReg& rs1, const FReg& rs2, const FReg& rs3, RM rm=RM::DYN) { opR4(0x400004b, rs3, rs2, rs1, rm, rd); }
-void fnmadd_h(const FReg& rd, const FReg& rs1, const FReg& rs2, const FReg& rs3, RM rm=RM::DYN) { opR4(0x400004f, rs3, rs2, rs1, rm, rd); }
+void fmadd_h(const FReg& rd, const FReg& rs1, const FReg& rs2, const FReg& rs3, RM rm=RM::dyn) { opR4(0x4000043, rs3, rs2, rs1, rm, rd); }
+void fmsub_h(const FReg& rd, const FReg& rs1, const FReg& rs2, const FReg& rs3, RM rm=RM::dyn) { opR4(0x4000047, rs3, rs2, rs1, rm, rd); }
+void fnmsub_h(const FReg& rd, const FReg& rs1, const FReg& rs2, const FReg& rs3, RM rm=RM::dyn) { opR4(0x400004b, rs3, rs2, rs1, rm, rd); }
+void fnmadd_h(const FReg& rd, const FReg& rs1, const FReg& rs2, const FReg& rs3, RM rm=RM::dyn) { opR4(0x400004f, rs3, rs2, rs1, rm, rd); }
 ''')
 
 # encode LOAD-FP, STORE-FP instructions
