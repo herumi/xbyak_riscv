@@ -428,6 +428,11 @@ static constexpr FReg f0(0), f1(1), f2(2), f3(3), f4(4), f5(5), f6(6), f7(7);
 static constexpr FReg f8(8), f9(9), f10(10), f11(11), f12(12), f13(13), f14(14), f15(15);
 static constexpr FReg f16(16), f17(17), f18(18), f19(19), f20(20), f21(21), f22(22), f23(23);
 static constexpr FReg f24(24), f25(25), f26(26), f27(27), f28(28), f29(29), f30(30), f31(31);
+// ABI name
+static constexpr FReg ft0(0), ft1(1), ft2(2), ft3(3), ft4(4), ft5(5), ft6(6), ft7(7);
+static constexpr FReg fs0(8), fs1(9), fa0(10), fa1(11), fa2(12), fa3(13), fa4(14), fa5(15), fa6(16), fa7(f17);
+static constexpr FReg fs2(18), fs3(19), fs4(20), fs5(21), fs6(22), fs7(23), fs8(24), fs9(25), fs10(26), fs11(27);
+static constexpr FReg ft8(28), ft9(29), ft10(30), ft11(31);
 
 #if defined(XBYAK_RISCV_V) && XBYAK_RISCV_V == 1
 struct VReg : public Reg {
