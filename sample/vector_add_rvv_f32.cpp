@@ -137,10 +137,10 @@ struct vecSumJITGenerator : public CodeGenerator {
             Label vvaddfloat32;
             L(vvaddfloat32);
             // Load values from lhs and rhs, sum and store to result
-            flw(f10, 0, a1);
-            flw(f11, 0, a2);
+            flw(f10, a1);
+            flw(f11, a2);
             fadd_s(f12, f10, f11);
-            fsw(f12, 0, a0);
+            fsw(f12, a0);
             // Move pointers, increase counter
             addi(a0, a0, 4);
             addi(a1, a1, 4);
