@@ -46,6 +46,9 @@ def putFR(name, nm=""):
 def putRF(name, nm=""):
   putFPU(name, 'x9, f10', nm)
 
+def putRFF(name, nm=""):
+  putFPU(name, 'x9, f10, f3', nm)
+
 def putRR(name):
   put(name, 'x1, x2')
 
@@ -145,6 +148,18 @@ def fpu():
   for op in tbl:
     putFFF(op)
 
+  tbl = ['fmv_x_w', 'fclass_s']
+  for op in tbl:
+    putRF(op)
+
+  tbl = ['feq_s', 'flt_s', 'fle_s']
+  for op in tbl:
+    putRFF(op)
+
+  tbl = ['fcvt_s_w', 'fcvt_s_wu', 'fmv_w_x']
+  for op in tbl:
+    putFR(op)
+
   rmTbl = ['rne', 'rtz', 'rdn', 'rup', 'rmm', 'dyn']
   for rm in rmTbl:
     tbl = ['fmadd_s', 'fmsub_s', 'fnmsub_s', 'fnmadd_s'] #, 'fmadd_h', 'fmsub_h', 'fnmsub_h', 'fnmadd_h']
@@ -155,7 +170,7 @@ def fpu():
     for op in tbl:
       putFFF(op, rm)
 
-    tbl = ['fcvt_l_s', 'fcvt_lu_s']
+    tbl = ['fcvt_l_s', 'fcvt_lu_s', 'fcvt_w_s', 'fcvt_wu_s']
     for op in tbl:
       putRF(op, rm)
 
