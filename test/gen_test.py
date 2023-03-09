@@ -21,6 +21,34 @@ def put(name, args=""):
 def putRRR(name):
   put(name, 'x1, x2, x3')
 
+def addRM(rm):
+  if isXbyak:
+    return 'RM::' + rm
+  return rm
+
+def putFPU(name, arg, rm=""):
+  if rm:
+    arg += f', {addRM(rm)}'
+  put(name, arg)
+
+def putFFFF(name, nm=""):
+  putFPU(name, 'f1, f2, f3, f4', nm)
+
+def putFFF(name, nm=""):
+  putFPU(name, 'f1, f2, f3', nm)
+
+def putFF(name, nm=""):
+  putFPU(name, 'f2, f3', nm)
+
+def putFR(name, nm=""):
+  putFPU(name, 'f1, x5', nm)
+
+def putRF(name, nm=""):
+  putFPU(name, 'x9, f10', nm)
+
+def putRFF(name, nm=""):
+  putFPU(name, 'x9, f10, f3', nm)
+
 def putRR(name):
   put(name, 'x1, x2')
 
@@ -115,6 +143,50 @@ def csr():
   for op in ['csrwi', 'csrsi', 'csrci']:
     put(op, f'{castCSR(4)}, 9')
 
+def fpu():
+  tbl = ['flw', 'fsw']
+  immTbl = [0, -4, 123, (1<<11)-1, -(1<<11)]
+  for op in tbl:
+    for imm in immTbl:
+      putRM(op, 'f3', 'x5', imm)
+  tbl = ['fsgnj_s', 'fsgnjn_s', 'fsgnjx_s', 'fmin_s', 'fmax_s']
+  for op in tbl:
+    putFFF(op)
+
+  tbl = ['fmv_x_w', 'fclass_s']
+  for op in tbl:
+    putRF(op)
+
+  tbl = ['feq_s', 'flt_s', 'fle_s']
+  for op in tbl:
+    putRFF(op)
+
+  tbl = ['fcvt_s_w', 'fcvt_s_wu', 'fmv_w_x']
+  for op in tbl:
+    putFR(op)
+
+  rmTbl = ['rne', 'rtz', 'rdn', 'rup', 'rmm', 'dyn']
+  for rm in rmTbl:
+    tbl = ['fmadd_s', 'fmsub_s', 'fnmsub_s', 'fnmadd_s'] #, 'fmadd_h', 'fmsub_h', 'fnmsub_h', 'fnmadd_h']
+    for op in tbl:
+      putFFFF(op, rm)
+
+    tbl = ['fadd_s', 'fsub_s', 'fmul_s', 'fdiv_s']
+    for op in tbl:
+      putFFF(op, rm)
+
+    tbl = ['fcvt_l_s', 'fcvt_lu_s', 'fcvt_w_s', 'fcvt_wu_s']
+    for op in tbl:
+      putRF(op, rm)
+
+    tbl = ['fcvt_s_l', 'fcvt_s_lu']
+    for op in tbl:
+      putFR(op, rm)
+
+    tbl = ['fsqrt_s']
+    for op in tbl:
+      putFF(op, rm)
+
 def misc():
   for name in ['ret', 'ecall', 'ebreak', 'nop']:
     put(name)
@@ -174,6 +246,7 @@ def main():
     putLr('d', flag)
 
   csr()
+  fpu()
   misc()
 
 
