@@ -326,10 +326,10 @@ void fnmadd_h(const FReg& rd, const FReg& rs1, const FReg& rs2, const FReg& rs3,
 
 # encode LOAD-FP, STORE-FP instructions
 print('''
-void flw(const FReg& rd, int32_t imm12, const Reg& rs1) { opLoadFP(0x2007, imm12, rs1, rd); }
-void fsw(const FReg& rs2, int32_t imm12, const Reg& rs1) { opStoreFP(0x2027, imm12, rs2, rs1); }
-void flh(const FReg& rd, int32_t imm12, const Reg& rs1) { opLoadFP(0x1007, imm12, rs1, rd); }
-void fsh(const FReg& rs2, int32_t imm12, const Reg& rs1) { opStoreFP(0x1027, imm12, rs2, rs1); }
+void flw(const FReg& rd, const Reg& rs1, int32_t imm12 = 0) { opLoadFP(0x2007, imm12, rs1, rd); }
+void fsw(const FReg& rs2, const Reg& rs1, int32_t imm12 = 0) { opStoreFP(0x2027, imm12, rs2, rs1); }
+void flh(const FReg& rd, const Reg& rs1, int32_t imm12 = 0) { opLoadFP(0x1007, imm12, rs1, rd); }
+void fsh(const FReg& rs2, const Reg& rs1, int32_t imm12 = 0) { opStoreFP(0x1027, imm12, rs2, rs1); }
 ''')
 
 # misc
