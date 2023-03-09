@@ -144,8 +144,11 @@ def csr():
     put(op, f'{castCSR(4)}, 9')
 
 def fpu():
-  putRM('flw', 'f3', 'x5', 123)
-  putRM('fsw', 'f3', 'x5', 0)
+  tbl = ['flw', 'fsw']
+  immTbl = [0, -4, 123, (1<<11)-1, -(1<<11)]
+  for op in tbl:
+    for imm in immTbl:
+      putRM(op, 'f3', 'x5', imm)
   tbl = ['fsgnj_s', 'fsgnjn_s', 'fsgnjx_s', 'fmin_s', 'fmax_s']
   for op in tbl:
     putFFF(op)

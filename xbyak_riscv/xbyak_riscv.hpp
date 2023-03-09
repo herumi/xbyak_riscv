@@ -1065,28 +1065,30 @@ private:
 		v |= baseValue.v; // force-encode base value
 		append4B(v);
 	}
-	void opLoadFP(Bit32 baseValue, Bit12 imm, Bit5 rs1, Bit5 rd)
+	void opLoadFP(Bit32 baseValue, int imm, Bit5 rs1, Bit5 rd)
 	{
+		if (!local::inSBit(imm, 12)) XBYAK_RISCV_THROW(ERR_IMM_IS_TOO_BIG)
 		/*
 			31 .. 20 | 19 .. 15 | 14 .. 12 | 11 .. 7 | 6 .. 0
 			imm[11:0]     rs1       width       rd      opcode
 
 			width and opcode must be encoded in the baseValue
 		*/
-		uint32_t v = (imm.v<<20) | (rs1.v<<15) | (rd.v<<7);
+		uint32_t v = (imm<<20) | (rs1.v<<15) | (rd.v<<7);
 		v |= baseValue.v; // force-encode base value
 		append4B(v);
 	}
-	void opStoreFP(Bit32 baseValue, Bit12 imm, Bit5 rs2, Bit5 rs1)
+	void opStoreFP(Bit32 baseValue, int imm, Bit5 rs2, Bit5 rs1)
 	{
+		if (!local::inSBit(imm, 12)) XBYAK_RISCV_THROW(ERR_IMM_IS_TOO_BIG)
 		/*
 			31 .. 25 | 24 .. 20 | 19 .. 15 | 14 .. 12 | 11 .. 7 | 6 .. 0
 			imm[11:5]     rs2        rs1       width    imm[4:0]   opcode
 
 			width and opcode must be encoded in the baseValue
 		*/
-		uint32_t imm_11_5 = imm.v & (local::mask(7)<<5);
-		uint32_t imm_4_0 = imm.v & local::mask(5);
+		uint32_t imm_11_5 = imm & (local::mask(7)<<5);
+		uint32_t imm_4_0 = imm & local::mask(5);
 		uint32_t v = (imm_11_5<<20) | (rs2.v<<20) | (rs1.v<<15) | (imm_4_0<<7);
 		v |= baseValue.v; // force-encode base value
 		append4B(v);
