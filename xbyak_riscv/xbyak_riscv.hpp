@@ -1087,7 +1087,7 @@ private:
 		*/
 		uint32_t imm_11_5 = imm.v & (local::mask(7)<<5);
 		uint32_t imm_4_0 = imm.v & local::mask(5);
-		uint32_t v = (imm_11_5<<25) | (rs2.v<<20) | (rs1.v<<15) | (imm_4_0<<7);
+		uint32_t v = (imm_11_5<<20) | (rs2.v<<20) | (rs1.v<<15) | (imm_4_0<<7);
 		v |= baseValue.v; // force-encode base value
 		append4B(v);
 	}
