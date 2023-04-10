@@ -112,8 +112,8 @@ inline const char *ConvertErrorToString(int err)
 		"offset is too big",
 		"code is too big",
 		"imm is too big",
-		"invliad imm of jal",
-		"invliad imm of Btye",
+		"invalid imm of jal",
+		"invalid imm of Btype",
 		"label is not found",
 		"label is redefined",
 		"label is too far",
@@ -222,7 +222,7 @@ inline constexpr bool inBit(uint32_t x, size_t n)
 	return x <= mask(n);
 }
 
-// is x is signed n-bit integer?
+// is x a signed n-bit integer?
 inline constexpr bool inSBit(int x, int n)
 {
 	return -(1 << (n-1)) <= x && x < (1 << (n-1));
