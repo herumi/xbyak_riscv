@@ -54,8 +54,8 @@ def immTest():
     put('lui', f'x5, {i}')
   for i in range((1<<20)-33,(1<<20)):
     put('lui', f'x5, {i}')
-  # c.srli, c.srai, c.slli
-  for op in ['srli', 'srai', 'slli']:
+  # c.srli, c.srai, c.slli, c.andi
+  for op in ['srli', 'srai', 'slli', 'andi']:
     for i in range(10):
       put(op, f'a3, a3, {i}')
     for i in range(4,10):

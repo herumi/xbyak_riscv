@@ -36,7 +36,7 @@ void slti(const Reg& rd, const Reg& rs1, int imm) { Itype(0x13, 2, rd, rs1, imm)
 void sltiu(const Reg& rd, const Reg& rs1, int imm) { Itype(0x13, 3, rd, rs1, imm); }
 void xori(const Reg& rd, const Reg& rs1, int imm) { Itype(0x13, 4, rd, rs1, imm); }
 void ori(const Reg& rd, const Reg& rs1, int imm) { Itype(0x13, 6, rd, rs1, imm); }
-void andi(const Reg& rd, const Reg& rs1, int imm) { Itype(0x13, 7, rd, rs1, imm); }
+void andi(const Reg& rd, const Reg& rs1, int imm) { if (supportRVC_ && c_srli(rd, rs1, imm, 2)) return; Itype(0x13, 7, rd, rs1, imm); }
 void addiw(const Reg& rd, const Reg& rs1, int imm) { if (supportRVC_ && c_addi_inner(rd, rs1, imm, 1)) return; Itype(0x1b, 0, rd, rs1, imm); }
 // load-op rd, imm(addr); rd = addr[imm];
 void jalr(const Reg& rd, const Reg& addr, int imm = 0) { Itype(0x67, 0, rd, addr, imm); }
