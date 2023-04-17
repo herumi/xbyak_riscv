@@ -35,10 +35,16 @@ tbl = [
 ]
 
 for (funct7, funct3, opcode, name) in tbl:
-  if name == 'sub':
-    rvc = 'if (supportRVC_ && c_noimm(rd, rs1, rs2, 0b100011, 0b00)) return; '
-  elif name == 'xor_':
-    rvc = 'if (supportRVC_ && c_noimm(rd, rs1, rs2, 0b100011, 0b01)) return; '
+  if name in ['sub', 'xor_', 'or_', 'and_', 'subw']:
+    tbl2 = {
+      'sub' : (0b100011, 0b00),
+      'xor_': (0b100011, 0b01),
+      'or_' : (0b100011, 0b10),
+      'and_': (0b100011, 0b11),
+      'subw': (0b100111, 0b00),
+    }
+    (cf3, cf2) = tbl2[name]
+    rvc = f'if (supportRVC_ && c_noimm(rd, rs1, rs2, {hex(cf3)}, {cf2})) return; '
   else:
     rvc = ''
   print(f'void {name}(const Reg& rd, const Reg& rs1, const Reg& rs2) {{ {rvc}Rtype({hex(opcode)}, {funct3}, {hex(funct7)}, rd, rs1, rs2); }}')

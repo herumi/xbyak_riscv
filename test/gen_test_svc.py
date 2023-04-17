@@ -63,10 +63,10 @@ def immTest():
 
 def noimmTest():
   # c.sub
-  for i in range(32):
-    put('sub', f'x{i}, x{i}, x9')
-  for i in range(32):
-    put('xor_', f'x{i}, x{i}, x9')
+  tbl = ['sub', 'xor_', 'or_', 'and_', 'subw']
+  for name in tbl:
+    for i in range(32):
+      put(name, f'x{i}, x{i}, x9')
 
 def main():
   if len(sys.argv) > 1 and sys.argv[1] == 'gas':
