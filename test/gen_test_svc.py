@@ -63,7 +63,7 @@ def immTest():
 
 def noimmTest():
   # c.sub
-  tbl = ['sub', 'xor_', 'or_', 'and_', 'subw']
+  tbl = ['sub', 'xor_', 'or_', 'and_', 'subw', 'addw']
   for name in tbl:
     for i in range(32):
       put(name, f'x{i}, x{i}, x9')

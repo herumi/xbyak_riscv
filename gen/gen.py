@@ -35,13 +35,14 @@ tbl = [
 ]
 
 for (funct7, funct3, opcode, name) in tbl:
-  if name in ['sub', 'xor_', 'or_', 'and_', 'subw']:
+  if name in ['sub', 'xor_', 'or_', 'and_', 'subw', 'addw']:
     tbl2 = {
       'sub' : (0b100011, 0b00),
       'xor_': (0b100011, 0b01),
       'or_' : (0b100011, 0b10),
       'and_': (0b100011, 0b11),
       'subw': (0b100111, 0b00),
+      'addw': (0b100111, 0b01),
     }
     (cf3, cf2) = tbl2[name]
     rvc = f'if (supportRVC_ && c_noimm(rd, rs1, rs2, {hex(cf3)}, {cf2})) return; '

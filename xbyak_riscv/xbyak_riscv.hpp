@@ -1193,7 +1193,7 @@ private:
 		return true;
 	}
 	// rd = rs1
-	// c_sub
+	// c_sub, c_xor, c_or, c_and, c_subw
 	bool c_noimm(const Reg& rd, const Reg& rs1, const Reg& rs2, uint32_t funct3, uint32_t funct2)
 	{
 		uint32_t dIdx = rd.getIdx();
