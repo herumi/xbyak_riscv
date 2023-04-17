@@ -36,7 +36,9 @@ tbl = [
 
 for (funct7, funct3, opcode, name) in tbl:
   if name == 'sub':
-    rvc = 'if (supportRVC_ && c_noimm(rd, rs1, rs2, 0b100011, 1)) return; '
+    rvc = 'if (supportRVC_ && c_noimm(rd, rs1, rs2, 0b100011, 0b00)) return; '
+  elif name == 'xor_':
+    rvc = 'if (supportRVC_ && c_noimm(rd, rs1, rs2, 0b100011, 0b01)) return; '
   else:
     rvc = ''
   print(f'void {name}(const Reg& rd, const Reg& rs1, const Reg& rs2) {{ {rvc}Rtype({hex(opcode)}, {funct3}, {hex(funct7)}, rd, rs1, rs2); }}')

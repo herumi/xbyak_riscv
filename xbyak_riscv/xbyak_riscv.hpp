@@ -1199,7 +1199,7 @@ private:
 		uint32_t dIdx = rd.getIdx();
 		uint32_t sIdx = rs2.getIdx();
 		if (rd.getIdx() != rs1.getIdx() || !isValiCidx(dIdx) || !isValiCidx(sIdx)) return false;
-		uint32_t v = (funct3<<13) | ((dIdx-8)<<7) | ((sIdx-8)<<7) | funct2;
+		uint32_t v = (funct3<<10) | ((dIdx-8)<<7) | (funct2<<5) | ((sIdx-8)<<2) | 1;
 		append2B(v);
 		return true;
 	}

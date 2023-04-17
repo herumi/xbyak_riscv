@@ -64,7 +64,9 @@ def immTest():
 def noimmTest():
   # c.sub
   for i in range(32):
-    put('sub', f'x9, x{i}, x{i}')
+    put('sub', f'x{i}, x{i}, x9')
+  for i in range(32):
+    put('xor_', f'x{i}, x{i}, x9')
 
 def main():
   if len(sys.argv) > 1 and sys.argv[1] == 'gas':
