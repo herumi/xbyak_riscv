@@ -35,7 +35,11 @@ tbl = [
 ]
 
 for (funct7, funct3, opcode, name) in tbl:
-  print(f'void {name}(const Reg& rd, const Reg& rs1, const Reg& rs2) {{ Rtype({hex(opcode)}, {funct3}, {hex(funct7)}, rd, rs1, rs2); }}')
+  if name == 'sub':
+    rvc = 'if (supportRVC_ && c_noimm(rd, rs1, rs2, 0b100011, 1)) return; '
+  else:
+    rvc = ''
+  print(f'void {name}(const Reg& rd, const Reg& rs1, const Reg& rs2) {{ {rvc}Rtype({hex(opcode)}, {funct3}, {hex(funct7)}, rd, rs1, rs2); }}')
 
 tbl = [
  (0b000, 0b0010011, 'addi'),

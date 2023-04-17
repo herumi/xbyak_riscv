@@ -1192,6 +1192,17 @@ private:
 		append2B(v);
 		return true;
 	}
+	// rd = rs1
+	// c_sub
+	bool c_noimm(const Reg& rd, const Reg& rs1, const Reg& rs2, uint32_t funct3, uint32_t funct2)
+	{
+		uint32_t dIdx = rd.getIdx();
+		uint32_t sIdx = rs2.getIdx();
+		if (rd.getIdx() != rs1.getIdx() || !isValiCidx(dIdx) || !isValiCidx(sIdx)) return false;
+		uint32_t v = (funct3<<13) | ((dIdx-8)<<7) | ((sIdx-8)<<7) | funct2;
+		append2B(v);
+		return true;
+	}
 public:
 	void L(Label& label) { labelMgr_.defineClabel(label); }
 	Label L() { Label label; L(label); return label; }

@@ -23,7 +23,7 @@ def lwTest():
     putRM('sd', 'x8', 'x10', i)
 
 def immTest():
-  #c.addi4spn
+  # c.addi4spn
   for i in range(32):
     put('addi', f'x{i}, x2, 4')
   for i in range(32):
@@ -61,6 +61,11 @@ def immTest():
     for i in range(4,10):
       put(op, f'x{i}, x{i}, 4')
 
+def noimmTest():
+  # c.sub
+  for i in range(32):
+    put('sub', f'x9, x{i}, x{i}')
+
 def main():
   if len(sys.argv) > 1 and sys.argv[1] == 'gas':
     setXbyak(False)
@@ -69,6 +74,7 @@ def main():
 
   lwTest()
   immTest()
+  noimmTest()
 
 if __name__ == '__main__':
   main()
