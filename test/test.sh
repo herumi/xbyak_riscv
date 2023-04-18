@@ -20,7 +20,7 @@ CFLAGS="-g -I../ -Wall -Wextra"
 
 python3 $GEN gas > generated.s
 $AS -c -o generated.o generated.s $ASFLAGS
-$OBJDUMP --no-addresses -d generated.o > ok.s
+$OBJDUMP --no-addresses -d generated.o | sed -e '1,7d' > ok.s
 awk '/        / { print $1 }' < ok.s > ok.txt
 
 python3 $GEN > generated.cpp

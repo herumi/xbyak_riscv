@@ -238,6 +238,10 @@ inline size_t get5to3_z3_7_6_z5(size_t v) { return ((v & (7<<3)) << 7)| ((v & (1
 inline size_t get5_z5_4to0_z2(size_t v) { return ((v & (1<<5)) << 7)| ((v & 31) << 2); }
 inline size_t get11_4_9to8_10_6_7_3to1_5_z2(size_t v) { return ((v & (1<<11)) << 1)| ((v & (1<<4)) << 7)| ((v & (3<<8)) << 1)| ((v & (1<<10)) >> 2)| ((v & (1<<6)) << 1)| ((v & (1<<7)) >> 1)| ((v & (7<<1)) << 2)| ((v & (1<<5)) >> 3); }
 inline size_t get17_z5_16to12_z2(size_t v) { return ((v & (1<<17)) >> 5)| ((v & (31<<12)) >> 10); }
+inline size_t get5_z5_4to2_7to6_z2(size_t v) { return ((v & (1<<5)) << 7)| ((v & (7<<2)) << 2)| ((v & (3<<6)) >> 4); }
+inline size_t get5_z5_4to3_8to6_z2(size_t v) { return ((v & (1<<5)) << 7)| ((v & (3<<3)) << 2)| ((v & (7<<6)) >> 4); }
+inline size_t get5to2_7to6_z7(size_t v) { return ((v & (15<<2)) << 7)| ((v & (3<<6)) << 1); }
+inline size_t get5to3_8to6_z7(size_t v) { return ((v & (7<<3)) << 7)| ((v & (7<<6)) << 1); }
 // @@@ embedded by bit_pattern.py (DON'T DELETE THIS LINE)
 
 } // local
@@ -1136,6 +1140,7 @@ private:
 		append2B(v);
 		return true;
 	}
+	// c_li, c_slli
 	bool c_li(const Reg& rd, uint32_t imm, uint32_t funct3, uint32_t op)
 	{
 		if (rd == x0 || !local::inSBit(imm, 6)) return false;
@@ -1153,6 +1158,7 @@ private:
 	bool c_addi(const Reg& rd, const Reg& rs, uint32_t imm)
 	{
 		uint32_t dIdx = rd.getIdx();
+		if (imm == 0 && c_mv(rd, rs, 0)) return true;
 		if (c_addi_inner(rd, rs, imm, 0)) return true;
 		if (c_addi16sp(rd, rs, imm)) return true;
 		// c.addi4spn(rd, imm) = c.addi(rd, x2, imm)
@@ -1182,13 +1188,64 @@ private:
 		append2B(v);
 		return true;
 	}
-	// c_srli, csrai
-	bool c_srli(const Reg& rd, const Reg& rs, int imm, uint32_t funct2)
+	// c_srli, c_srai, c_andi
+	bool c_srli(const Reg& rd, const Reg& rs, int imm, uint32_t funct2, bool allowImm0 = false)
 	{
 		uint32_t dIdx = rd.getIdx();
 		uint32_t sIdx = rs.getIdx();
-		if (dIdx != sIdx || !isValiCidx(dIdx) || imm == 0 || imm >= (1 << 6)) return false;
+		if (dIdx != sIdx || !isValiCidx(dIdx) || (!allowImm0 && imm == 0) || imm >= (1 << 6)) return false;
 		uint32_t v = (4<<13) | (funct2<<10) | ((dIdx-8)<<7) | local::get5_z5_4to0_z2(imm) | 1;
+		append2B(v);
+		return true;
+	}
+	// rd = rs1
+	// c_sub, c_xor, c_or, c_and, c_subw
+	bool c_noimm(const Reg& rd, const Reg& rs1, const Reg& rs2, uint32_t funct3, uint32_t funct2)
+	{
+		uint32_t dIdx = rd.getIdx();
+		uint32_t sIdx = rs2.getIdx();
+		if (rd.getIdx() != rs1.getIdx() || !isValiCidx(dIdx) || !isValiCidx(sIdx)) return false;
+		uint32_t v = (funct3<<10) | ((dIdx-8)<<7) | (funct2<<5) | ((sIdx-8)<<2) | 1;
+		append2B(v);
+		return true;
+	}
+	// c_lwsp, c_flwsp
+	bool c_lwsp(const Reg& rd, const Reg& addr, int imm, uint32_t funct3)
+	{
+		uint32_t idx = rd.getIdx();
+		if (addr != sp || (imm % 4) != 0 || (imm >> 8)) return false;
+		uint32_t v = (funct3<<13) | (idx<<7) | local::get5_z5_4to2_7to6_z2(imm) | 2;
+		append2B(v);
+		return true;
+	}
+	// c_ldsp
+	bool c_ldsp(const Reg& rd, const Reg& addr, int imm, uint32_t funct3)
+	{
+		uint32_t idx = rd.getIdx();
+		if (addr != sp || (imm % 8) != 0 || (imm >> 9)) return false;
+		uint32_t v = (funct3<<13) | (idx<<7) | local::get5_z5_4to3_8to6_z2(imm) | 2;
+		append2B(v);
+		return true;
+	}
+	// c.mv, c.add
+	bool c_mv(const Reg& rd, const Reg& rs, uint32_t funct1)
+	{
+		if (rd == 0 || rs == x0) return false;
+		uint32_t v = (4<<13) | (funct1<<12) | (rd.getIdx()<<7) | (rs.getIdx()<<2) | 2;
+		append2B(v);
+		return true;
+	}
+	bool c_swsp(const Reg& rs, const Reg& addr, int imm, uint32_t funct3)
+	{
+		if (addr != sp || (imm % 4) != 0 || (imm >> 8)) return false;
+		uint32_t v = (funct3<<13) | (rs.getIdx()<<2) | local::get5to2_7to6_z7(imm) | 2;
+		append2B(v);
+		return true;
+	}
+	bool c_sdsp(const Reg& rs, const Reg& addr, int imm, uint32_t funct3)
+	{
+		if (addr != sp || (imm % 8) != 0 || (imm >> 9)) return false;
+		uint32_t v = (funct3<<13) | (rs.getIdx()<<2) | local::get5to3_8to6_z7(imm) | 2;
 		append2B(v);
 		return true;
 	}

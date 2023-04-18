@@ -35,7 +35,22 @@ tbl = [
 ]
 
 for (funct7, funct3, opcode, name) in tbl:
-  print(f'void {name}(const Reg& rd, const Reg& rs1, const Reg& rs2) {{ Rtype({hex(opcode)}, {funct3}, {hex(funct7)}, rd, rs1, rs2); }}')
+  if name in ['sub', 'xor_', 'or_', 'and_', 'subw', 'addw']:
+    tbl2 = {
+      'sub' : (0b100011, 0b00),
+      'xor_': (0b100011, 0b01),
+      'or_' : (0b100011, 0b10),
+      'and_': (0b100011, 0b11),
+      'subw': (0b100111, 0b00),
+      'addw': (0b100111, 0b01),
+    }
+    (cf3, cf2) = tbl2[name]
+    rvc = f'if (supportRVC_ && c_noimm(rd, rs1, rs2, {hex(cf3)}, {cf2})) return; '
+  elif name == 'add':
+    rvc = 'if (supportRVC_ && rd == rs1 && c_mv(rd, rs2, 1)) return; '
+  else:
+    rvc = ''
+  print(f'void {name}(const Reg& rd, const Reg& rs1, const Reg& rs2) {{ {rvc}Rtype({hex(opcode)}, {funct3}, {hex(funct7)}, rd, rs1, rs2); }}')
 
 tbl = [
  (0b000, 0b0010011, 'addi'),
@@ -52,6 +67,8 @@ for (funct3, opcode, name) in tbl:
     rvc = 'if (supportRVC_ && c_addi(rd, rs1, imm)) return; '
   elif name == 'addiw':
     rvc = 'if (supportRVC_ && c_addi_inner(rd, rs1, imm, 1)) return; '
+  elif name == 'andi':
+    rvc = 'if (supportRVC_ && c_srli(rd, rs1, imm, 2, true)) return; '
   else:
     rvc = ''
   print(f'void {name}(const Reg& rd, const Reg& rs1, int imm) {{ {rvc}Itype({hex(opcode)}, {funct3}, rd, rs1, imm); }}')
@@ -70,9 +87,9 @@ tbl = [
 print('// load-op rd, imm(addr); rd = addr[imm];')
 for (funct3, opcode, name) in tbl:
   if name == 'lw':
-    rvc = 'if (supportRVC_ && c_lsw(rd, addr, imm, 2)) return; '
+    rvc = 'if (supportRVC_ && (c_lwsp(rd, addr, imm, 2) || c_lsw(rd, addr, imm, 2))) return; '
   elif name == 'ld':
-    rvc = 'if (supportRVC_ && c_lsd(rd, addr, imm, 3)) return; '
+    rvc = 'if (supportRVC_ && (c_ldsp(rd, addr, imm, 3) || c_lsd(rd, addr, imm, 3))) return; '
   else:
     rvc = ''
   print(f'void {name}(const Reg& rd, const Reg& addr, int imm = 0) {{ {rvc}Itype({hex(opcode)}, {funct3}, rd, addr, imm); }}')
@@ -97,7 +114,7 @@ for (pre, funct3, opcode, name) in tbl:
     rvc = f'if (supportRVC_ && c_srli(rd, rs1, shamt, 0)) return; '
   elif name == 'srai':
     rvc = f'if (supportRVC_ && c_srli(rd, rs1, shamt, 1)) return; '
-  else:
+  elif name == 'slli':
     rvc = f'if (supportRVC_ && rd == rs1 && shamt != 0 && c_li(rd, shamt, 0, 2)) return; '
   print(f'void {name}(const Reg& rd, const Reg& rs1, uint32_t shamt) {{ {rvc}opShift({hex(pre)}, {funct3}, {hex(opcode)}, rd, rs1, shamt); }}')
 
@@ -118,11 +135,12 @@ tbl = [
   (0x0110000f, 'fence_w_w'),
   (0x0000100f, 'fence_i'),
   (0x00000073, 'ecall'),
-  (0x00100073, 'ebreak'),
 ]
 
 for (code, name) in tbl:
   print(f'void {name}() {{ append4B({hex(code)}); }}')
+
+print('void ebreak() { if (supportRVC_) append2B(0x9002); else append4B(0x00100073); }')
 
 tbl = [
  (0b000, 0b0100011, 'sb'),
@@ -134,9 +152,9 @@ tbl = [
 print('// store-op rs, imm(addr) ; addr[imm] = rs;')
 for (funct3, opcode, name) in tbl:
   if name == 'sw':
-    rvc = 'if (supportRVC_ && c_lsw(rs, addr, imm, 6)) return; '
+    rvc = 'if (supportRVC_ && (c_swsp(rs, addr, imm, 6) || c_lsw(rs, addr, imm, 6))) return; '
   elif name == 'sd':
-    rvc = 'if (supportRVC_ && c_lsd(rs, addr, imm, 7)) return; '
+    rvc = 'if (supportRVC_ && (c_sdsp(rs, addr, imm, 7) || c_lsd(rs, addr, imm, 7))) return; '
   else:
     rvc = ''
   print(f'void {name}(const Reg& rs, const Reg& addr, int imm = 0) {{ {rvc}Stype({hex(opcode)}, {funct3}, addr, rs, imm); }}')

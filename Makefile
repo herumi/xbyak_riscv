@@ -23,6 +23,7 @@ test:
 	$(MAKE) clean
 	$(MAKE) -C gen
 	$(MAKE) -C test test
+	$(MAKE) -C test test_svc
 
 bin2hex:
 	python3 gen/bin2hex.py xbyak_riscv/xbyak_riscv.hpp
