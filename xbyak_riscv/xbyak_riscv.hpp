@@ -1136,6 +1136,7 @@ private:
 		append2B(v);
 		return true;
 	}
+	// c_li, c_slli
 	bool c_li(const Reg& rd, uint32_t imm, uint32_t funct3, uint32_t op)
 	{
 		if (rd == x0 || !local::inSBit(imm, 6)) return false;

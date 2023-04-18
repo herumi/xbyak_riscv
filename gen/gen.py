@@ -112,7 +112,7 @@ for (pre, funct3, opcode, name) in tbl:
     rvc = f'if (supportRVC_ && c_srli(rd, rs1, shamt, 0)) return; '
   elif name == 'srai':
     rvc = f'if (supportRVC_ && c_srli(rd, rs1, shamt, 1)) return; '
-  else:
+  elif name == 'slli':
     rvc = f'if (supportRVC_ && rd == rs1 && shamt != 0 && c_li(rd, shamt, 0, 2)) return; '
   print(f'void {name}(const Reg& rd, const Reg& rs1, uint32_t shamt) {{ {rvc}opShift({hex(pre)}, {funct3}, {hex(opcode)}, rd, rs1, shamt); }}')
 
