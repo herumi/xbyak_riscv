@@ -1156,6 +1156,7 @@ private:
 	bool c_addi(const Reg& rd, const Reg& rs, uint32_t imm)
 	{
 		uint32_t dIdx = rd.getIdx();
+		if (imm == 0 && c_mv(rd, rs)) return true;
 		if (c_addi_inner(rd, rs, imm, 0)) return true;
 		if (c_addi16sp(rd, rs, imm)) return true;
 		// c.addi4spn(rd, imm) = c.addi(rd, x2, imm)
@@ -1186,11 +1187,11 @@ private:
 		return true;
 	}
 	// c_srli, csrai
-	bool c_srli(const Reg& rd, const Reg& rs, int imm, uint32_t funct2)
+	bool c_srli(const Reg& rd, const Reg& rs, int imm, uint32_t funct2, bool allowImm0 = false)
 	{
 		uint32_t dIdx = rd.getIdx();
 		uint32_t sIdx = rs.getIdx();
-		if (dIdx != sIdx || !isValiCidx(dIdx) || imm == 0 || imm >= (1 << 6)) return false;
+		if (dIdx != sIdx || !isValiCidx(dIdx) || (!allowImm0 && imm == 0) || imm >= (1 << 6)) return false;
 		uint32_t v = (4<<13) | (funct2<<10) | ((dIdx-8)<<7) | local::get5_z5_4to0_z2(imm) | 1;
 		append2B(v);
 		return true;
@@ -1224,7 +1225,12 @@ private:
 		append2B(v);
 		return true;
 	}
-
+	bool c_mv(const Reg& rd, const Reg& rs)
+	{
+		uint32_t v = (0b100<<13) | (rd.getIdx()<<7) | (rs.getIdx()<<2) | 2;
+		append2B(v);
+		return true;
+	}
 public:
 	void L(Label& label) { labelMgr_.defineClabel(label); }
 	Label L() { Label label; L(label); return label; }

@@ -66,7 +66,7 @@ for (funct3, opcode, name) in tbl:
   elif name == 'addiw':
     rvc = 'if (supportRVC_ && c_addi_inner(rd, rs1, imm, 1)) return; '
   elif name == 'andi':
-    rvc = 'if (supportRVC_ && c_srli(rd, rs1, imm, 2)) return; '
+    rvc = 'if (supportRVC_ && c_srli(rd, rs1, imm, 2, true)) return; '
   else:
     rvc = ''
   print(f'void {name}(const Reg& rd, const Reg& rs1, int imm) {{ {rvc}Itype({hex(opcode)}, {funct3}, rd, rs1, imm); }}')
