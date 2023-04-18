@@ -1186,7 +1186,7 @@ private:
 		append2B(v);
 		return true;
 	}
-	// c_srli, csrai
+	// c_srli, c_srai, c_andi
 	bool c_srli(const Reg& rd, const Reg& rs, int imm, uint32_t funct2, bool allowImm0 = false)
 	{
 		uint32_t dIdx = rd.getIdx();
@@ -1227,6 +1227,7 @@ private:
 	}
 	bool c_mv(const Reg& rd, const Reg& rs)
 	{
+		if (rs == x0) return false;
 		uint32_t v = (0b100<<13) | (rd.getIdx()<<7) | (rs.getIdx()<<2) | 2;
 		append2B(v);
 		return true;
