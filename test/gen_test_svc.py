@@ -6,6 +6,8 @@ def lwTest():
     putRM('lw', f'x{i}', 'x9', 4)
   for i in range(0, 128+4, 4):
     putRM('lw', 'x8', 'x10', i)
+  for i in range(32):
+    putRM('lw', f'x3', 'sp', i)
 
   for i in range(32):
     putRM('ld', f'x{i}', 'x9', 8)

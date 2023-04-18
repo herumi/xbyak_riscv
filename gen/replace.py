@@ -19,6 +19,7 @@ tbl = [
   '5|z5|4:0|z2',           # c.li, c.srli, c.srai
   '11|4|9:8|10|6|7|3:1|5|z2', #c.jal
   '17|z5|16:12|z2',        # c.lui
+  '5|z5|4:2|7:6|z2',       # c.lwsp
 ]
 for ptn in tbl:
   ptnText += bitPattern(ptn) + '\n'

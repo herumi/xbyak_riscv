@@ -85,7 +85,7 @@ tbl = [
 print('// load-op rd, imm(addr); rd = addr[imm];')
 for (funct3, opcode, name) in tbl:
   if name == 'lw':
-    rvc = 'if (supportRVC_ && c_lsw(rd, addr, imm, 2)) return; '
+    rvc = 'if (supportRVC_ && (c_lwsp(rd, addr, imm, 2) || c_lsw(rd, addr, imm, 2))) return; '
   elif name == 'ld':
     rvc = 'if (supportRVC_ && c_lsd(rd, addr, imm, 3)) return; '
   else:
