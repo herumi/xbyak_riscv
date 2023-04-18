@@ -151,7 +151,7 @@ for (funct3, opcode, name) in tbl:
   if name == 'sw':
     rvc = 'if (supportRVC_ && (c_swsp(rs, addr, imm, 6) || c_lsw(rs, addr, imm, 6))) return; '
   elif name == 'sd':
-    rvc = 'if (supportRVC_ && c_lsd(rs, addr, imm, 7)) return; '
+    rvc = 'if (supportRVC_ && (c_sdsp(rs, addr, imm, 7) || c_lsd(rs, addr, imm, 7))) return; '
   else:
     rvc = ''
   print(f'void {name}(const Reg& rs, const Reg& addr, int imm = 0) {{ {rvc}Stype({hex(opcode)}, {funct3}, addr, rs, imm); }}')

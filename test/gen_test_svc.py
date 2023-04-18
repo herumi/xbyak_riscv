@@ -33,6 +33,10 @@ def lwTest():
     putRM('sd', f'x{i}', 'x9', 8)
   for i in range(0, 256+8, 8):
     putRM('sd', 'x8', 'x10', i)
+  for i in range(32):
+    putRM('sd', f'x3', 'sp', i)
+  putRM('sd', f'x3', 'sp', 512-8)
+  putRM('sd', f'x3', 'sp', 512)
 
 def immTest():
   # c.addi4spn
