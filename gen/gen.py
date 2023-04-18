@@ -46,6 +46,8 @@ for (funct7, funct3, opcode, name) in tbl:
     }
     (cf3, cf2) = tbl2[name]
     rvc = f'if (supportRVC_ && c_noimm(rd, rs1, rs2, {hex(cf3)}, {cf2})) return; '
+  elif name == 'add':
+    rvc = 'if (supportRVC_ && rd == rs1 && c_mv(rd, rs2, 1)) return; '
   else:
     rvc = ''
   print(f'void {name}(const Reg& rd, const Reg& rs1, const Reg& rs2) {{ {rvc}Rtype({hex(opcode)}, {funct3}, {hex(funct7)}, rd, rs1, rs2); }}')

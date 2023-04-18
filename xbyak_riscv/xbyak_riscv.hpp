@@ -1158,7 +1158,7 @@ private:
 	bool c_addi(const Reg& rd, const Reg& rs, uint32_t imm)
 	{
 		uint32_t dIdx = rd.getIdx();
-		if (imm == 0 && c_mv(rd, rs)) return true;
+		if (imm == 0 && c_mv(rd, rs, 0)) return true;
 		if (c_addi_inner(rd, rs, imm, 0)) return true;
 		if (c_addi16sp(rd, rs, imm)) return true;
 		// c.addi4spn(rd, imm) = c.addi(rd, x2, imm)
@@ -1227,10 +1227,11 @@ private:
 		append2B(v);
 		return true;
 	}
-	bool c_mv(const Reg& rd, const Reg& rs)
+	// c.mv, c.add
+	bool c_mv(const Reg& rd, const Reg& rs, uint32_t funct1)
 	{
-		if (rs == x0) return false;
-		uint32_t v = (0x4<<13) | (rd.getIdx()<<7) | (rs.getIdx()<<2) | 2;
+		if (rd == 0 || rs == x0) return false;
+		uint32_t v = (4<<13) | (funct1<<12) | (rd.getIdx()<<7) | (rs.getIdx()<<2) | 2;
 		append2B(v);
 		return true;
 	}
