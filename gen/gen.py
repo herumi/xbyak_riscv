@@ -149,7 +149,7 @@ tbl = [
 print('// store-op rs, imm(addr) ; addr[imm] = rs;')
 for (funct3, opcode, name) in tbl:
   if name == 'sw':
-    rvc = 'if (supportRVC_ && c_lsw(rs, addr, imm, 6)) return; '
+    rvc = 'if (supportRVC_ && (c_swsp(rs, addr, imm, 6) || c_lsw(rs, addr, imm, 6))) return; '
   elif name == 'sd':
     rvc = 'if (supportRVC_ && c_lsd(rs, addr, imm, 7)) return; '
   else:

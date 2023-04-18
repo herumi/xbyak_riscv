@@ -67,7 +67,7 @@ void ebreak() { append4B(0x100073); }
 // store-op rs, imm(addr) ; addr[imm] = rs;
 void sb(const Reg& rs, const Reg& addr, int imm = 0) { Stype(0x23, 0, addr, rs, imm); }
 void sh(const Reg& rs, const Reg& addr, int imm = 0) { Stype(0x23, 1, addr, rs, imm); }
-void sw(const Reg& rs, const Reg& addr, int imm = 0) { if (supportRVC_ && c_lsw(rs, addr, imm, 6)) return; Stype(0x23, 2, addr, rs, imm); }
+void sw(const Reg& rs, const Reg& addr, int imm = 0) { if (supportRVC_ && (c_swsp(rs, addr, imm, 6) || c_lsw(rs, addr, imm, 6))) return; Stype(0x23, 2, addr, rs, imm); }
 void sd(const Reg& rs, const Reg& addr, int imm = 0) { if (supportRVC_ && c_lsd(rs, addr, imm, 7)) return; Stype(0x23, 3, addr, rs, imm); }
 void beq(const Reg& rs1, const Reg& rs2, const Label& label) { Jmp jmp(getCurr(), 0x63, 0, rs1, rs2); opJmp(label, jmp); }
 void bne(const Reg& rs1, const Reg& rs2, const Label& label) { Jmp jmp(getCurr(), 0x63, 1, rs1, rs2); opJmp(label, jmp); }
