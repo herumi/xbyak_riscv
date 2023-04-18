@@ -46,7 +46,7 @@ void lw(const Reg& rd, const Reg& addr, int imm = 0) { if (supportRVC_ && (c_lws
 void lbu(const Reg& rd, const Reg& addr, int imm = 0) { Itype(0x3, 4, rd, addr, imm); }
 void lhu(const Reg& rd, const Reg& addr, int imm = 0) { Itype(0x3, 5, rd, addr, imm); }
 void lwu(const Reg& rd, const Reg& addr, int imm = 0) { Itype(0x3, 6, rd, addr, imm); }
-void ld(const Reg& rd, const Reg& addr, int imm = 0) { if (supportRVC_ && c_lsd(rd, addr, imm, 3)) return; Itype(0x3, 3, rd, addr, imm); }
+void ld(const Reg& rd, const Reg& addr, int imm = 0) { if (supportRVC_ && (c_ldsp(rd, addr, imm, 3) || c_lsd(rd, addr, imm, 3))) return; Itype(0x3, 3, rd, addr, imm); }
 void auipc(const Reg& rd, uint32_t imm) { Utype(0x17, rd, imm); }
 void lui(const Reg& rd, uint32_t imm) { if (supportRVC_ && c_lui(rd, imm)) return; Utype(0x37, rd, imm); }
 void slli(const Reg& rd, const Reg& rs1, uint32_t shamt) { if (supportRVC_ && rd == rs1 && shamt != 0 && c_li(rd, shamt, 0, 2)) return; opShift(0x0, 1, 0x13, rd, rs1, shamt); }

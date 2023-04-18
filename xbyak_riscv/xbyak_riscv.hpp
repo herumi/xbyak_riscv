@@ -239,6 +239,7 @@ inline size_t get5_z5_4to0_z2(size_t v) { return ((v & (1<<5)) << 7)| ((v & 31) 
 inline size_t get11_4_9to8_10_6_7_3to1_5_z2(size_t v) { return ((v & (1<<11)) << 1)| ((v & (1<<4)) << 7)| ((v & (3<<8)) << 1)| ((v & (1<<10)) >> 2)| ((v & (1<<6)) << 1)| ((v & (1<<7)) >> 1)| ((v & (7<<1)) << 2)| ((v & (1<<5)) >> 3); }
 inline size_t get17_z5_16to12_z2(size_t v) { return ((v & (1<<17)) >> 5)| ((v & (31<<12)) >> 10); }
 inline size_t get5_z5_4to2_7to6_z2(size_t v) { return ((v & (1<<5)) << 7)| ((v & (7<<2)) << 2)| ((v & (3<<6)) >> 4); }
+inline size_t get5_z5_4to3_8to6_z2(size_t v) { return ((v & (1<<5)) << 7)| ((v & (3<<3)) << 2)| ((v & (7<<6)) >> 4); }
 // @@@ embedded by bit_pattern.py (DON'T DELETE THIS LINE)
 
 } // local
@@ -1208,12 +1209,22 @@ private:
 	// c_lwsp, c_flwsp
 	bool c_lwsp(const Reg& rd, const Reg& addr, int imm, uint32_t funct3)
 	{
-		uint32_t dIdx = rd.getIdx();
+		uint32_t idx = rd.getIdx();
 		if (addr != sp || (imm % 4) != 0 || (imm >> 8)) return false;
-		uint32_t v = (funct3<<13) | (dIdx<<7) | local::get5_z5_4to2_7to6_z2(imm) | 2;
+		uint32_t v = (funct3<<13) | (idx<<7) | local::get5_z5_4to2_7to6_z2(imm) | 2;
 		append2B(v);
 		return true;
 	}
+	// c_ldsp
+	bool c_ldsp(const Reg& rd, const Reg& addr, int imm, uint32_t funct3)
+	{
+		uint32_t idx = rd.getIdx();
+		if (addr != sp || (imm % 8) != 0 || (imm >> 9)) return false;
+		uint32_t v = (funct3<<13) | (idx<<7) | local::get5_z5_4to3_8to6_z2(imm) | 2;
+		append2B(v);
+		return true;
+	}
+
 public:
 	void L(Label& label) { labelMgr_.defineClabel(label); }
 	Label L() { Label label; L(label); return label; }

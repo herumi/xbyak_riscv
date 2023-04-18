@@ -8,11 +8,17 @@ def lwTest():
     putRM('lw', 'x8', 'x10', i)
   for i in range(32):
     putRM('lw', f'x3', 'sp', i)
+  putRM('lw', f'x3', 'sp', 256-4)
+  putRM('lw', f'x3', 'sp', 256)
 
   for i in range(32):
     putRM('ld', f'x{i}', 'x9', 8)
   for i in range(0, 256+8, 8):
     putRM('ld', 'x8', 'x10', i)
+  for i in range(32):
+    putRM('ld', f'x3', 'sp', i)
+  putRM('ld', f'x3', 'sp', 512-8)
+  putRM('ld', f'x3', 'sp', 512)
 
   for i in range(32):
     putRM('sw', f'x{i}', 'x9', 4)
