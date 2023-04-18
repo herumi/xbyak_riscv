@@ -84,6 +84,9 @@ def noimmTest():
     for i in range(32):
       put(name, f'x{i}, x{i}, x9')
 
+def miscTest():
+  put('ebreak')
+
 def main():
   if len(sys.argv) > 1 and sys.argv[1] == 'gas':
     setXbyak(False)
@@ -93,6 +96,7 @@ def main():
   lwTest()
   immTest()
   noimmTest()
+  miscTest()
 
 if __name__ == '__main__':
   main()

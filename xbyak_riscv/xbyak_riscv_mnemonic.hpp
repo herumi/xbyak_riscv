@@ -63,7 +63,7 @@ void fence_r_r() { append4B(0x220000f); }
 void fence_w_w() { append4B(0x110000f); }
 void fence_i() { append4B(0x100f); }
 void ecall() { append4B(0x73); }
-void ebreak() { append4B(0x100073); }
+void ebreak() { if (supportRVC_) append2B(0x9002); else append4B(0x00100073); }
 // store-op rs, imm(addr) ; addr[imm] = rs;
 void sb(const Reg& rs, const Reg& addr, int imm = 0) { Stype(0x23, 0, addr, rs, imm); }
 void sh(const Reg& rs, const Reg& addr, int imm = 0) { Stype(0x23, 1, addr, rs, imm); }

@@ -135,11 +135,12 @@ tbl = [
   (0x0110000f, 'fence_w_w'),
   (0x0000100f, 'fence_i'),
   (0x00000073, 'ecall'),
-  (0x00100073, 'ebreak'),
 ]
 
 for (code, name) in tbl:
   print(f'void {name}() {{ append4B({hex(code)}); }}')
+
+print('void ebreak() { if (supportRVC_) append2B(0x9002); else append4B(0x00100073); }')
 
 tbl = [
  (0b000, 0b0100011, 'sb'),
