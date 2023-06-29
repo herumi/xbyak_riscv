@@ -350,57 +350,46 @@ public:
 };
 #endif
 
-class Reg {
+namespace local {
+
+// Register Interface
+class IReg {
 public:
 	enum Kind {
 		GPR = 1,         // General purpose register
 		FReg = 1 << 1,   // Floating-point register
 		VECTOR = 1 << 2, // Vector register
 	};
-private:
+protected:
 	uint32_t idx_;
 	Kind kind_;
 public:
-	constexpr Reg(uint32_t idx = 0, Kind kind = GPR)
-		: idx_(idx), kind_(kind)
-	{
-		XBYAK_RISCV_ASSERT(local::inBit(idx, 5));
-	}
+	constexpr IReg(uint32_t idx = 0, Kind kind = GPR)
+		: idx_(idx), kind_(kind) { }
 	constexpr int getIdx() const { return idx_; }
-	const char *toString() const
+	bool operator==(const IReg& rhs) const
 	{
-		if (kind_ == GPR) {
-			static const char tbl[][4] = {
+		return idx_ == rhs.idx_ && kind_ == rhs.kind_;
+	}
+	bool operator!=(const IReg& rhs) const { return !operator==(rhs); }
+
+	virtual const char *toString() const = 0;
+};
+
+} // local
+
+// General Purpose Register
+struct Reg : public local::IReg {
+	explicit constexpr Reg(int idx = 0) : local::IReg(idx, IReg::Kind::GPR) { }
+	const char *toString() const override {
+		static const char tbl[][4] = {
 				"x0", "x1", "x2", "x3", "x4", "x5", "x6", "x7",
 				"x8", "x9", "x10", "x11", "x12", "x13", "x14", "x15",
 				"x16", "x17", "x18", "x19", "x20", "x21", "x22", "x23",
 				"x24", "x25", "x26", "x27", "x28", "x29", "x30", "x31",
-			};
-			return tbl[idx_];
-		} else if (kind_ == FReg) {
-			static const char tbl[][4] = {
-				"f0", "f1", "f2", "f3", "f4", "f5", "f6", "f7",
-				"f8", "f9", "f10", "f11", "f12", "f13", "f14", "f15",
-				"f16", "f17", "f18", "f19", "f20", "f21", "f22", "f23",
-				"f24", "f25", "f26", "f27", "f28", "f29", "f30", "f31",
-			};
-			return tbl[idx_];
-		} else if (kind_ == VECTOR) {
-			static const char tbl[][4] = {
-				"v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7",
-				"v8", "v9", "v10", "v11", "v12", "v13", "v14", "v15",
-				"v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23",
-				"v24", "v25", "v26", "v27", "v28", "v29", "v30", "v31",
-			};
-			return tbl[idx_];
-		}
-		XBYAK_RISCV_THROW_RET(ERR_INTERNAL, 0);
-	}
-	bool operator==(const Reg& rhs) const
-	{
-		return idx_ == rhs.idx_ && kind_ == rhs.kind_;
-	}
-	bool operator!=(const Reg& rhs) const { return !operator==(rhs); }
+        };
+		return tbl[idx_];
+    }
 };
 
 static constexpr Reg x0(0), x1(1), x2(2), x3(3), x4(4), x5(5), x6(6), x7(7);
@@ -424,8 +413,18 @@ static constexpr Reg s2(x18), s3(x19), s4(x20), s5(x21), s6(x22), s7(x23), s8(x2
 static constexpr Reg s10(x26), s11(x27);
 static constexpr Reg t3(x28), t4(x29), t5(x30), t6(x31);
 
-struct FReg : public Reg {
-	explicit constexpr FReg(int idx = 0, Kind kind = Reg::Kind:: FReg) : Reg(idx, kind) { }
+// Floating Point Register
+struct FReg : public local::IReg {
+	explicit constexpr FReg(int idx = 0) : local::IReg(idx, IReg::Kind::FReg) { }
+	const char *toString() const override {
+		static const char tbl[][4] = {
+            "f0", "f1", "f2", "f3", "f4", "f5", "f6", "f7",
+            "f8", "f9", "f10", "f11", "f12", "f13", "f14", "f15",
+            "f16", "f17", "f18", "f19", "f20", "f21", "f22", "f23",
+            "f24", "f25", "f26", "f27", "f28", "f29", "f30", "f31",
+		};
+		return tbl[idx_];
+    }
 };
 
 static constexpr FReg f0(0), f1(1), f2(2), f3(3), f4(4), f5(5), f6(6), f7(7);
@@ -439,8 +438,18 @@ static constexpr FReg fs2(18), fs3(19), fs4(20), fs5(21), fs6(22), fs7(23), fs8(
 static constexpr FReg ft8(28), ft9(29), ft10(30), ft11(31);
 
 #if defined(XBYAK_RISCV_V) && XBYAK_RISCV_V == 1
-struct VReg : public Reg {
-	explicit constexpr VReg(int idx = 0, Kind kind = Reg::Kind::VECTOR) : Reg(idx, kind) { }
+// Vector Register
+struct VReg : public local::IReg {
+	explicit constexpr VReg(int idx = 0) : local::IReg(idx, IReg::Kind::VECTOR) { }
+    const char *toString() const override {
+		static const char tbl[][4] = {
+				"v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7",
+				"v8", "v9", "v10", "v11", "v12", "v13", "v14", "v15",
+				"v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23",
+				"v24", "v25", "v26", "v27", "v28", "v29", "v30", "v31",
+		};
+		return tbl[idx_];
+    }
 };
 
 static constexpr VReg v0(0), v1(1), v2(2), v3(3), v4(4), v5(5), v6(6), v7(7);
@@ -864,7 +873,7 @@ struct Bit {
 	{
 		XBYAK_RISCV_ASSERT(inBit(v, n));
 	}
-	Bit(const Reg& r)
+	Bit(const IReg& r)
 		: v(r.getIdx())
 	{
 	}
@@ -1230,7 +1239,7 @@ private:
 	// c.mv, c.add
 	bool c_mv(const Reg& rd, const Reg& rs, uint32_t funct1)
 	{
-		if (rd == 0 || rs == x0) return false;
+		if (rd == x0 || rs == x0) return false;
 		uint32_t v = (4<<13) | (funct1<<12) | (rd.getIdx()<<7) | (rs.getIdx()<<2) | 2;
 		append2B(v);
 		return true;
