@@ -3,12 +3,12 @@ set -e
 case $1 in
 svc)
   echo "svc test"
-  ASFLAGS="-march=rv64gc"
+  ASFLAGS="-march=rv64iafmqgc"
   GEN=gen_test_svc.py
   ;;
 *)
   echo "test"
-  ASFLAGS=""
+  ASFLAGS="-march=rv64iafmqg"
   GEN=gen_test.py
   ;;
 esac

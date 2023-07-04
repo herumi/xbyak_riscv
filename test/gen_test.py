@@ -144,7 +144,7 @@ def csr():
     put(op, f'{castCSR(4)}, 9')
 
 def fpu():
-  tbl = ['flw', 'fsw']
+  tbl = ['flw', 'fsw', 'fld', 'fsd', 'flq', 'fsq']
   immTbl = [0, -4, 123, (1<<11)-1, -(1<<11)]
   for op in tbl:
     for imm in immTbl:
