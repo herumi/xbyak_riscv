@@ -174,6 +174,10 @@ void fnmsub_h(const FReg& rd, const FReg& rs1, const FReg& rs2, const FReg& rs3,
 void fnmadd_h(const FReg& rd, const FReg& rs1, const FReg& rs2, const FReg& rs3, RM rm=RM::dyn) { opR4(0x400004f, rs3, rs2, rs1, rm, rd); }
 
 
+void flq(const FReg& rd, const Reg& rs1, int32_t imm12 = 0) { opLoadFP(0x4007, imm12, rs1, rd); }
+void fsq(const FReg& rs2, const Reg& rs1, int32_t imm12 = 0) { opStoreFP(0x4027, imm12, rs2, rs1); }
+void fld(const FReg& rd, const Reg& rs1, int32_t imm12 = 0) { opLoadFP(0x3007, imm12, rs1, rd); }
+void fsd(const FReg& rs2, const Reg& rs1, int32_t imm12 = 0) { opStoreFP(0x3027, imm12, rs2, rs1); }
 void flw(const FReg& rd, const Reg& rs1, int32_t imm12 = 0) { opLoadFP(0x2007, imm12, rs1, rd); }
 void fsw(const FReg& rs2, const Reg& rs1, int32_t imm12 = 0) { opStoreFP(0x2027, imm12, rs2, rs1); }
 void flh(const FReg& rd, const Reg& rs1, int32_t imm12 = 0) { opLoadFP(0x1007, imm12, rs1, rd); }
