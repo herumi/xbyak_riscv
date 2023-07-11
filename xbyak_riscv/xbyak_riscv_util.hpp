@@ -74,8 +74,13 @@ struct CSRReader : public CodeGenerator {
 /**
  * Class that detects information about a RISC-V CPU.
  */
-class CPU {
+class CPU final {
 public:
+    static const CPU& getInstance() {
+        static const CPU cpu;
+        return cpu;
+    }
+
     CPU() {
 #if defined(__linux__) && defined(__riscv)
         // Set hwcapFeatures with AT_HWCAP value from

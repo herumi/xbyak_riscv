@@ -50,7 +50,7 @@ struct vecSumJITGenerator : public CodeGenerator {
     bool useRVV = false;
 
     vecSumJITGenerator() {
-        CPU cpu;
+        const auto& cpu = CPU::getInstance();
         useRVV = cpu.hasExtension(RISCVExtension::V);
         generate();
     }
