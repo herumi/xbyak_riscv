@@ -13,7 +13,7 @@ using namespace Xbyak_riscv;
 
 int main()
 {
-    const auto& cpu = CPU::getInstance();
+    CPU cpu;
 
     std::cout << "Number of RISC-V CPU cores: " << cpu.getNumCores() << std::endl;
     std::cout << "XLEN:  " << cpu.getXlenb() << std::endl;
