@@ -118,6 +118,13 @@ public:
                 const auto csrReader = csrReaderGenerator.getCode<uint32_t (*)()>();
                 vlenb = csrReader();
         }
+
+        // Set flenb
+        if (hasExtension(RISCVExtension::D)) {
+            flenb = 64;
+        } else if (hasExtension(RISCVExtension::F)) {
+            flenb = 32;
+        }
     }
 
     /**
@@ -133,9 +140,13 @@ public:
         return vlenb;
     }
 
-    uint64_t getXlenb() const {
+    uint32_t getXlenb() const {
         return xlenb;
     };
+
+    uint32_t getFlenb() const {
+        return flenb;
+    }
 
     uint32_t getNumCores() const {
         return numCores;
@@ -159,6 +170,7 @@ private:
     uint32_t numCores = 0;
     uint32_t xlenb = 0;
     uint32_t vlenb = 0;
+    uint32_t flenb = 0;
 };
 
 } // Xbyak_riscv
