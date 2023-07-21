@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <climits>
 #include <cstddef>
 #include <cstdint>
 #include "xbyak_riscv_csr.hpp"
@@ -95,8 +96,8 @@ public:
             COMPAT_HWCAP_ISA_V
         );
 
-        // Set xlen, number of cores, cache info
-        xlenb = sysconf(_SC_LONG_BIT);
+        // Set xlenb, number of cores, cache info
+        xlenb = sysconf(_SC_LONG_BIT) / CHAR_BIT;
         numCores = sysconf(_SC_NPROCESSORS_ONLN);
         numCores = sysconf(_SC_NPROCESSORS_ONLN);
 
@@ -111,19 +112,19 @@ public:
         dataCacheLineSize_[3] = sysconf(_SC_LEVEL4_CACHE_LINESIZE);
 #endif
 
-        // Set vlenb - Vector Register Length in bytes
+        // Set vlenb
         if(hasExtension(RISCVExtension::V)) {
-                CSRReader<CSR::vlenb> csrReaderGenerator;
-                csrReaderGenerator.ready();
-                const auto csrReader = csrReaderGenerator.getCode<uint32_t (*)()>();
-                vlenb = csrReader();
+            CSRReader<CSR::vlenb> csrReaderGenerator;
+            csrReaderGenerator.ready();
+            const auto csrReader = csrReaderGenerator.getCode<uint32_t (*)()>();
+            vlenb = csrReader();
         }
 
         // Set flenb
         if (hasExtension(RISCVExtension::D)) {
-            flenb = 64;
+            flenb = 8;
         } else if (hasExtension(RISCVExtension::F)) {
-            flenb = 32;
+            flenb = 4;
         }
     }
 
@@ -136,16 +137,46 @@ public:
         return (hwcapFeatures & static_cast<uint64_t>(extension)) != 0;
     }
 
+    /**
+     * Get vector register width in bytes
+    */
     uint32_t getVlenb() const {
         return vlenb;
     }
 
+    /**
+     * Get vector register width in bits
+    */
+    uint32_t getVlen() const {
+        return vlenb * CHAR_BIT;
+    }
+
+    /**
+     * Get general purpose register width in bytes
+    */
     uint32_t getXlenb() const {
         return xlenb;
     };
 
+    /**
+     * Get general purpose register width in bits
+    */
+    uint32_t getXlen() const {
+        return xlenb * CHAR_BIT;
+    };
+
+    /**
+     * Get floating-point register width in bytes
+    */
     uint32_t getFlenb() const {
         return flenb;
+    }
+
+    /**
+     * Get floating-point register width in bits
+    */
+    uint32_t getFlen() const {
+        return flenb * CHAR_BIT;
     }
 
     uint32_t getNumCores() const {
