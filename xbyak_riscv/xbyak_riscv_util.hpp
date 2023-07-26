@@ -140,7 +140,7 @@ public:
     /**
      * Get vector register width in bytes
     */
-    uint32_t getVlenb() const {
+    uint32_t getVlenByte() const {
         return vlenb;
     }
 
@@ -154,7 +154,7 @@ public:
     /**
      * Get general purpose register width in bytes
     */
-    uint32_t getXlenb() const {
+    uint32_t getXlenByte() const {
         return xlenb;
     };
 
@@ -168,7 +168,7 @@ public:
     /**
      * Get floating-point register width in bytes
     */
-    uint32_t getFlenb() const {
+    uint32_t getFlenByte() const {
         return flenb;
     }
 
