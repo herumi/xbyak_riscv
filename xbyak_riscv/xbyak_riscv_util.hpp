@@ -96,8 +96,8 @@ public:
             COMPAT_HWCAP_ISA_V
         );
 
-        // Set xlenb, number of cores, cache info
-        xlenb = sysconf(_SC_LONG_BIT) / CHAR_BIT;
+        // Set xlen, number of cores, cache info
+        xlen = sysconf(_SC_LONG_BIT);
         numCores = sysconf(_SC_NPROCESSORS_ONLN);
         numCores = sysconf(_SC_NPROCESSORS_ONLN);
 
@@ -112,19 +112,19 @@ public:
         dataCacheLineSize_[3] = sysconf(_SC_LEVEL4_CACHE_LINESIZE);
 #endif
 
-        // Set vlenb
+        // Set vlen
         if(hasExtension(RISCVExtension::V)) {
             CSRReader<CSR::vlenb> csrReaderGenerator;
             csrReaderGenerator.ready();
             const auto csrReader = csrReaderGenerator.getCode<uint32_t (*)()>();
-            vlenb = csrReader();
+            vlen = csrReader() * 8 /* bit */;
         }
 
-        // Set flenb
+        // Set flen (bit)
         if (hasExtension(RISCVExtension::D)) {
-            flenb = 8;
+            flen = 64;
         } else if (hasExtension(RISCVExtension::F)) {
-            flenb = 4;
+            flen = 32;
         }
     }
 
@@ -138,45 +138,24 @@ public:
     }
 
     /**
-     * Get vector register width in bytes
-    */
-    uint32_t getVlenByte() const {
-        return vlenb;
-    }
-
-    /**
      * Get vector register width in bits
     */
     uint32_t getVlen() const {
-        return vlenb * CHAR_BIT;
+        return vlen;
     }
-
-    /**
-     * Get general purpose register width in bytes
-    */
-    uint32_t getXlenByte() const {
-        return xlenb;
-    };
 
     /**
      * Get general purpose register width in bits
     */
     uint32_t getXlen() const {
-        return xlenb * CHAR_BIT;
+        return xlen;
     };
-
-    /**
-     * Get floating-point register width in bytes
-    */
-    uint32_t getFlenByte() const {
-        return flenb;
-    }
 
     /**
      * Get floating-point register width in bits
     */
     uint32_t getFlen() const {
-        return flenb * CHAR_BIT;
+        return flen;
     }
 
     uint32_t getNumCores() const {
@@ -199,9 +178,9 @@ private:
     uint32_t dataCacheSize_[maxNumberCacheLevels] = {0, 0, 0, 0};
     uint32_t dataCacheLineSize_[maxNumberCacheLevels] = {0, 0, 0, 0};
     uint32_t numCores = 0;
-    uint32_t xlenb = 0;
-    uint32_t vlenb = 0;
-    uint32_t flenb = 0;
+    uint32_t xlen = 0;
+    uint32_t vlen = 0;
+    uint32_t flen = 0;
 };
 
 } // Xbyak_riscv
