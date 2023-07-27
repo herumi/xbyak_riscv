@@ -16,9 +16,9 @@ int main()
     CPU cpu;
 
     std::cout << "Number of RISC-V CPU cores: " << cpu.getNumCores() << std::endl;
-    std::cout << "XLEN: " << cpu.getXlen() << " bits" << std::endl;
-    std::cout << "VLEN: " << cpu.getVlen() << " bits" << std::endl;
-    std::cout << "FLEN: " << cpu.getFlen() << " bits" << std::endl;
+    std::cout << "XLEN: " << cpu.getXlenByte() << " bytes" << std::endl;
+    std::cout << "VLEN: " << cpu.getVlenByte() << " bytes" << std::endl;
+    std::cout << "FLEN: " << cpu.getFlenByte() << " bytes" << std::endl;
     std::cout << std::endl;
 
     std::cout << "Supported RISC-V extensions:" << std::endl;

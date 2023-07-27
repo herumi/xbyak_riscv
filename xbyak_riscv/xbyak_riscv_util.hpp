@@ -96,8 +96,8 @@ public:
             COMPAT_HWCAP_ISA_V
         );
 
-        // Set xlen, number of cores, cache info
-        xlen = sysconf(_SC_LONG_BIT);
+        // Set xlenByte, number of cores, cache info
+        xlenByte = sysconf(_SC_LONG_BIT) / 8;
         numCores = sysconf(_SC_NPROCESSORS_ONLN);
         numCores = sysconf(_SC_NPROCESSORS_ONLN);
 
@@ -112,19 +112,19 @@ public:
         dataCacheLineSize_[3] = sysconf(_SC_LEVEL4_CACHE_LINESIZE);
 #endif
 
-        // Set vlen
+        // Set vlenByte
         if(hasExtension(RISCVExtension::V)) {
             CSRReader<CSR::vlenb> csrReaderGenerator;
             csrReaderGenerator.ready();
             const auto csrReader = csrReaderGenerator.getCode<uint32_t (*)()>();
-            vlen = csrReader() * 8 /* bit */;
+            vlenByte = csrReader();
         }
 
-        // Set flen (bit)
+        // Set flenByte
         if (hasExtension(RISCVExtension::D)) {
-            flen = 64;
+            flenByte = 8;
         } else if (hasExtension(RISCVExtension::F)) {
-            flen = 32;
+            flenByte = 4;
         }
     }
 
@@ -138,24 +138,24 @@ public:
     }
 
     /**
-     * Get vector register width in bits
+     * Get vector register width in bytes
     */
-    uint32_t getVlen() const {
-        return vlen;
+    uint32_t getVlenByte() const {
+        return vlenByte;
     }
 
     /**
-     * Get general purpose register width in bits
+     * Get general purpose register width in bytes
     */
-    uint32_t getXlen() const {
-        return xlen;
+    uint32_t getXlenByte() const {
+        return xlenByte;
     };
 
     /**
-     * Get floating-point register width in bits
+     * Get floating-point register width in bytes
     */
-    uint32_t getFlen() const {
-        return flen;
+    uint32_t getFlenByte() const {
+        return flenByte;
     }
 
     uint32_t getNumCores() const {
@@ -178,9 +178,9 @@ private:
     uint32_t dataCacheSize_[maxNumberCacheLevels] = {0, 0, 0, 0};
     uint32_t dataCacheLineSize_[maxNumberCacheLevels] = {0, 0, 0, 0};
     uint32_t numCores = 0;
-    uint32_t xlen = 0;
-    uint32_t vlen = 0;
-    uint32_t flen = 0;
+    uint32_t xlenByte = 0;
+    uint32_t vlenByte = 0;
+    uint32_t flenByte = 0;
 };
 
 } // Xbyak_riscv
