@@ -32,11 +32,11 @@ int main()
     std::cout << std::endl;
 
     std::cout << "Cache info:" << std::endl;
-    for (uint8_t cacheLvl = 1; cacheLvl < 5; cacheLvl+=1)
+    for (uint8_t cacheLvl = 1; cacheLvl <= 4; cacheLvl++)
     {
         const auto cacheLvlStr = std::to_string(cacheLvl);
-        std::cout << "L" << cacheLvlStr << " cache size: " << cpu.getDataCacheSize(1) << std::endl;
-        std::cout << "L" << cacheLvlStr << " cache line size: " << cpu.getDataCacheSize(1) << std::endl;
+        std::cout << "L" << cacheLvlStr << " cache size: " << cpu.getDataCacheSize(cacheLvl) << std::endl;
+        std::cout << "L" << cacheLvlStr << " cache line size: " << cpu.getDataCacheLineSize(cacheLvl) << std::endl;
     }
     return 0;
 }

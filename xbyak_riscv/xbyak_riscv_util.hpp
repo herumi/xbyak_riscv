@@ -162,14 +162,22 @@ public:
         return numCores;
     }
 
+    /**
+     * Get data cache size in bytes
+     * @param lvl Cache level 1..4
+    */
     uint32_t getDataCacheSize(uint32_t lvl) const {
-        if (lvl >= maxNumberCacheLevels) XBYAK_RISCV_THROW(ERR_BAD_PARAMETER);
-        return dataCacheSize_[lvl];
+        if (lvl == 0 || lvl > maxNumberCacheLevels) XBYAK_RISCV_THROW(ERR_BAD_PARAMETER);
+        return dataCacheSize_[lvl - 1];
     }
 
+    /**
+     * Get data cache line size in bytes
+     * @param lvl Cache level 1..4
+    */
     uint32_t getDataCacheLineSize(uint32_t lvl) const {
-        if (lvl >= maxNumberCacheLevels) XBYAK_RISCV_THROW(ERR_BAD_PARAMETER);
-        return dataCacheLineSize_[lvl];
+        if (lvl == 0 || lvl > maxNumberCacheLevels) XBYAK_RISCV_THROW(ERR_BAD_PARAMETER);
+        return dataCacheLineSize_[lvl - 1];
     }
 
 private:
