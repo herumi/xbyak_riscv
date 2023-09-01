@@ -356,7 +356,7 @@ void fsh(const FReg& rs2, const Reg& rs1, int32_t imm12 = 0) { opStoreFP(0x1027,
 
 # misc
 print('''
-void nop() { if (supportRVC_) { append2B(0x0001); return;} addi(x0, x0, 0); }
+void nop() { if (supportRVC_) { append2B(0x0001); return; } addi(x0, x0, 0); }
 void li(const Reg& rd, int imm) { addi(rd, x0, imm); }
 void mv(const Reg& rd, const Reg& rs) { addi(rd, rs, 0); }
 void not_(const Reg& rd, const Reg& rs) { xori(rd, rs, -1); }
