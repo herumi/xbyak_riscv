@@ -228,6 +228,21 @@ inline constexpr bool inSBit(int x, int n)
 	return -(1 << (n-1)) <= x && x < (1 << (n-1));
 }
 
+// split x to hi20bits and low12bits
+// return false if x in 12-bit signed integer
+inline bool split32bit(int *pH, int* pL, int x) {
+	if (inSBit(x, 12)) return false;
+	int H = (x >> 12) & mask(20);
+	int L = x & mask(12);
+	if (x & (1 << 11)) {
+		H++;
+		L = L | (mask(20) << 12);
+	}
+	*pH = H;
+	*pL = L;
+	return true;
+}
+
 // @@@ embedded by bit_pattern.py (DON'T DELETE THIS LINE)
 inline size_t get20_10to1_11_19to12_z12(size_t v) { return ((v & (1<<20)) << 11)| ((v & (1023<<1)) << 20)| ((v & (1<<11)) << 9)| (v & (255<<12)); }
 inline size_t get12_10to5_z13_4to1_11_z7(size_t v) { return ((v & (1<<12)) << 19)| ((v & (63<<5)) << 20)| ((v & (15<<1)) << 7)| ((v & (1<<11)) >> 4); }
