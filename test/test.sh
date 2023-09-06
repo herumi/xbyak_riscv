@@ -3,12 +3,12 @@ set -e
 case $1 in
 svc)
   echo "svc test"
-  ASFLAGS="-march=rv64iafmqgc"
+  ASFLAGS="-march=rv64iafmqgcv"
   GEN=gen_test_svc.py
   ;;
 *)
   echo "test"
-  ASFLAGS="-march=rv64iafmqg"
+  ASFLAGS="-march=rv64iafmqgv"
   GEN=gen_test.py
   ;;
 esac
@@ -17,6 +17,7 @@ CXX=g++
 AS=riscv64-linux-gnu-as
 OBJDUMP=riscv64-unknown-elf-objdump
 CFLAGS="-g -I../ -Wall -Wextra"
+CFLAGS+=" -DXBYAK_RISCV_V"
 
 python3 $GEN gas > generated.s
 $AS -c -o generated.o generated.s $ASFLAGS

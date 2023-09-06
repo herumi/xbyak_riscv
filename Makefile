@@ -34,7 +34,7 @@ test_svc:
 	$(MAKE) -C test test_svc
 
 disas:
-	riscv64-linux-gnu-as -c -o a.o a.s -march=rv64iafmqg && riscv64-unknown-elf-objdump -d a.o
+	riscv64-linux-gnu-as -c -o a.o a.s -march=rv64iafmqgv && riscv64-unknown-elf-objdump -d a.o
 disas_c:
 	riscv64-linux-gnu-as -c -o a.o a.s -march=rv64gc && riscv64-unknown-elf-objdump -d a.o
 
