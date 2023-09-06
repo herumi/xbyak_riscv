@@ -331,22 +331,16 @@ void vsetvl(const Reg& rd, const Reg& rs1, const Reg& rs2) {
 ''')
 
     # generate vector mask pseudoinstructions
+    # https://github.com/riscv/riscv-v-spec/blob/master/v-spec.adoc#151-vector-mask-register-logical-instructions
     print('''
-void vmmv_m(VReg vd, VReg vs) {
-    vmand_mm(vd, vs, vs); // Copy mask register
-}
-
-void vmclr_m(VReg vd) {
-    vmxor_mm(vd, vd, vd); // Clear mask register
-}
-
-void vmset_m(VReg vd) {
-    vmxnor_mm(vd, vd, vd); // Set mask register
-}
-
-void vmnot_m(VReg vd, VReg vs) {
-    vmnand_mm(vd, vs, vs); // Invert bits
-}
+// Copy mask register
+void vmmv_m(const VReg& vd, const VReg& vs) { vmand_mm(vd, vs, vs); }
+// Clear mask register
+void vmclr_m(const VReg& vd) { vmxor_mm(vd, vd, vd); }
+// Set mask register
+void vmset_m(const VReg& vd) { vmxnor_mm(vd, vd, vd); }
+// Invert bits
+void vmnot_m(const VReg& vd, const VReg& vs) { vmnand_mm(vd, vs, vs); }
 ''')
 
 
