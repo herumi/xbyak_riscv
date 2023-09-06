@@ -21,6 +21,15 @@ def put(name, args=""):
 def putRRR(name):
   put(name, 'x1, x2, x3')
 
+def putV(name):
+  put(name, 'v1')
+
+def putVV(name):
+  put(name, 'v1, v2')
+
+def putVVV(name):
+  put(name, 'v1, v2, v3')
+
 def addRM(rm):
   if isXbyak:
     return 'RM::' + rm
@@ -198,6 +207,15 @@ def misc():
   for v in [0, 1, -1, 2, -2, 100, -100, -2049, -2048, -2047, 2047, 2048, 0xfffff, -0xfffff, 0x1fffff, -0x1fffff, 0x000000007ffffabc]:
     put('li', f'x2, {v}')
 
+def vec():
+  tbl1 = ['vmclr_m', 'vmset_m']
+  for op in tbl1:
+    putV(op)
+
+  tbl2 = ['vmmv_m', 'vmnot_m']
+  for op in tbl2:
+    putVV(op)
+
 def main():
   global isXbyak
   if len(sys.argv) > 1 and sys.argv[1] == 'gas':
@@ -251,7 +269,7 @@ def main():
   csr()
   fpu()
   misc()
-
+  vec()
 
 if __name__ == '__main__':
   main()
