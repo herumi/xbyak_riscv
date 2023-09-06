@@ -330,9 +330,30 @@ void vsetvl(const Reg& rd, const Reg& rs1, const Reg& rs2) {
 }
 ''')
 
+    # generate vector mask pseudoinstructions
+    print('''
+void vmmv_m(VReg vd, VReg vs) {
+    vmand_mm(vd, vs, vs); // Copy mask register
+}
+
+void vmclr_m(VReg vd) {
+    vmxor_mm(vd, vd, vd); // Clear mask register
+}
+
+void vmset_m(VReg vd) {
+    vmxnor_mm(vd, vd, vd); // Set mask register
+}
+
+void vmnot_m(VReg vd, VReg vs) {
+    vmnand_mm(vd, vs, vs); // Invert bits
+}
+''')
+
+
 def main():
   copyright.put()
   generate_RVV()
+
 
 if __name__ == '__main__':
   main()
