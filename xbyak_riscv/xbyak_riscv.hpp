@@ -896,15 +896,15 @@ struct Bit {
 		: v(r.getIdx())
 	{
 	}
-	Bit(const VM& vm)
+	Bit(VM vm)
 		: v(static_cast<uint32_t>(vm))
 	{
 	}
-	Bit(const CSR& csr)
+	Bit(CSR csr)
 		: v(static_cast<uint32_t>(csr))
 	{
 	}
-	Bit(const RM& rm)
+	Bit(RM rm)
 		: v(static_cast<uint32_t>(rm))
 	{
 	}

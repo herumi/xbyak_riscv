@@ -74,10 +74,10 @@ def generate_instruction_signature(instr_name: str,
     signature_args = []
     # add destination register, if it is in the instruction's arguments
     if 'vd' in __instr_args:
-        signature_args.append('VReg vd')
+        signature_args.append('const VReg& vd')
     elif 'rd' in __instr_args:
         reg_type = opcode_to_scalar_reg_type[minor_opcode]
-        signature_args.append(f'{reg_type} rd')
+        signature_args.append(f'const {reg_type}& rd')
     elif 'vs3' in __instr_args:
         # vectore store instructions have a vs3 operand instead of vd/rd
         signature_args.append('VReg vs3')
@@ -106,10 +106,10 @@ def generate_instruction_signature(instr_name: str,
     def is_scalar_source_register(r): return bool(re.match(r'rs[\d]', r))
     for p in __instr_args:
         if is_vector_source_register(p):
-            signature_args.append(f'VReg {p}')
+            signature_args.append(f'const VReg& {p}')
         elif is_scalar_source_register(p):
             reg_type = opcode_to_scalar_reg_type[minor_opcode]
-            signature_args.append(f'{reg_type} {p}')
+            signature_args.append(f'const {reg_type}& {p}')
 
     # add immediate value, if it is in the instruction's arguments
     if 'simm5' in __instr_args:
