@@ -766,3 +766,10 @@ void vmset_m(const VReg& vd) { vmxnor_mm(vd, vd, vd); }
 // Invert bits
 void vmnot_m(const VReg& vd, const VReg& vs) { vmnand_mm(vd, vs, vs); }
 
+void vmfgt_vv(VReg vd, VReg vs2, VReg vs1, VM vm=VM::unmasked) {
+    vmflt_vv(vd, vs1, vs2, vm);
+}
+
+void vmfge_vv(VReg vd, VReg vs2, VReg vs1, VM vm=VM::unmasked) {
+    vmfle_vv(vd, vs1, vs2, vm);
+}
