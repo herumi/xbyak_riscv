@@ -1,6 +1,6 @@
 PRE?=riscv64-linux-gnu-
 CXX?=g++-13
-CFLAGS?=-I../ -Wall -Wextra
+CFLAGS?=-I../ -Wall -Wextra -g
 CFLAGS+=-DXBYAK_RISCV_V
 SRC=add.cpp cpuinfo.cpp fill.cpp vector_add_rvv.cpp vector_add_rvv_f32.cpp
 OBJ=$(SRC:.cpp=.o)
