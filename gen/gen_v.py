@@ -345,14 +345,9 @@ void vmnot_m(const VReg& vd, const VReg& vs) { vmnand_mm(vd, vs, vs); }
 
     # generate vector compare pseudoinstructions
     print('''
-void vmfgt_vv(VReg vd, VReg vs2, VReg vs1, VM vm=VM::unmasked) {
-    vmflt_vv(vd, vs1, vs2, vm);
-}
+void vmfgt_vv(const VReg& vd, const VReg& vs1, const VReg& vs2, VM vm=VM::unmasked) { vmflt_vv(vd, vs2, vs1, vm); }
 
-void vmfge_vv(VReg vd, VReg vs2, VReg vs1, VM vm=VM::unmasked) {
-    vmfle_vv(vd, vs1, vs2, vm);
-}
-''')
+void vmfge_vv(const VReg& vd, const VReg& vs1, const VReg& vs2, VM vm=VM::unmasked) { vmfle_vv(vd, vs2, vs1, vm); }''')
 
 def main():
   copyright.put()
