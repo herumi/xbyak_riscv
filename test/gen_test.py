@@ -216,6 +216,10 @@ def vec():
   for op in tbl2:
     putVV(op)
 
+  tbl3 = ['vmflt_vv', 'vmfgt_vv', 'vmfle_vv', 'vmfge_vv']
+  for op in tbl3:
+    putVVV(op)
+
 def main():
   global isXbyak
   if len(sys.argv) > 1 and sys.argv[1] == 'gas':
