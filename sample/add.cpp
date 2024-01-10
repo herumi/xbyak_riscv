@@ -5,8 +5,8 @@ using namespace Xbyak_riscv;
 struct Code : CodeGenerator {
 	Code(int v)
 	{
-		add(a0, a0, a1);
-		addi(a0, a0, v);
+		addw(a0, a0, a1);
+		addiw(a0, a0, v);
 		ret();
 	}
 };
