@@ -59,7 +59,7 @@ asm|Xbyak
 -|-
 `add x3, x4, x5`|`add(x3, x4, x5);`
 `ld x3, 16(x4)`|`ld(x3, x4, 16);`
-`sw t0,8(s1)`|sw(t0, s1, 8);`
+`sw t0,8(s1)`|`sw(t0, s1, 8);`
 `amoswap.w a0,a1,(a2)`|`amoswap_w(a0, a1, a2);`
 
 Replace a period in instructions with an underscore.
