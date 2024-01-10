@@ -42,18 +42,18 @@ public:
 			case '+':
 			case '-': {
 				int count = getContinuousChar(is, c);
-				ld(a0, stack);
+				lb(a0, stack);
 				// QQQ : not support large count
 				if (c == '+') {
 					addi(a0, a0, count);
 				} else {
 					addi(a0, a0, -count);
 				}
-				sd(a0, stack);
+				sb(a0, stack);
 			} break;
 			case '>':
 			case '<': {
-				int count = getContinuousChar(is, c) * 8;
+				int count = getContinuousChar(is, c);
 				if (c == '>') {
 					addi(stack, stack, count);
 				} else {
@@ -61,17 +61,17 @@ public:
 				}
 			} break;
 			case '.':
-				ld(a0, stack);
+				lb(a0, stack);
 				jalr(pPutchar);
 				break;
 			case ',':
 				jalr(pGetchar);
-				sd(a0, stack);
+				sb(a0, stack);
 				break;
 			case '[': {
 				Label B = L();
 				labelB.push(B);
-				ld(a0, stack);
+				lb(a0, stack);
 				Label F;
 				beq(a0, x0, F);
 				labelF.push(F);
@@ -107,8 +107,8 @@ int main(int argc, char *argv[]) try {
 	std::ifstream ifs(argv[1]);
 	Brainfuck bf(ifs);
 	bf.ready();
-	static int64_t stack[128 * 1024];
-	auto f = bf.getCode<void (*)(const void *, const void *, int64_t *)>();
+	static uint8_t stack[30000];
+	auto f = bf.getCode<void (*)(const void *, const void *, uint8_t *)>();
 	if (doDump) {
 		FILE *fp = fopen("bf.dump", "wb");
 		fwrite((const void*)f, bf.getSize(), 1, fp);
