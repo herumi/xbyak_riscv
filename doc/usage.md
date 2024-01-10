@@ -10,8 +10,8 @@ using namespace Xbyak_riscv;
 struct Code : CodeGenerator {
   Code(int v)
   {
-    add(a0, a0, a1);
-    addi(a0, a0, v);
+    addw(a0, a0, a1);
+    addiw(a0, a0, v);
     ret();
   }
 };
@@ -52,6 +52,21 @@ x18-27|s2-11
 x28-31|t3-6
 
 These names are defined in the `Xbyak_riscv` namespace.
+
+# Syntax
+
+asm|Xbyak
+-|-
+`add x3, x4, x5`|`add(x3, x4, x5);`
+`ld x3, 16(x4)`|`ld(x3, x4, 16);`
+`sw t0,8(s1)`|sw(t0, s1, 8);`
+`amoswap.w a0,a1,(a2)`|amoswap_w(a0, a1, a2);`
+
+Replace a period in instructions with an underscore.
+
+# RVC
+
+Use `supportRVC()` to enable RVC instructions.
 
 # Macros
 
