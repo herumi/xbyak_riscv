@@ -1,6 +1,6 @@
 #!/usr/bin/bash
 set -e
-ASFLAGS="-march=rv64iafmqgv"
+ASFLAGS="-march=rv64imafdqv"
 case $1 in
 svc)
   echo "svc test"
