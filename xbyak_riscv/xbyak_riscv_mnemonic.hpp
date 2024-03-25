@@ -229,4 +229,7 @@ void csrc(CSR csr, const Reg& rs) { csrrc(x0, csr, rs); }
 void csrwi(CSR csr, uint32_t imm) { csrrwi(x0, csr, imm); }
 void csrsi(CSR csr, uint32_t imm) { csrrsi(x0, csr, imm); }
 void csrci(CSR csr, uint32_t imm) { csrrci(x0, csr, imm); }
+// ld, sq
+void lq(const Reg& rd, const Reg& addr, int imm = 0) { if (supportRVC_ && c_lsq(rd, addr, imm, 1)) return; Itype(0xF, 3, rd, addr, imm); }
+void sq(const Reg& rs, const Reg& addr, int imm = 0) { if (supportRVC_ && c_lsq(rs, addr, imm, 5)) return; Stype(0x23, 4, addr, rs, imm); }
 
