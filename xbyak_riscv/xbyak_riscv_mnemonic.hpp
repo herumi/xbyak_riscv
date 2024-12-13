@@ -193,11 +193,11 @@ void li(const Reg& rd, int imm)
 		return;
 	}
 	lui(rd, H);
-#ifdef XBYAK_RISCV64
-	addiw(rd, rd, L);
-#else
-	addi(rd, rd, L);
-#endif
+	if (isRV32_) {
+		addi(rd, rd, L);
+	} else {
+		addiw(rd, rd, L);
+	}
 }
 void mv(const Reg& rd, const Reg& rs) { addi(rd, rs, 0); }
 void not_(const Reg& rd, const Reg& rs) { xori(rd, rs, -1); }
