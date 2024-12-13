@@ -32,7 +32,14 @@ Install QEMU and C++ compiler for RISC-V.
 sudo apt install g++-12-riscv64-linux-gnu
 make -C sample
 ```
-
+Generate targets:
+```
+cmake -DCMAKE_BUILD_TYPE=Debug -DXBYAK_RISCV_V=ON ..
+```
+Build:
+```
+make --build .  --parallel 4
+```
 
 ## License
 

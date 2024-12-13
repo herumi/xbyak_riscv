@@ -2,6 +2,14 @@ cmake_minimum_required(VERSION 2.6...3.0.2)
 
 project(xbyak_riscv LANGUAGES CXX VERSION 6.68)
 
+OPTION(XBYAK_RISCV_V "RISC-V 'V' Vector Extension support" OFF)
+
+IF(XBYAK_RISCV_V)
+	ADD_DEFINITIONS(-DXBYAK_RISCV_V)
+ENDIF()
+
+message(XBYAK_RISCV_V=${XBYAK_RISCV_V})
+
 file(GLOB headers xbyak_riscv/*.h)
 
 if (DEFINED CMAKE_VERSION AND CMAKE_VERSION VERSION_GREATER_EQUAL 3.0.2)
