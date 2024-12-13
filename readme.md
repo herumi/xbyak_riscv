@@ -29,7 +29,7 @@ C++11 or later compiler
 ## Sample
 Install QEMU and C++ compiler for RISC-V.
 ```
-sudo apt install g++-12-riscv64-linux-gnu
+sudo apt install g++-14-riscv64-linux-gnu binutils-riscv64-unknown-elf
 make -C sample
 ```
 Generate targets:
