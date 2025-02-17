@@ -204,7 +204,10 @@ def misc():
   ]:
     putRR(name)
   name = 'li'
-  for v in [0, 1, -1, 2, -2, 100, -100, -2049, -2048, -2047, 2047, 2048, 0xfffff, -0xfffff, 0x1fffff, -0x1fffff, 0x000000007ffffabc]:
+  for v in [0, 1, -1, 2, -2, 100, -100, -2049, -2048, -2047, 2047, 2048, 0xfffff, -0xfffff, 0x1fffff, -0x1fffff, 0x000000007ffffabc,
+    0x7ffffffe, 0x7fffffff, 0x12345000, 0x12348000, 0x7ffff000,
+	# 0x80000000, # lui reg, 0x80000 is better than addiw, reg, 1 ; slli reg, reg, 31
+  ]:
     put('li', f'x2, {v}')
 
 def vec():

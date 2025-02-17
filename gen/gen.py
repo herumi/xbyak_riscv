@@ -357,11 +357,15 @@ void fsh(const FReg& rs2, const Reg& rs1, int32_t imm12 = 0) { opStoreFP(0x1027,
 # misc
 print('''
 void nop() { if (supportRVC_) { append2B(0x0001); return; } addi(x0, x0, 0); }
-void li(const Reg& rd, int imm)
+void li(const Reg& rd, uint32_t imm)
 {
+	if (imm && (imm & local::mask(12)) == 0) { // lower 12 bits of imm are zero
+		lui(rd, uint32_t(imm >> 12));
+		return;
+	}
 	int H, L;
 	if (!local::split32bit(&H, &L, imm)) {
-		addi(rd, x0, imm);
+		addi(rd, zero, imm);
 		return;
 	}
 	lui(rd, H);
