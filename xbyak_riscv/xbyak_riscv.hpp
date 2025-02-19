@@ -102,6 +102,7 @@ enum {
 	ERR_CANT_ALLOC,
 	ERR_BAD_PARAMETER,
 	ERR_MUNMAP,
+	ERR_BAD_ALIGN,
 	ERR_INTERNAL // Put it at last.
 };
 
@@ -123,6 +124,7 @@ inline const char *ConvertErrorToString(int err)
 		"can't alloc",
 		"bad parameter",
 		"munmap",
+		"bad align",
 		"internal error"
 	};
 	assert(ERR_INTERNAL == sizeof(errTbl) / sizeof(*errTbl));
@@ -1348,6 +1350,19 @@ public:
 	}
 	// set read/exec
 	void readyRE() { return ready(PROTECT_RE); }
+
+	void align(size_t x)
+	{
+		if (x == 1) return;
+		if (x < 4 || (x & (x - 1))) XBYAK_RISCV_THROW(ERR_BAD_ALIGN)
+		size_t remain = size_t(getCurr()) % x;
+		if (remain % 4) XBYAK_RISCV_THROW(ERR_INTERNAL)
+		if (remain) {
+			for (size_t i = 0; i < (x - remain) / 4; i++) {
+				nop();
+			}
+		}
+	}
 
 #include "xbyak_riscv_mnemonic.hpp"
 #if defined(XBYAK_RISCV_V) && XBYAK_RISCV_V == 1

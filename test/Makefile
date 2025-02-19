@@ -1,7 +1,8 @@
 HEADER=../xbyak_riscv/xbyak_riscv_mnemonic.hpp
 
-test: $(HEADER) jmp_test.exe
+test: $(HEADER) jmp_test.exe misc_test.exe
 	./jmp_test.exe
+	./misc_test.exe
 	./test.sh
 #	./test.sh svc
 
