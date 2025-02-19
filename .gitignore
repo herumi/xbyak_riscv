@@ -1,2 +1,5 @@
 /build* # cmake
 CVS
+*.o
+*.exe
+*.d
