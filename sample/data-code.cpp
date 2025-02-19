@@ -14,31 +14,30 @@ static const size_t codeSize = 4096;
 */
 
 struct Generator : public CodeGenerator {
-    Generator()
+	Generator()
 		: CodeGenerator(dataSize + codeSize, DontSetProtectRWE)
 	{
 		// data from here
 		dataTop = const_cast<uint8_t*>(getCurr());
 		Label d1L, d2L;
 		L(d1L);
-        append4B(123000);
+		append4B(123000);
 		L(d2L);
-        append4B(456);
+		append4B(456);
 
 		// set the other data
-
 		setSize(dataSize);
 
 		// code from here
-        codeTop = getCurr<uint32_t(*)(uint8_t *data)>();
+		codeTop = getCurr<uint32_t(*)(uint8_t *data)>();
 
-        const Reg &dataTop = a2;
+		const Reg &dataTop = a2;
 		mv(dataTop, a0);
-        lw(a0, dataTop, getOffset(d1L));
+		lw(a0, dataTop, getOffset(d1L));
 		lw(a1, dataTop, getOffset(d2L));
 		add(a0, a0, a1);
-        ret();
-    }
+		ret();
+	}
 	uint32_t getOffset(const Label& L) const
 	{
 		return L.getAddress() - dataTop;
@@ -51,12 +50,12 @@ struct Generator : public CodeGenerator {
 int main()
 	try
 {
-    Generator gen;
-    gen.ready();
+	Generator gen;
+	gen.ready();
 	CodeArray::protect((void*)gen.codeTop, codeSize, CodeArray::PROTECT_RE);
 	printf("data=%p\n", gen.dataTop);
 	printf("code=%p\n", gen.codeTop);
-    printf("exec = %d\n", gen.codeTop(gen.dataTop));
+	printf("exec = %d\n", gen.codeTop(gen.dataTop));
 } catch (std::exception& e) {
 	printf("err %s\n", e.what());
 	return 1;
