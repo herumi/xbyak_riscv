@@ -349,6 +349,12 @@ void vmfgt_vv(const VReg& vd, const VReg& vs1, const VReg& vs2, VM vm=VM::unmask
 
 void vmfge_vv(const VReg& vd, const VReg& vs1, const VReg& vs2, VM vm=VM::unmasked) { vmfle_vv(vd, vs2, vs1, vm); }''')
 
+    # generate sign-related pseudoinstructions
+    print('''
+void vfabs_v(const VReg& vd, const VReg& vs, VM vm=VM::unmasked) { vfsgnjx_vv(vd, vs, vs, vm); }
+
+void vfneg_v(const VReg& vd, const VReg& vs, VM vm=VM::unmasked) { vfsgnjn_vv(vd, vs, vs, vm); }''')
+
 def main():
   copyright.put()
   generate_RVV()
