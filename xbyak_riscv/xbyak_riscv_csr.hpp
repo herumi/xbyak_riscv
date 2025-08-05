@@ -10,6 +10,10 @@ namespace Xbyak_riscv {
 
 // Control and Status Register
 enum class CSR : uint32_t {
+    // FP CSRs
+    fflags = 0x001, // Floating-Point Accrued Exceptions
+    frm    = 0x002, // Floating-Point Dynamic Rounding Mode
+    fcsr   = 0x003, // Floating-Point Control and Status register
     // vector CSRs
     vstart = 0x008, // Vector start position
     vxsat  = 0x009, // Fixed-Point Saturate Flag
@@ -95,6 +99,14 @@ enum class RM : uint32_t {
     rmm = 0x4, // Round to Nearest, ties to Max Magnitude
     dyn = 0x7  // In instruction’s rm field, selects dynamic rounding mode;
                // In Rounding Mode register, reserved.
+};
+
+enum class FFlags : uint32_t {
+    NV = 0x01, // Invalid Operation 
+    DZ = 0x02, // Divide by Zero
+    OF = 0x04, // Overflow
+    UF = 0x08, // Underflow
+    NX = 0x10  // Inexact
 };
 
 } // Xbyak_riscv
