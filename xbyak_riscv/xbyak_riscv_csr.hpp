@@ -102,7 +102,7 @@ enum class RM : uint32_t {
 };
 
 enum class FFlags : uint32_t {
-    NV = 0x01, // Invalid Operation 
+    NV = 0x01, // Invalid Operation
     DZ = 0x02, // Divide by Zero
     OF = 0x04, // Overflow
     UF = 0x08, // Underflow
