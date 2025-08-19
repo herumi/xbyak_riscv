@@ -165,7 +165,7 @@ public:
 		}
 	}
 	operator int() const { return err_; }
-	const char *what() const noexcept
+	const char *what() const noexcept override
 	{
 		return ConvertErrorToString(err_);
 	}
@@ -314,7 +314,7 @@ class MmapAllocator : public Allocator {
 	AllocationList allocList_;
 public:
 	explicit MmapAllocator(const std::string& name = "xbyak") : name_(name) {}
-	uint8_t *alloc(size_t size)
+	uint8_t *alloc(size_t size) override
 	{
 		const size_t alignedSizeM1 = local::ALIGN_PAGE_SIZE - 1;
 		size = (size + alignedSizeM1) & ~alignedSizeM1;
@@ -353,7 +353,7 @@ public:
 #endif
 		return (uint8_t*)p;
 	}
-	void free(uint8_t *p)
+	void free(uint8_t *p) override
 	{
 		if (p == 0) return;
 		AllocationList::iterator i = allocList_.find((uintptr_t)p);
