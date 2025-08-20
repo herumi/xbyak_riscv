@@ -1,5 +1,19 @@
-import copyright
-copyright.put()
+import re
+
+def getVersionString():
+  V = re.compile(r'VERSION = 0x(\d\d\d\d)')
+  with open('../xbyak_riscv/xbyak_riscv.hpp', 'r') as f:
+    for line in f.read().split('\n'):
+      r = V.search(line)
+      if r:
+        ver = r.group(1)
+        s = ver[0] + '.' + ver[1:3]
+        if ver[3] != '0':
+          s += '.' + ver[3]
+        return s
+  raise Exception('bad format')
+
+print(f'const char *getVersionString() const {{ return "{getVersionString()}"; }}')
 
 tbl = [
  (0b0000000,0b000, 0b0110011, 'add'),
