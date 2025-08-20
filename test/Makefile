@@ -10,7 +10,7 @@ test_svc:
 	./test.sh svc
 
 %.exe: %.cpp $(HEADER)
-	$(CXX) -o $@ $< -Wall -Wextra -I ../ -I ./
+	$(CXX) -o $@ $< -Wall -Wextra -Wsuggest-override -I ../ -I ./
 
 $(HEADER):
 	$(MAKE) -C ../gen
