@@ -3,3 +3,8 @@ CVS
 *.o
 *.exe
 *.d
+__pycache__
+test/*.out
+test/*.s
+test/*.txt
+test/generated*

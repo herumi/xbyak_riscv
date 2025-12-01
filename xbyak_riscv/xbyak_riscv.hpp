@@ -77,11 +77,17 @@
 
 #include "xbyak_riscv_csr.hpp"
 
+#if ((__cplusplus >= 201402L) && !(!defined(__clang__) && defined(__GNUC__) && (__GNUC__ <= 5))) || (defined(_MSC_VER) && _MSC_VER >= 1910)
+	#define XBYAK_RISCV_CONSTEXPR constexpr
+#else
+	#define XBYAK_RISCV_CONSTEXPR
+#endif
+
 namespace Xbyak_riscv {
 
 enum {
 	DEFAULT_MAX_CODE_SIZE = 4096,
-	VERSION = 0x1000 /* 0xABCD = A.BC.D */
+	VERSION = 0x1010 /* 0xABCD = A.BC.D */
 };
 
 inline uint32_t getVersion() { return VERSION; }
@@ -213,19 +219,19 @@ namespace local {
 
 static const size_t ALIGN_PAGE_SIZE = 4096;
 
-inline constexpr uint32_t mask(size_t n)
+inline XBYAK_RISCV_CONSTEXPR uint32_t mask(size_t n)
 {
 	XBYAK_RISCV_ASSERT(n <= 32);
 	return n == 32 ? 0xffffffff : (1u << n) - 1;
 }
 // is x <= mask(n) ?
-inline constexpr bool inBit(uint32_t x, size_t n)
+inline XBYAK_RISCV_CONSTEXPR bool inBit(uint32_t x, size_t n)
 {
 	return x <= mask(n);
 }
 
 // is x a signed n-bit integer?
-inline constexpr bool inSBit(int x, int n)
+inline XBYAK_RISCV_CONSTEXPR bool inSBit(int x, int n)
 {
 	return -(1 << (n-1)) <= x && x < (1 << (n-1));
 }
@@ -381,12 +387,12 @@ protected:
 	uint32_t idx_;
 	Kind kind_;
 public:
-	constexpr IReg(uint32_t idx = 0, Kind kind = GPR)
+	XBYAK_RISCV_CONSTEXPR IReg(uint32_t idx = 0, Kind kind = GPR)
 		: idx_(idx), kind_(kind)
 	{
 		XBYAK_RISCV_ASSERT(local::inBit(idx, 5));
 	}
-	constexpr int getIdx() const { return idx_; }
+	XBYAK_RISCV_CONSTEXPR int getIdx() const { return idx_; }
 	const char *toString() const
 	{
 		if (kind_ == GPR) {
@@ -428,55 +434,55 @@ public:
 
 // General Purpose Register
 struct Reg : public local::IReg {
-	explicit constexpr Reg(int idx = 0) : local::IReg(idx, IReg::Kind::GPR) { }
+	explicit XBYAK_RISCV_CONSTEXPR Reg(int idx = 0) : local::IReg(idx, IReg::Kind::GPR) { }
 };
 
-static constexpr Reg x0(0), x1(1), x2(2), x3(3), x4(4), x5(5), x6(6), x7(7);
-static constexpr Reg x8(8), x9(9), x10(10), x11(11), x12(12), x13(13), x14(14), x15(15);
-static constexpr Reg x16(16), x17(17), x18(18), x19(19), x20(20), x21(21), x22(22), x23(23);
-static constexpr Reg x24(24), x25(25), x26(26), x27(27), x28(28), x29(29), x30(30), x31(31);
+static XBYAK_RISCV_CONSTEXPR Reg x0(0), x1(1), x2(2), x3(3), x4(4), x5(5), x6(6), x7(7);
+static XBYAK_RISCV_CONSTEXPR Reg x8(8), x9(9), x10(10), x11(11), x12(12), x13(13), x14(14), x15(15);
+static XBYAK_RISCV_CONSTEXPR Reg x16(16), x17(17), x18(18), x19(19), x20(20), x21(21), x22(22), x23(23);
+static XBYAK_RISCV_CONSTEXPR Reg x24(24), x25(25), x26(26), x27(27), x28(28), x29(29), x30(30), x31(31);
 
-static constexpr Reg zero(x0);
-static constexpr Reg ra(x1);
-static constexpr Reg sp(x2);
-static constexpr Reg gp(x3);
-static constexpr Reg tp(x4);
-static constexpr Reg t0(x5);
-static constexpr Reg t1(x6);
-static constexpr Reg t2(x7);
-static constexpr Reg fp(x8);
-static constexpr Reg s0(x8);
-static constexpr Reg s1(x9);
-static constexpr Reg a0(x10), a1(x11), a2(x12), a3(x13), a4(x14), a5(x15), a6(x16), a7(x17);
-static constexpr Reg s2(x18), s3(x19), s4(x20), s5(x21), s6(x22), s7(x23), s8(x24), s9(x25);
-static constexpr Reg s10(x26), s11(x27);
-static constexpr Reg t3(x28), t4(x29), t5(x30), t6(x31);
+static XBYAK_RISCV_CONSTEXPR Reg zero(x0);
+static XBYAK_RISCV_CONSTEXPR Reg ra(x1);
+static XBYAK_RISCV_CONSTEXPR Reg sp(x2);
+static XBYAK_RISCV_CONSTEXPR Reg gp(x3);
+static XBYAK_RISCV_CONSTEXPR Reg tp(x4);
+static XBYAK_RISCV_CONSTEXPR Reg t0(x5);
+static XBYAK_RISCV_CONSTEXPR Reg t1(x6);
+static XBYAK_RISCV_CONSTEXPR Reg t2(x7);
+static XBYAK_RISCV_CONSTEXPR Reg fp(x8);
+static XBYAK_RISCV_CONSTEXPR Reg s0(x8);
+static XBYAK_RISCV_CONSTEXPR Reg s1(x9);
+static XBYAK_RISCV_CONSTEXPR Reg a0(x10), a1(x11), a2(x12), a3(x13), a4(x14), a5(x15), a6(x16), a7(x17);
+static XBYAK_RISCV_CONSTEXPR Reg s2(x18), s3(x19), s4(x20), s5(x21), s6(x22), s7(x23), s8(x24), s9(x25);
+static XBYAK_RISCV_CONSTEXPR Reg s10(x26), s11(x27);
+static XBYAK_RISCV_CONSTEXPR Reg t3(x28), t4(x29), t5(x30), t6(x31);
 
 // Floating Point Register
 struct FReg : public local::IReg {
-	explicit constexpr FReg(int idx = 0) : local::IReg(idx, IReg::Kind::FReg) { }
+	explicit XBYAK_RISCV_CONSTEXPR FReg(int idx = 0) : local::IReg(idx, IReg::Kind::FReg) { }
 };
 
-static constexpr FReg f0(0), f1(1), f2(2), f3(3), f4(4), f5(5), f6(6), f7(7);
-static constexpr FReg f8(8), f9(9), f10(10), f11(11), f12(12), f13(13), f14(14), f15(15);
-static constexpr FReg f16(16), f17(17), f18(18), f19(19), f20(20), f21(21), f22(22), f23(23);
-static constexpr FReg f24(24), f25(25), f26(26), f27(27), f28(28), f29(29), f30(30), f31(31);
+static XBYAK_RISCV_CONSTEXPR FReg f0(0), f1(1), f2(2), f3(3), f4(4), f5(5), f6(6), f7(7);
+static XBYAK_RISCV_CONSTEXPR FReg f8(8), f9(9), f10(10), f11(11), f12(12), f13(13), f14(14), f15(15);
+static XBYAK_RISCV_CONSTEXPR FReg f16(16), f17(17), f18(18), f19(19), f20(20), f21(21), f22(22), f23(23);
+static XBYAK_RISCV_CONSTEXPR FReg f24(24), f25(25), f26(26), f27(27), f28(28), f29(29), f30(30), f31(31);
 // ABI name
-static constexpr FReg ft0(0), ft1(1), ft2(2), ft3(3), ft4(4), ft5(5), ft6(6), ft7(7);
-static constexpr FReg fs0(8), fs1(9), fa0(10), fa1(11), fa2(12), fa3(13), fa4(14), fa5(15), fa6(16), fa7(f17);
-static constexpr FReg fs2(18), fs3(19), fs4(20), fs5(21), fs6(22), fs7(23), fs8(24), fs9(25), fs10(26), fs11(27);
-static constexpr FReg ft8(28), ft9(29), ft10(30), ft11(31);
+static XBYAK_RISCV_CONSTEXPR FReg ft0(0), ft1(1), ft2(2), ft3(3), ft4(4), ft5(5), ft6(6), ft7(7);
+static XBYAK_RISCV_CONSTEXPR FReg fs0(8), fs1(9), fa0(10), fa1(11), fa2(12), fa3(13), fa4(14), fa5(15), fa6(16), fa7(f17);
+static XBYAK_RISCV_CONSTEXPR FReg fs2(18), fs3(19), fs4(20), fs5(21), fs6(22), fs7(23), fs8(24), fs9(25), fs10(26), fs11(27);
+static XBYAK_RISCV_CONSTEXPR FReg ft8(28), ft9(29), ft10(30), ft11(31);
 
 #if defined(XBYAK_RISCV_V) && XBYAK_RISCV_V == 1
 // Vector Register
 struct VReg : public local::IReg {
-	explicit constexpr VReg(int idx = 0) : local::IReg(idx, IReg::Kind::VECTOR) { }
+	explicit XBYAK_RISCV_CONSTEXPR VReg(int idx = 0) : local::IReg(idx, IReg::Kind::VECTOR) { }
 };
 
-static constexpr VReg v0(0), v1(1), v2(2), v3(3), v4(4), v5(5), v6(6), v7(7);
-static constexpr VReg v8(8), v9(9), v10(10), v11(11), v12(12), v13(13), v14(14), v15(15);
-static constexpr VReg v16(16), v17(17), v18(18), v19(19), v20(20), v21(21), v22(22), v23(23);
-static constexpr VReg v24(24), v25(25), v26(26), v27(27), v28(28), v29(29), v30(30), v31(31);
+static XBYAK_RISCV_CONSTEXPR VReg v0(0), v1(1), v2(2), v3(3), v4(4), v5(5), v6(6), v7(7);
+static XBYAK_RISCV_CONSTEXPR VReg v8(8), v9(9), v10(10), v11(11), v12(12), v13(13), v14(14), v15(15);
+static XBYAK_RISCV_CONSTEXPR VReg v16(16), v17(17), v18(18), v19(19), v20(20), v21(21), v22(22), v23(23);
+static XBYAK_RISCV_CONSTEXPR VReg v24(24), v25(25), v26(26), v27(27), v28(28), v29(29), v30(30), v31(31);
 #endif
 
 // 2nd parameter for constructor of CodeArray(maxSize, userPtr, alloc)

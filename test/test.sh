@@ -13,9 +13,11 @@ svc)
   ;;
 esac
 
-CXX=g++
-AS=riscv64-linux-gnu-as
-OBJDUMP=riscv64-unknown-elf-objdump
+ASFLAGS+="_zifencei"
+
+CXX=${CXX:-g++}
+AS=${AS:-riscv64-linux-gnu-as}
+OBJDUMP=${OBJDUMP:-riscv64-unknown-elf-objdump}
 CFLAGS="-g -I../ -Wall -Wextra"
 CFLAGS+=" -DXBYAK_RISCV_V"
 

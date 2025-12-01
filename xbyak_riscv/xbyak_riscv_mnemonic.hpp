@@ -1,4 +1,4 @@
-const char *getVersionString() const { return "1.00"; }
+const char *getVersionString() const { return "1.01"; }
 void add(const Reg& rd, const Reg& rs1, const Reg& rs2) { if (supportRVC_ && rd == rs1 && c_mv(rd, rs2, 1)) return; Rtype(0x33, 0, 0x0, rd, rs1, rs2); }
 void sub(const Reg& rd, const Reg& rs1, const Reg& rs2) { if (supportRVC_ && c_noimm(rd, rs1, rs2, 0x23, 0)) return; Rtype(0x33, 0, 0x20, rd, rs1, rs2); }
 void sll(const Reg& rd, const Reg& rs1, const Reg& rs2) { Rtype(0x33, 1, 0x0, rd, rs1, rs2); }
