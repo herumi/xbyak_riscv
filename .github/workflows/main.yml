@@ -14,7 +14,7 @@ jobs:
     container:
       image: debian:testing
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - run: apt -y update
     - run: apt -y install make g++ binutils-riscv64-linux-gnu binutils-riscv64-unknown-elf python3
     - run: make test
