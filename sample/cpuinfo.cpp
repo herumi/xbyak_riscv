@@ -29,6 +29,11 @@ int main()
     std::cout << "Has D: " <<  cpu.hasExtension(RISCVExtension::D) << std::endl;
     std::cout << "Has C: " <<  cpu.hasExtension(RISCVExtension::C) << std::endl;
     std::cout << "Has V: " <<  cpu.hasExtension(RISCVExtension::V) << std::endl;
+    
+    std::cout << "Has Zvfh: " <<  cpu.hasExtension(RISCVExtension::Zvfh) << std::endl;
+    std::cout << "Has Zvbb: " <<  cpu.hasExtension(RISCVExtension::Zvbb) << std::endl;
+    std::cout << "Has Zvbc: " <<  cpu.hasExtension(RISCVExtension::Zvbc) << std::endl;
+    std::cout << "Has Zvkg: " <<  cpu.hasExtension(RISCVExtension::Zvkg) << std::endl;
     std::cout << std::endl;
 
     std::cout << "Cache info:" << std::endl;
