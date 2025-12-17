@@ -266,7 +266,6 @@ private:
     uint32_t xlen = 0;
     uint32_t vlen = 0;
     uint32_t flen = 0;
-
 };
 
 } // Xbyak_riscv
