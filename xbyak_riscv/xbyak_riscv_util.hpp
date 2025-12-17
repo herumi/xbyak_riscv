@@ -10,10 +10,6 @@
 #include <climits>
 #include <cstddef>
 #include <cstdint>
-#include <fstream>
-#include <string>
-#include <array>
-#include <cstring>
 #include "xbyak_riscv_csr.hpp"
 #include "xbyak_riscv.hpp"
 
@@ -162,11 +158,14 @@ public:
             if (v & RISCV_HWPROBE_IMA_V) hwcapFeatures |= static_cast<uint64_t>(RISCVExtension::V);
 
             // Detect Z-extensions using the table
-            const ExtensionEntry table[] = {
-               { RISCVExtension::Zvfh, RISCV_HWPROBE_EXT_ZVFH, "_zvfh" },
-               { RISCVExtension::Zvbb, RISCV_HWPROBE_EXT_ZVBB, "_zvbb" },
-               { RISCVExtension::Zvbc, RISCV_HWPROBE_EXT_ZVBC, "_zvbc" },
-               { RISCVExtension::Zvkg, RISCV_HWPROBE_EXT_ZVKG, "_zvkg" }
+            const struct {
+                RISCVExtension id;
+                uint64_t hwprobe_bit; // Bit in RISCV_HWPROBE_KEY_IMA_EXT_0
+            } table[] = {
+                { RISCVExtension::Zvfh, RISCV_HWPROBE_EXT_ZVFH },
+                { RISCVExtension::Zvbb, RISCV_HWPROBE_EXT_ZVBB },
+                { RISCVExtension::Zvbc, RISCV_HWPROBE_EXT_ZVBC },
+                { RISCVExtension::Zvkg, RISCV_HWPROBE_EXT_ZVKG }
             };
             for (const auto& entry : table) {
                 if (v & entry.hwprobe_bit) {
@@ -268,14 +267,6 @@ private:
     uint32_t vlen = 0;
     uint32_t flen = 0;
 
-    /**
-     * Helper structure for extension mapping
-    */
-    struct ExtensionEntry {
-        RISCVExtension id;
-        uint64_t hwprobe_bit;  // Bit in RISCV_HWPROBE_KEY_IMA_EXT_0
-        const char* name;      // String in /proc/cpuinfo "isa" line
-    };
 };
 
 } // Xbyak_riscv
