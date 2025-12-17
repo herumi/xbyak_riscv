@@ -135,7 +135,7 @@ public:
     CPU() {
         hwcapFeatures = 0;
         xlen = sizeof(void*) * 8; // Fallback if sysconf fails
-        
+
 #if defined(__linux__) && defined(__riscv)
         // Set hwcapFeatures with AT_HWCAP value from
         // the Linux auxiliary vector to check for base extensions support.
@@ -153,14 +153,14 @@ public:
         struct riscv_hwprobe requests[] = {
             {RISCV_HWPROBE_KEY_IMA_EXT_0, 0}
         };
-        
+
         int ret = syscall(__NR_riscv_hwprobe, &requests, sizeof(requests) / sizeof(requests[0]), 0, NULL, 0);
 
         if (ret == 0) {
             uint64_t v = requests[0].value;
             // Update V support from hwprobe if present
             if (v & RISCV_HWPROBE_IMA_V) hwcapFeatures |= static_cast<uint64_t>(RISCVExtension::V);
-            
+
             // Detect Z-extensions using the table
             for (const auto& entry : getExtensionTable()) {
                 if (v & entry.hwprobe_bit) {
@@ -306,7 +306,7 @@ private:
                     }
                 }
                 // We only parse the first valid 'isa' line we find.
-                break; 
+                break;
             }
         }
     }
