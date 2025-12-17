@@ -162,7 +162,13 @@ public:
             if (v & RISCV_HWPROBE_IMA_V) hwcapFeatures |= static_cast<uint64_t>(RISCVExtension::V);
 
             // Detect Z-extensions using the table
-            for (const auto& entry : getExtensionTable()) {
+            const ExtensionEntry table[] = {
+               { RISCVExtension::Zvfh, RISCV_HWPROBE_EXT_ZVFH, "_zvfh" },
+               { RISCVExtension::Zvbb, RISCV_HWPROBE_EXT_ZVBB, "_zvbb" },
+               { RISCVExtension::Zvbc, RISCV_HWPROBE_EXT_ZVBC, "_zvbc" },
+               { RISCVExtension::Zvkg, RISCV_HWPROBE_EXT_ZVKG, "_zvkg" }
+            };
+            for (const auto& entry : table) {
                 if (v & entry.hwprobe_bit) {
                     hwcapFeatures |= static_cast<uint64_t>(entry.id);
                 }
@@ -270,20 +276,6 @@ private:
         uint64_t hwprobe_bit;  // Bit in RISCV_HWPROBE_KEY_IMA_EXT_0
         const char* name;      // String in /proc/cpuinfo "isa" line
     };
-
-    /**
-     * Centralized table for all supported Z-extensions
-    */
-	static const size_t ExtensionEntryN = 4;
-    static const std::array<ExtensionEntry, ExtensionEntryN>& getExtensionTable() {
-        static const std::array<ExtensionEntry, ExtensionEntryN> table = {{
-            { RISCVExtension::Zvfh, RISCV_HWPROBE_EXT_ZVFH, "_zvfh" },
-            { RISCVExtension::Zvbb, RISCV_HWPROBE_EXT_ZVBB, "_zvbb" },
-            { RISCVExtension::Zvbc, RISCV_HWPROBE_EXT_ZVBC, "_zvbc" },
-            { RISCVExtension::Zvkg, RISCV_HWPROBE_EXT_ZVKG, "_zvkg" }
-        }};
-        return table;
-    }
 };
 
 } // Xbyak_riscv
