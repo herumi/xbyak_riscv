@@ -167,12 +167,6 @@ public:
                     hwcapFeatures |= static_cast<uint64_t>(entry.id);
                 }
             }
-        } else {
-            // Fallback: If hwprobe failed (Kernel < 6.4), use procfs
-            // We only try this if the base Vector extension is present.
-            if (hasExtension(RISCVExtension::V)) {
-                detect_extensions_procfs();
-            }
         }
 
         // Set xlen, number of cores, cache info
@@ -289,27 +283,6 @@ private:
             { RISCVExtension::Zvkg, RISCV_HWPROBE_EXT_ZVKG, "_zvkg" }
         }};
         return table;
-    }
-
-    /**
-     * Helper to detect all extensions in the table from /proc/cpuinfo
-    */
-    void detect_extensions_procfs() {
-        std::ifstream cpuinfo("/proc/cpuinfo");
-        if (!cpuinfo.is_open()) return;
-
-        std::string line;
-        while (std::getline(cpuinfo, line)) {
-            if (line.find("isa") == 0) {
-                for (const auto& entry : getExtensionTable()) {
-                    if (line.find(entry.name) != std::string::npos) {
-                        hwcapFeatures |= static_cast<uint64_t>(entry.id);
-                    }
-                }
-                // We only parse the first valid 'isa' line we find.
-                break;
-            }
-        }
     }
 };
 
