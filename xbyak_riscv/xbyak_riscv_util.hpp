@@ -12,7 +12,7 @@
 #include <cstdint>
 #include <fstream>
 #include <string>
-#include <vector>
+#include <array>
 #include <cstring>
 #include "xbyak_riscv_csr.hpp"
 #include "xbyak_riscv.hpp"
@@ -280,13 +280,14 @@ private:
     /**
      * Centralized table for all supported Z-extensions
     */
-    static const std::vector<ExtensionEntry>& getExtensionTable() {
-        static const std::vector<ExtensionEntry> table = {
+	static const size_t ExtensionEntryN = 4;
+    static const std::array<ExtensionEntry, ExtensionEntryN>& getExtensionTable() {
+        static const std::array<ExtensionEntry, ExtensionEntryN> table = {{
             { RISCVExtension::Zvfh, RISCV_HWPROBE_EXT_ZVFH, "_zvfh" },
             { RISCVExtension::Zvbb, RISCV_HWPROBE_EXT_ZVBB, "_zvbb" },
             { RISCVExtension::Zvbc, RISCV_HWPROBE_EXT_ZVBC, "_zvbc" },
             { RISCVExtension::Zvkg, RISCV_HWPROBE_EXT_ZVKG, "_zvkg" }
-        };
+        }};
         return table;
     }
 
