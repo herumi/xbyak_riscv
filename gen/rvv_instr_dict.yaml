@@ -1503,6 +1503,28 @@ vfwmacc_vv:
   - vs2
   - vs1
   - vd
+vfwmaccbf16_vf:
+  encoding: 111011-----------101-----1010111
+  extension:
+  - rv_zvfbfwma
+  mask: '0xfc00707f'
+  match: '0xec005057'
+  variable_fields:
+  - vm
+  - vs2
+  - rs1
+  - vd
+vfwmaccbf16_vv:
+  encoding: 111011-----------001-----1010111
+  extension:
+  - rv_zvfbfwma
+  mask: '0xfc00707f'
+  match: '0xec001057'
+  variable_fields:
+  - vm
+  - vs2
+  - vs1
+  - vd
 vfwmsac_vf:
   encoding: 111110-----------101-----1010111
   extension:
