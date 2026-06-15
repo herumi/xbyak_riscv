@@ -41,6 +41,21 @@ Build:
 make --build .  --parallel 4
 ```
 
+## Test
+```
+make -C test
+```
+The vector test (`make -C test test_vec`) generates RVV instructions from
+`gen/rvv_instr_dict.yaml` and compares xbyak's encoding against the assembler.
+It uses the `Zvfbfwma` extension (`vfwmaccbf16`), which requires **binutils 2.43
+or later** and PyYAML:
+```
+sudo apt install python3-yaml
+```
+The binutils packaged with Ubuntu 24.04 (2.42) cannot assemble `Zvfbfwma`; use a
+distribution that ships binutils >= 2.43 (e.g. `debian:testing`) or build it from
+source.
+
 ## License
 
 [BSD-3-Clause License](http://opensource.org/licenses/BSD-3-Clause)

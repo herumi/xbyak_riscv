@@ -4,10 +4,17 @@ test: $(HEADER) jmp_test.exe misc_test.exe
 	./jmp_test.exe
 	./misc_test.exe
 	./test.sh
-#	./test.sh svc
+	./test.sh svc
 
 test_svc:
 	./test.sh svc
+
+# require binutils>= 2.43
+test_vec:
+	./test.sh vec
+
+test_vec_docker:
+	./run_vec_docker.sh
 
 %.exe: %.cpp $(HEADER)
 	$(CXX) -o $@ $< -Wall -Wextra -Wsuggest-override -I ../ -I ./

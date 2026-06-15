@@ -8,6 +8,11 @@ def setXbyak(flag=True):
 def getXbyak():
   return isXbyak
 
+def setModeFromArgv():
+  # switch to gas output when invoked as `... gas`, xbyak output otherwise
+  if len(sys.argv) > 1 and sys.argv[1] == 'gas':
+    setXbyak(False)
+
 def putEach(op1, op2):
   if isXbyak:
     print(f'{op1};')
@@ -224,9 +229,7 @@ def vec():
     putVVV(op)
 
 def main():
-  global isXbyak
-  if len(sys.argv) > 1 and sys.argv[1] == 'gas':
-    isXbyak = False
+  setModeFromArgv()
 
   for op in ['add', 'sub', 'sll', 'slt', 'sltu', 'xor_', 'srl', 'sra', 'or_', 'and_', 'addw', 'subw', 'sllw', 'srlw', 'sraw',
     'mul', 'mulh', 'mulhsu', 'mulhu', 'div', 'divu', 'rem', 'remu',

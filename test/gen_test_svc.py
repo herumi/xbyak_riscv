@@ -88,8 +88,7 @@ def miscTest():
   put('ebreak')
 
 def main():
-  if len(sys.argv) > 1 and sys.argv[1] == 'gas':
-    setXbyak(False)
+  setModeFromArgv()
   if getXbyak():
     print('supportRVC();')
 

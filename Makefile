@@ -33,6 +33,9 @@ bin2hex:
 test_svc:
 	$(MAKE) -C test test_svc
 
+test_vec_docker:
+	$(MAKE) -C test test_vec_docker
+
 disas:
 	riscv64-linux-gnu-as -c -o a.o a.s -march=rv64iafmqgv && riscv64-unknown-elf-objdump -d a.o
 disas_c:

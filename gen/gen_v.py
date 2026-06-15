@@ -53,6 +53,29 @@ def extract_func3(instr_encoding: str) -> str:
     return instr_encoding[-15:-12]
 
 
+# OP-V instructions whose source operands are encoded in reversed order
+OPV_REVERSED_ORDER = [
+    'vmacc', 'vnmsac', 'vmadd', 'vnmsub', 'vwmacc', 'vwmaccu',
+    'vwmaccsu', 'vwmaccus', 'vfmacc', 'vfnmacc', 'vfmsac', 'vfnmsac',
+    'vfmadd', 'vfnmadd', 'vfmsub', 'vfnmsub', 'vfwmacc', 'vfwnmacc',
+    'vfwmsac', 'vfwnmsac'
+]
+
+
+def has_reverse_operands_order(instr_name: str, major_opcode: str) -> bool:
+    if major_opcode == OPV_MAJOR:
+        return any(instr_name.startswith(n) for n in OPV_REVERSED_ORDER)
+    # all vector load/store instructions have reversed source operands order
+    # e.g. `vluxei8.v vd, (rs1), vs2`
+    return True
+
+
+def sort_operands_for_signature(instr_name, instr_args, major_opcode):
+    '''Order operands the way the C++ signature / gas mnemonic expect them.'''
+    regular_order = not has_reverse_operands_order(instr_name, major_opcode)
+    return sorted(instr_args, key=lambda arg: re.sub('[^0-9]', '', arg), reverse=regular_order)
+
+
 def generate_instruction_signature(instr_name: str,
                                    instr_args: List[str],
                                    minor_opcode: str,
@@ -85,23 +108,7 @@ def generate_instruction_signature(instr_name: str,
 
 
     # add all source registers from the instruction's arguments
-    def has_reverse_operands_order(instr_name: str, major_opcode: str):
-        if major_opcode == OPV_MAJOR:
-            opv_instrs_with_reversed_order = [
-                'vmacc', 'vnmsac', 'vmadd', 'vnmsub', 'vwmacc', 'vwmaccu',
-                'vwmaccsu', 'vwmaccus', 'vfmacc', 'vfnmacc', 'vfmsac', 'vfnmsac',
-                'vfmadd', 'vfnmadd', 'vfmsub', 'vfnmsub', 'vfwmacc', 'vfwnmacc',
-                'vfwmsac', 'vfwnmsac'
-            ]
-
-            return any([instr_name.startswith(n) for n in opv_instrs_with_reversed_order])
-        else:
-            # all vectore load/store instructions have reversed source operands order
-            # e.g. `vluxei8.v vd, (rs1), vs2`
-            return True
-
-    regular_order = not has_reverse_operands_order(instr_name, major_opcode)
-    __instr_args.sort(key=lambda arg: re.sub('[^0-9]', '', arg), reverse=regular_order)
+    __instr_args = sort_operands_for_signature(instr_name, __instr_args, major_opcode)
     def is_vector_source_register(r): return bool(re.match(r'vs[\d]', r))
     def is_scalar_source_register(r): return bool(re.match(r'rs[\d]', r))
     for p in __instr_args:
