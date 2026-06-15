@@ -87,7 +87,7 @@ namespace Xbyak_riscv {
 
 enum {
 	DEFAULT_MAX_CODE_SIZE = 4096,
-	VERSION = 0x1010 /* 0xABCD = A.BC.D */
+	VERSION = 0x1100 /* 0xABCD = A.BC.D */
 };
 
 inline uint32_t getVersion() { return VERSION; }
@@ -155,10 +155,10 @@ inline void SetError(int err) {
 inline void ClearError() {
 	local::GetErrorRef() = 0;
 }
-inline int GetError() { return Xbyak::local::GetErrorRef(); }
+inline int GetError() { return Xbyak_riscv::local::GetErrorRef(); }
 
-#define XBYAK_RISCV_THROW(err) { Xbyak::local::SetError(err); return; }
-#define XBYAK_RISCV_THROW_RET(err, r) { Xbyak::local::SetError(err); return r; }
+#define XBYAK_RISCV_THROW(err) { Xbyak_riscv::local::SetError(err); return; }
+#define XBYAK_RISCV_THROW_RET(err, r) { Xbyak_riscv::local::SetError(err); return r; }
 
 #else
 class Error : public std::exception {

@@ -14,8 +14,10 @@ jobs:
     container:
       image: debian:testing
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v5
     - run: apt -y update
-    - run: apt -y install make g++ binutils-riscv64-linux-gnu binutils-riscv64-unknown-elf python3
+    - run: apt -y install make g++ binutils-riscv64-linux-gnu binutils-riscv64-unknown-elf python3 python3-yaml
     - run: make test
     - run: env CXX="g++ -std=c++11 -DNDEBUG --pedantic" make test
+    # vector (Zvfbfwma) test: needs binutils >= 2.43, provided by debian:testing
+    - run: make -C test test_vec

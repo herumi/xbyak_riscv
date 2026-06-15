@@ -7,6 +7,11 @@ svc)
   ASFLAGS+="c"
   GEN=gen_test_svc.py
   ;;
+vec)
+  echo "vec test"
+  ASFLAGS+="_zvfbfwma"
+  GEN=gen_test_vec.py
+  ;;
 *)
   echo "test"
   GEN=gen_test.py

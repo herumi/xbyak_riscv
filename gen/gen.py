@@ -242,7 +242,7 @@ for (code, name, imm) in tbl:
   else:
     print(f'void {name}(const Reg& rd, CSR csr, uint32_t imm) {{ opCSR({hex(code)}, csr, imm, rd); }}')
 
-# encode RV32F, RV64F instructions with OP-FP opcode
+# encode RV32F, RV64F, RV32D, RV64D instructions with OP-FP opcode
 tbl = [
   # RV32_F extension
   (0b00000000000000000000000001010011, 'rs2', 'rm', 'fadd_s'),
@@ -270,6 +270,34 @@ tbl = [
   (0b11000000001100000000000001010011, '-', 'rm', 'fcvt_lu_s'),
   (0b11010000001000000000000001010011, '-', 'rm', 'fcvt_s_l'),
   (0b11010000001100000000000001010011, '-', 'rm', 'fcvt_s_lu'),
+  # RV32_D extension
+  (0b00000010000000000000000001010011, 'rs2', 'rm', 'fadd_d'),
+  (0b00001010000000000000000001010011, 'rs2', 'rm', 'fsub_d'),
+  (0b00010010000000000000000001010011, 'rs2', 'rm', 'fmul_d'),
+  (0b00011010000000000000000001010011, 'rs2', 'rm', 'fdiv_d'),
+  (0b01011010000000000000000001010011, '-', 'rm', 'fsqrt_d'),
+  (0b00100010000000000000000001010011, 'rs2', '-', 'fsgnj_d'),
+  (0b00100010000000000001000001010011, 'rs2', '-', 'fsgnjn_d'),
+  (0b00100010000000000010000001010011, 'rs2', '-', 'fsgnjx_d'),
+  (0b00101010000000000000000001010011, 'rs2', '-', 'fmin_d'),
+  (0b00101010000000000001000001010011, 'rs2', '-', 'fmax_d'),
+  (0b01000000000100000000000001010011, '-', 'rm', 'fcvt_s_d'),
+  (0b01000010000000000000000001010011, '-', 'rm', 'fcvt_d_s'),
+  (0b10100010000000000010000001010011, 'rs2', '-', 'feq_d'),
+  (0b10100010000000000001000001010011, 'rs2', '-', 'flt_d'),
+  (0b10100010000000000000000001010011, 'rs2', '-', 'fle_d'),
+  (0b11100010000000000001000001010011, '-', '-', 'fclass_d'),
+  (0b11000010000000000000000001010011, '-', 'rm', 'fcvt_w_d'),
+  (0b11000010000100000000000001010011, '-', 'rm', 'fcvt_wu_d'),
+  (0b11010010000000000000000001010011, '-', 'rm', 'fcvt_d_w'),
+  (0b11010010000100000000000001010011, '-', 'rm', 'fcvt_d_wu'),
+  # RV64_D extension
+  (0b11000010001000000000000001010011, '-', 'rm', 'fcvt_l_d'),
+  (0b11000010001100000000000001010011, '-', 'rm', 'fcvt_lu_d'),
+  (0b11100010000000000000000001010011, '-', '-', 'fmv_x_d'),
+  (0b11010010001000000000000001010011, '-', 'rm', 'fcvt_d_l'),
+  (0b11010010001100000000000001010011, '-', 'rm', 'fcvt_d_lu'),
+  (0b11110010000000000000000001010011, '-', '-', 'fmv_d_x'),
   # RV32_Zfh extension
   (0b00000100000000000000000001010011, 'rs2', 'rm', 'fadd_h'),
   (0b11100100000000000001000001010011, '-', '-', 'fclass_h'),
@@ -310,10 +338,12 @@ def opFP(baseValue, rs2, rm, name):
   rd_type, rs1_type = 'FReg', 'FReg'
   if any([name.startswith(p) for p in ['fcvt', 'fmv', 'fclass']]):
     if name not in ['fcvt_s_w', 'fcvt_s_wu', 'fcvt_s_l', 'fcvt_s_lu', 'fmv_w_x',
+                    'fcvt_d_s', 'fcvt_s_d', 'fcvt_d_w', 'fcvt_d_wu', 'fcvt_d_l', 'fcvt_d_lu', 'fmv_d_x',
                     'fcvt_h_w', 'fcvt_h_wu', 'fcvt_h_l', 'fcvt_h_lu', 'fmv_h_x']:
       rd_type = 'Reg'
 
     if name not in ['fcvt_w_s', 'fcvt_wu_s', 'fcvt_l_s', 'fcvt_lu_s', 'fmv_x_w', 'fclass_s',
+                                'fcvt_d_s', 'fcvt_s_d', 'fcvt_w_d', 'fcvt_wu_d', 'fcvt_l_d', 'fcvt_lu_d', 'fmv_x_d', 'fclass_d',
                                 'fcvt_w_h', 'fcvt_wu_h', 'fcvt_l_h', 'fcvt_lu_h', 'fmv_x_h', 'fclass_h']:
       rs1_type = 'Reg'
 
@@ -354,6 +384,11 @@ void fmadd_h(const FReg& rd, const FReg& rs1, const FReg& rs2, const FReg& rs3, 
 void fmsub_h(const FReg& rd, const FReg& rs1, const FReg& rs2, const FReg& rs3, RM rm=RM::dyn) { opR4(0x4000047, rs3, rs2, rs1, rm, rd); }
 void fnmsub_h(const FReg& rd, const FReg& rs1, const FReg& rs2, const FReg& rs3, RM rm=RM::dyn) { opR4(0x400004b, rs3, rs2, rs1, rm, rd); }
 void fnmadd_h(const FReg& rd, const FReg& rs1, const FReg& rs2, const FReg& rs3, RM rm=RM::dyn) { opR4(0x400004f, rs3, rs2, rs1, rm, rd); }
+
+void fmadd_d(const FReg& rd, const FReg& rs1, const FReg& rs2, const FReg& rs3, RM rm=RM::dyn) { opR4(0x2000043, rs3, rs2, rs1, rm, rd); }
+void fmsub_d(const FReg& rd, const FReg& rs1, const FReg& rs2, const FReg& rs3, RM rm=RM::dyn) { opR4(0x2000047, rs3, rs2, rs1, rm, rd); }
+void fnmsub_d(const FReg& rd, const FReg& rs1, const FReg& rs2, const FReg& rs3, RM rm=RM::dyn) { opR4(0x200004b, rs3, rs2, rs1, rm, rd); }
+void fnmadd_d(const FReg& rd, const FReg& rs1, const FReg& rs2, const FReg& rs3, RM rm=RM::dyn) { opR4(0x200004f, rs3, rs2, rs1, rm, rd); }
 ''')
 
 # encode LOAD-FP, STORE-FP instructions
