@@ -63,6 +63,13 @@ def putRF(name, nm=""):
 def putRFF(name, nm=""):
   putFPU(name, 'x9, f10, f3', nm)
 
+def putFcvtExact(name, arg):
+  # widening conversions to double (fcvt.d.s/.w/.wu) are exact: gas takes no
+  # rounding mode and encodes the rm field as 0, so emit RM::rne (=0) on the
+  # xbyak side to produce the same encoding.
+  asmName = name.strip('_').replace('_', '.')
+  putEach(f'{name}({arg}, RM::rne)', f'{asmName} {arg}')
+
 def putRR(name):
   put(name, 'x1, x2')
 
@@ -163,41 +170,49 @@ def fpu():
   for op in tbl:
     for imm in immTbl:
       putRM(op, 'f3', 'x5', imm)
-  tbl = ['fsgnj_s', 'fsgnjn_s', 'fsgnjx_s', 'fmin_s', 'fmax_s']
+  tbl = ['fsgnj_s', 'fsgnjn_s', 'fsgnjx_s', 'fmin_s', 'fmax_s',
+    'fsgnj_d', 'fsgnjn_d', 'fsgnjx_d', 'fmin_d', 'fmax_d']
   for op in tbl:
     putFFF(op)
 
-  tbl = ['fmv_x_w', 'fclass_s']
+  tbl = ['fmv_x_w', 'fclass_s', 'fmv_x_d', 'fclass_d']
   for op in tbl:
     putRF(op)
 
-  tbl = ['feq_s', 'flt_s', 'fle_s']
+  tbl = ['feq_s', 'flt_s', 'fle_s', 'feq_d', 'flt_d', 'fle_d']
   for op in tbl:
     putRFF(op)
 
-  tbl = ['fcvt_s_w', 'fcvt_s_wu', 'fmv_w_x']
+  tbl = ['fcvt_s_w', 'fcvt_s_wu', 'fmv_w_x', 'fmv_d_x']
   for op in tbl:
     putFR(op)
 
+  # exact widening conversions to double (no rounding mode)
+  putFcvtExact('fcvt_d_s', 'f2, f3')
+  putFcvtExact('fcvt_d_w', 'f1, x5')
+  putFcvtExact('fcvt_d_wu', 'f1, x5')
+
   rmTbl = ['rne', 'rtz', 'rdn', 'rup', 'rmm', 'dyn']
   for rm in rmTbl:
-    tbl = ['fmadd_s', 'fmsub_s', 'fnmsub_s', 'fnmadd_s'] #, 'fmadd_h', 'fmsub_h', 'fnmsub_h', 'fnmadd_h']
+    tbl = ['fmadd_s', 'fmsub_s', 'fnmsub_s', 'fnmadd_s', #, 'fmadd_h', 'fmsub_h', 'fnmsub_h', 'fnmadd_h']
+      'fmadd_d', 'fmsub_d', 'fnmsub_d', 'fnmadd_d']
     for op in tbl:
       putFFFF(op, rm)
 
-    tbl = ['fadd_s', 'fsub_s', 'fmul_s', 'fdiv_s']
+    tbl = ['fadd_s', 'fsub_s', 'fmul_s', 'fdiv_s', 'fadd_d', 'fsub_d', 'fmul_d', 'fdiv_d']
     for op in tbl:
       putFFF(op, rm)
 
-    tbl = ['fcvt_l_s', 'fcvt_lu_s', 'fcvt_w_s', 'fcvt_wu_s']
+    tbl = ['fcvt_l_s', 'fcvt_lu_s', 'fcvt_w_s', 'fcvt_wu_s',
+      'fcvt_l_d', 'fcvt_lu_d', 'fcvt_w_d', 'fcvt_wu_d']
     for op in tbl:
       putRF(op, rm)
 
-    tbl = ['fcvt_s_l', 'fcvt_s_lu']
+    tbl = ['fcvt_s_l', 'fcvt_s_lu', 'fcvt_d_l', 'fcvt_d_lu']
     for op in tbl:
       putFR(op, rm)
 
-    tbl = ['fsqrt_s']
+    tbl = ['fsqrt_s', 'fsqrt_d', 'fcvt_s_d']
     for op in tbl:
       putFF(op, rm)
 
