@@ -1,5 +1,5 @@
 
-# Xbyak_riscv 1.01 [![Badge Build]][Build Status]
+# Xbyak_riscv 1.10 [![Badge Build]][Build Status]
 
 *A C++ JIT assembler for RISC-V (under CONSTRUCTION)*
 
@@ -17,6 +17,7 @@ Xbyak_riscv is a C++ header library that enables dynamically to assemble RISC-V 
 
 
 ## News
+- Support Zvfbfwma(BF16), D std extension
 
 
 ## Supported OS
