@@ -1,5 +1,6 @@
 # History
 
+- 2026-06-15 ver 1.10 support Zvfbfwma and D std
 - 2025-12-18 ver 1.02 support hwprobe for Zvfh/Zvbb/Zvbc/Zvkg
 - 2025-12-01 ver 1.01 support C++11
 - 2025-08-20 ver 1.00 release
