@@ -218,6 +218,14 @@ def ldst_seg_strided():
     ldst(header_names(r'v(lsseg|ssseg)%se%s_v' % (SEG_NF, EEW)))
 
 
+def vfloat_pseudo():
+    # vfabs.v/vfneg.v are 2-operand pseudo-instructions (aliases of
+    # vfsgnjx.vv/vfsgnjn.vv vd, vs, vs) not present in the YAML table.
+    for name in ['vfabs_v', 'vfneg_v']:
+        asm = name.strip('_').replace('_', '.')
+        putEach(f'{name}(v1, v2)', f'{asm} v1, v2')
+
+
 def main():
     setModeFromArgv()
     vec()
@@ -228,6 +236,7 @@ def main():
     ldst_whole()
     ldst_seg_unit()
     ldst_seg_strided()
+    vfloat_pseudo()
 
 
 if __name__ == '__main__':
