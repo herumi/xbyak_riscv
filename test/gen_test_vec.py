@@ -188,11 +188,17 @@ def ldst_unit():
     ldst(header_names(r'v(le%s(ff)?|se%s|lm|sm)_v' % (EEW, EEW)))
 
 
+def ldst_strided():
+    # strided load/store: vd/vs3, (rs1), rs2
+    ldst(header_names(r'v(lse%s|sse%s)_v' % (EEW, EEW)))
+
+
 def main():
     setModeFromArgv()
     vec()
     vset()
     ldst_unit()
+    ldst_strided()
 
 
 if __name__ == '__main__':
