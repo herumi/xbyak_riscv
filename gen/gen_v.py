@@ -318,7 +318,7 @@ void vsetivli(const Reg& rd, uint32_t uimm, SEW sew, LMUL lmul XBYAK_RISCV_VSETV
                     (static_cast<uint32_t>(vta)<<6) |
                     (static_cast<uint32_t>(sew)<<3) |
                     (static_cast<uint32_t>(lmul));
-    uint32_t v = (0b11<<30) | (zimm<<20) | (uimm<<15) | (0b111<<12) | (rd.getIdx()<<7) | (0b1010111);
+    uint32_t v = (0x3<<30) | (zimm<<20) | (uimm<<15) | (0x7<<12) | (rd.getIdx()<<7) | (0x57);
     append4B(v);
 }
 
@@ -327,12 +327,12 @@ void vsetvli(const Reg& rd, const Reg& rs1, SEW sew, LMUL lmul XBYAK_RISCV_VSETV
                     (static_cast<uint32_t>(vta)<<6) |
                     (static_cast<uint32_t>(sew)<<3) |
                     (static_cast<uint32_t>(lmul));
-    uint32_t v = (0b0<<31) | (zimm<<20) | (rs1.getIdx()<<15) | (0b111<<12) | (rd.getIdx()<<7) | (0b1010111);
+    uint32_t v = (0x0<<31) | (zimm<<20) | (rs1.getIdx()<<15) | (0x7<<12) | (rd.getIdx()<<7) | (0x57);
     append4B(v);
 }
 
 void vsetvl(const Reg& rd, const Reg& rs1, const Reg& rs2) {
-    uint32_t v = (0b1000000<<25) | (rs2.getIdx()<<20) | (rs1.getIdx()<<15) | (0b111<<12) | (rd.getIdx()<<7) | (0b1010111);
+    uint32_t v = (0x40<<25) | (rs2.getIdx()<<20) | (rs1.getIdx()<<15) | (0x7<<12) | (rd.getIdx()<<7) | (0x57);
     append4B(v);
 }
 ''')
