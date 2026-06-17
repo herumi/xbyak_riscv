@@ -17,7 +17,7 @@ Xbyak_riscv is a C++ header library that enables dynamically to assemble RISC-V 
 
 
 ## News
-- Support Zvfbfwma(BF16), D std extension
+- 2026/06/15 v1.10 Support Zvfbfwma(BF16), D std extension
 
 
 ## Supported OS
