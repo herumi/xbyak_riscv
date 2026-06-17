@@ -313,7 +313,7 @@ def generate_RVV():
 
     # generate Vector Configuration Instructions
     print('''
-void vsetivli(const Reg& rd, uint32_t uimm, SEW sew, LMUL lmul=LMUL::m1, VTA vta=VTA::tu, VMA vma=VMA::mu) {
+void vsetivli(const Reg& rd, uint32_t uimm, SEW sew, LMUL lmul XBYAK_RISCV_VSETV_DEFAULT_LMUL, VTA vta XBYAK_RISCV_VSETV_DEFAULT_VTA, VMA vma XBYAK_RISCV_VSETV_DEFAULT_VMA) {
     uint32_t zimm = (static_cast<uint32_t>(vma)<<7) |
                     (static_cast<uint32_t>(vta)<<6) |
                     (static_cast<uint32_t>(sew)<<3) |
@@ -322,7 +322,7 @@ void vsetivli(const Reg& rd, uint32_t uimm, SEW sew, LMUL lmul=LMUL::m1, VTA vta
     append4B(v);
 }
 
-void vsetvli(const Reg& rd, const Reg& rs1, SEW sew, LMUL lmul=LMUL::m1, VTA vta=VTA::tu, VMA vma=VMA::mu) {
+void vsetvli(const Reg& rd, const Reg& rs1, SEW sew, LMUL lmul XBYAK_RISCV_VSETV_DEFAULT_LMUL, VTA vta XBYAK_RISCV_VSETV_DEFAULT_VTA, VMA vma XBYAK_RISCV_VSETV_DEFAULT_VMA) {
     uint32_t zimm = (static_cast<uint32_t>(vma)<<7) |
                     (static_cast<uint32_t>(vta)<<6) |
                     (static_cast<uint32_t>(sew)<<3) |
