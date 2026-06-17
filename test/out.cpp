@@ -1,3 +1,4 @@
+#define XBYAK_RISCV_VSETV_DEFAULT_OLD 0
 #include <xbyak_riscv/xbyak_riscv.hpp>
 
 using namespace Xbyak_riscv;

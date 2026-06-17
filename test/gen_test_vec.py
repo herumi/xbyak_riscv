@@ -87,9 +87,37 @@ def vec():
             put(name, args)
 
 
+# Vector Configuration Instructions (OPCFC) are emitted by hand in gen/gen_v.py
+# instead of from the YAML table, so the vec() loop above skips them. Generate
+# their tests explicitly here.
+SEW_TBL = ['e8', 'e16', 'e32', 'e64']
+LMUL_TBL = ['mf8', 'mf4', 'mf2', 'm1', 'm2', 'm4', 'm8']
+VTA_TBL = ['tu', 'ta']
+VMA_TBL = ['mu', 'ma']
+
+
+def vtype(sew, lmul, vta, vma):
+    if getXbyak():
+        return f'SEW::{sew}, LMUL::{lmul}, VTA::{vta}, VMA::{vma}'
+    return f'{sew}, {lmul}, {vta}, {vma}'
+
+
+def vset():
+    for sew in SEW_TBL:
+        for lmul in LMUL_TBL:
+            for vta in VTA_TBL:
+                for vma in VMA_TBL:
+                    vt = vtype(sew, lmul, vta, vma)
+                    gas = f'{sew}, {lmul}, {vta}, {vma}'
+                    putEach(f'vsetvli(x5, x6, {vt})', f'vsetvli x5, x6, {gas}')
+                    putEach(f'vsetivli(x5, 4, {vt})', f'vsetivli x5, 4, {gas}')
+    putEach('vsetvl(x5, x6, x7)', 'vsetvl x5, x6, x7')
+
+
 def main():
     setModeFromArgv()
     vec()
+    vset()
 
 
 if __name__ == '__main__':
