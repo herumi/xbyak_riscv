@@ -198,6 +198,11 @@ def ldst_indexed():
     ldst(header_names(r'v(lox|lux|sox|sux)ei%s_v' % EEW))
 
 
+def ldst_whole():
+    # whole-register load/store (no mask): vl<nf>re<eew>.v / vs<nf>r.v vd/vs3, (rs1)
+    ldst(header_names(r'(vl(1|2|4|8)re%s_v|vs(1|2|4|8)r_v)' % EEW))
+
+
 def main():
     setModeFromArgv()
     vec()
@@ -205,6 +210,7 @@ def main():
     ldst_unit()
     ldst_strided()
     ldst_indexed()
+    ldst_whole()
 
 
 if __name__ == '__main__':
