@@ -193,12 +193,18 @@ def ldst_strided():
     ldst(header_names(r'v(lse%s|sse%s)_v' % (EEW, EEW)))
 
 
+def ldst_indexed():
+    # indexed (ordered/unordered) load/store: vd/vs3, (rs1), vs2
+    ldst(header_names(r'v(lox|lux|sox|sux)ei%s_v' % EEW))
+
+
 def main():
     setModeFromArgv()
     vec()
     vset()
     ldst_unit()
     ldst_strided()
+    ldst_indexed()
 
 
 if __name__ == '__main__':
