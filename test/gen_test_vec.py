@@ -213,6 +213,11 @@ def ldst_seg_unit():
     ldst(header_names(r'v(lseg|sseg)%se%s(ff)?_v' % (SEG_NF, EEW)))
 
 
+def ldst_seg_strided():
+    # segment strided load/store: vd/vs3, (rs1), rs2
+    ldst(header_names(r'v(lsseg|ssseg)%se%s_v' % (SEG_NF, EEW)))
+
+
 def main():
     setModeFromArgv()
     vec()
@@ -222,6 +227,7 @@ def main():
     ldst_indexed()
     ldst_whole()
     ldst_seg_unit()
+    ldst_seg_strided()
 
 
 if __name__ == '__main__':
