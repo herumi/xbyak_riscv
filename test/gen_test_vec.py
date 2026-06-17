@@ -114,10 +114,85 @@ def vset():
     putEach('vsetvl(x5, x6, x7)', 'vsetvl x5, x6, x7')
 
 
+# Vector load/store instructions (LOAD-FP/STORE-FP major opcode) are skipped by
+# the vec() loop above, so generate their tests here. The gas operand order is
+# the same as the C++ signature; the only difference is that the base address
+# register rs1 is written `(x5)` in gas. One test per instruction (unmasked).
+HEADER_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                           '..', 'xbyak_riscv', 'xbyak_riscv_v.hpp')
+SIG_RE = re.compile(r'^void ([a-z][a-z0-9_]*)\(([^)]*)\)')
+
+_sigs = None
+
+
+def header_sigs():
+    '''Parse `void NAME(PARAMS) {` lines into {name: [param_var, ...]}.'''
+    global _sigs
+    if _sigs is None:
+        _sigs = {}
+        with open(HEADER_PATH) as f:
+            for line in f:
+                m = SIG_RE.match(line)
+                if not m:
+                    continue
+                name, params = m.group(1), m.group(2)
+                variables = []
+                for p in params.split(','):
+                    p = p.strip()
+                    if p:
+                        # the variable name is the last token, sans '&'/default
+                        variables.append(p.split('=')[0].split()[-1].lstrip('&'))
+                _sigs[name] = variables
+    return _sigs
+
+
+def header_names(pattern):
+    rx = re.compile(pattern)
+    return sorted(n for n in header_sigs() if rx.fullmatch(n))
+
+
+def ldst_operand(var):
+    # returns (xbyak_token, gas_token), or None to drop the operand (vm)
+    if var in ('vd', 'vs3'):
+        return ('v1', 'v1')
+    if var == 'rs1':
+        return ('x5', '(x5)')  # base address: parenthesized in gas
+    if var == 'rs2':
+        return ('x6', 'x6')    # stride
+    if var == 'vs2':
+        return ('v3', 'v3')    # index vector
+    return None  # vm -> omit (unmasked default)
+
+
+def ldst(names):
+    sigs = header_sigs()
+    for name in names:
+        xs, gs = [], []
+        for var in sigs[name]:
+            t = ldst_operand(var)
+            if t is not None:
+                xs.append(t[0])
+                gs.append(t[1])
+        asm = name.strip('_').replace('_', '.')
+        putEach(f'{name}({", ".join(xs)})', f'{asm} {", ".join(gs)}')
+
+
+# Only EEW 8/16/32/64 are testable: the header also defines eew 128..1024 forms
+# but those are outside the ratified V spec and the GNU assembler rejects them,
+# so there is no reference encoding to diff against.
+EEW = r'(8|16|32|64)'
+
+
+def ldst_unit():
+    # unit-stride load/store (+fault-only-first) and mask load/store
+    ldst(header_names(r'v(le%s(ff)?|se%s|lm|sm)_v' % (EEW, EEW)))
+
+
 def main():
     setModeFromArgv()
     vec()
     vset()
+    ldst_unit()
 
 
 if __name__ == '__main__':
