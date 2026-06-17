@@ -8,3 +8,5 @@ test/*.out
 test/*.s
 test/*.txt
 test/generated*
+CLAUDE.md
+memo.md

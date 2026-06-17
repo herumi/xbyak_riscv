@@ -71,3 +71,4 @@ Use `supportRVC()` to enable RVC instructions.
 # Macros
 
 - Define `XBYAK_RISCV_V = 1` to enable Vector Operations.
+  - Define `XBYAK_RISCV_VSETV_DEFAULT_OLD = 0` to remove the default arguments of `vsetivli` and `vsetvli`.

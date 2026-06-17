@@ -83,11 +83,30 @@
 	#define XBYAK_RISCV_CONSTEXPR
 #endif
 
+#if defined(XBYAK_RISCV_V) && XBYAK_RISCV_V == 1
+
+#ifndef XBYAK_RISCV_VSETV_DEFAULT_OLD
+	#pragma message "XBYAK_RISCV_VSETV_DEFAULT_OLD is 0 in the future"
+	#define XBYAK_RISCV_VSETV_DEFAULT_OLD 1
+#endif
+#if defined(XBYAK_RISCV_VSETV_DEFAULT_OLD) && XBYAK_RISCV_VSETV_DEFAULT_OLD == 1
+	// for backward compatibility
+	#define XBYAK_RISCV_VSETV_DEFAULT_LMUL =LMUL::m1
+	#define XBYAK_RISCV_VSETV_DEFAULT_VTA =VTA::tu
+	#define XBYAK_RISCV_VSETV_DEFAULT_VMA =VMA::mu
+#else
+	// no default arguments, the same as the assembler
+	#define XBYAK_RISCV_VSETV_DEFAULT_LMUL
+	#define XBYAK_RISCV_VSETV_DEFAULT_VTA
+	#define XBYAK_RISCV_VSETV_DEFAULT_VMA
+#endif
+#endif
+
 namespace Xbyak_riscv {
 
 enum {
 	DEFAULT_MAX_CODE_SIZE = 4096,
-	VERSION = 0x1100 /* 0xABCD = A.BC.D */
+	VERSION = 0x1200 /* 0xABCD = A.BC.D */
 };
 
 inline uint32_t getVersion() { return VERSION; }

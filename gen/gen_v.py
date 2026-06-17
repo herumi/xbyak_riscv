@@ -263,8 +263,11 @@ def generate_vector_load_store(instr_name: str, instr_encoding: str, instr_args:
         # if nf[2:0] field is in the arguments, then the instruction has
         # segment variants that should be generated separately
         generate_segment_load_store(instr_name, instr_encoding, instr_args, emitter_name, emitter_args)
-    # encode nf=0b000 for regular (non-segment) vector load/stores
-    instr_encoding = instr_encoding.replace(instr_encoding[0:3], '000', 1)
+        # encode nf=0b000 for the regular (non-segment) variant
+        instr_encoding = '000' + instr_encoding[3:]
+    # NOTE: do not clear the top 3 bits when nf is not an argument: for
+    # whole-register load/stores (vl<nf>re<eew>/vs<nf>r) they are a fixed field
+    # encoding the number of registers (1/2/4/8), not a segment count.
     generate_OPV(instr_name, instr_encoding, instr_args, emitter_name, emitter_args)
 
 
@@ -313,26 +316,26 @@ def generate_RVV():
 
     # generate Vector Configuration Instructions
     print('''
-void vsetivli(const Reg& rd, uint32_t uimm, SEW sew, LMUL lmul=LMUL::m1, VTA vta=VTA::tu, VMA vma=VMA::mu) {
+void vsetivli(const Reg& rd, uint32_t uimm, SEW sew, LMUL lmul XBYAK_RISCV_VSETV_DEFAULT_LMUL, VTA vta XBYAK_RISCV_VSETV_DEFAULT_VTA, VMA vma XBYAK_RISCV_VSETV_DEFAULT_VMA) {
     uint32_t zimm = (static_cast<uint32_t>(vma)<<7) |
                     (static_cast<uint32_t>(vta)<<6) |
                     (static_cast<uint32_t>(sew)<<3) |
                     (static_cast<uint32_t>(lmul));
-    uint32_t v = (0b11<<30) | (zimm<<20) | (uimm<<15) | (0b111<<12) | (rd.getIdx()<<7) | (0b1010111);
+    uint32_t v = (0x3<<30) | (zimm<<20) | (uimm<<15) | (0x7<<12) | (rd.getIdx()<<7) | (0x57);
     append4B(v);
 }
 
-void vsetvli(const Reg& rd, const Reg& rs1, SEW sew, LMUL lmul=LMUL::m1, VTA vta=VTA::tu, VMA vma=VMA::mu) {
+void vsetvli(const Reg& rd, const Reg& rs1, SEW sew, LMUL lmul XBYAK_RISCV_VSETV_DEFAULT_LMUL, VTA vta XBYAK_RISCV_VSETV_DEFAULT_VTA, VMA vma XBYAK_RISCV_VSETV_DEFAULT_VMA) {
     uint32_t zimm = (static_cast<uint32_t>(vma)<<7) |
                     (static_cast<uint32_t>(vta)<<6) |
                     (static_cast<uint32_t>(sew)<<3) |
                     (static_cast<uint32_t>(lmul));
-    uint32_t v = (0b0<<31) | (zimm<<20) | (rs1.getIdx()<<15) | (0b111<<12) | (rd.getIdx()<<7) | (0b1010111);
+    uint32_t v = (0x0<<31) | (zimm<<20) | (rs1.getIdx()<<15) | (0x7<<12) | (rd.getIdx()<<7) | (0x57);
     append4B(v);
 }
 
 void vsetvl(const Reg& rd, const Reg& rs1, const Reg& rs2) {
-    uint32_t v = (0b1000000<<25) | (rs2.getIdx()<<20) | (rs1.getIdx()<<15) | (0b111<<12) | (rd.getIdx()<<7) | (0b1010111);
+    uint32_t v = (0x40<<25) | (rs2.getIdx()<<20) | (rs1.getIdx()<<15) | (0x7<<12) | (rd.getIdx()<<7) | (0x57);
     append4B(v);
 }
 ''')
