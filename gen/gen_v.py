@@ -263,8 +263,11 @@ def generate_vector_load_store(instr_name: str, instr_encoding: str, instr_args:
         # if nf[2:0] field is in the arguments, then the instruction has
         # segment variants that should be generated separately
         generate_segment_load_store(instr_name, instr_encoding, instr_args, emitter_name, emitter_args)
-    # encode nf=0b000 for regular (non-segment) vector load/stores
-    instr_encoding = instr_encoding.replace(instr_encoding[0:3], '000', 1)
+        # encode nf=0b000 for the regular (non-segment) variant
+        instr_encoding = '000' + instr_encoding[3:]
+    # NOTE: do not clear the top 3 bits when nf is not an argument: for
+    # whole-register load/stores (vl<nf>re<eew>/vs<nf>r) they are a fixed field
+    # encoding the number of registers (1/2/4/8), not a segment count.
     generate_OPV(instr_name, instr_encoding, instr_args, emitter_name, emitter_args)
 
 
