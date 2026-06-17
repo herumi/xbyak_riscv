@@ -203,6 +203,16 @@ def ldst_whole():
     ldst(header_names(r'(vl(1|2|4|8)re%s_v|vs(1|2|4|8)r_v)' % EEW))
 
 
+# Segment instructions: nf=1 is the same encoding as the non-segment form
+# (vlseg1e8 == vle8) and the GNU assembler has no nf=1 mnemonic, so test nf=2..8.
+SEG_NF = r'[2-8]'
+
+
+def ldst_seg_unit():
+    # segment unit-stride load/store (+fault-only-first): vd/vs3, (rs1)
+    ldst(header_names(r'v(lseg|sseg)%se%s(ff)?_v' % (SEG_NF, EEW)))
+
+
 def main():
     setModeFromArgv()
     vec()
@@ -211,6 +221,7 @@ def main():
     ldst_strided()
     ldst_indexed()
     ldst_whole()
+    ldst_seg_unit()
 
 
 if __name__ == '__main__':
