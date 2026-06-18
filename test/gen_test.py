@@ -230,6 +230,23 @@ def misc():
   ]:
     put('li', f'x2, {v}')
 
+def bitmanip():
+  for op in ['sh1add', 'sh2add', 'sh3add', 'add_uw', 'sh1add_uw', 'sh2add_uw', 'sh3add_uw',
+    'andn', 'orn', 'xnor', 'min', 'minu', 'max', 'maxu', 'rol', 'ror', 'rolw', 'rorw',
+    'clmul', 'clmulr', 'clmulh', 'bclr', 'bext', 'binv', 'bset',
+  ]:
+    putRRR(op)
+
+  for op in ['clz', 'ctz', 'cpop', 'clzw', 'ctzw', 'cpopw', 'sext_b', 'sext_h', 'zext_h', 'zext_w', 'orc_b', 'rev8']:
+    putRR(op)
+
+  for shamt in [0, 1, 31, 32, 63]:
+    for op in ['rori', 'slli_uw', 'bclri', 'bexti', 'binvi', 'bseti']:
+      put(op, f'x1, x2, {shamt}')
+
+  for shamt in [0, 1, 31]:
+    put('roriw', f'x1, x2, {shamt}')
+
 def vec():
   tbl1 = ['vmclr_m', 'vmset_m']
   for op in tbl1:
@@ -293,6 +310,7 @@ def main():
 
   csr()
   fpu()
+  bitmanip()
   misc()
   vec()
 
