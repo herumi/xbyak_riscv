@@ -292,16 +292,18 @@ tbl = [
   (0x600, 0b001, 0x1b, 'clzw'),
   (0x601, 0b001, 0x1b, 'ctzw'),
   (0x602, 0b001, 0x1b, 'cpopw'),
-  (0x604, 0b001, 0x13, 'sext_b'),
-  (0x605, 0b001, 0x13, 'sext_h'),
   (0x287, 0b101, 0x13, 'orc_b'),
 ]
 for (imm12, funct3, opcode, name) in tbl:
   opBitmanipI(imm12, funct3, opcode, name)
 
 print('void rev8(const Reg& rd, const Reg& rs1) { Itype(0x13, 5, rd, rs1, isRV32_ ? 0x698 : 0x6b8); }')
-print('void zext_h(const Reg& rd, const Reg& rs) { Rtype(isRV32_ ? 0x33 : 0x3b, 4, 0x04, rd, rs, x0); }')
-print('void zext_w(const Reg& rd, const Reg& rs) { add_uw(rd, rs, x0); }')
+# sext_b/sext_h/zext_h/zext_w: use the B-extension encoding only when supportBext_,
+# otherwise fall back to the base-ISA shift sequence (backward compatible).
+print('void sext_b(const Reg& rd, const Reg& rs) { if (supportBext_) { Itype(0x13, 1, rd, rs, 0x604); return; } slli(rd, rs, XLEN_ - 8); srai(rd, rd, XLEN_ - 8); }')
+print('void sext_h(const Reg& rd, const Reg& rs) { if (supportBext_) { Itype(0x13, 1, rd, rs, 0x605); return; } slli(rd, rs, XLEN_ - 16); srai(rd, rd, XLEN_ - 16); }')
+print('void zext_h(const Reg& rd, const Reg& rs) { if (supportBext_) { Rtype(isRV32_ ? 0x33 : 0x3b, 4, 0x04, rd, rs, x0); return; } slli(rd, rs, XLEN_ - 16); srli(rd, rd, XLEN_ - 16); }')
+print('void zext_w(const Reg& rd, const Reg& rs) { if (supportBext_) { add_uw(rd, rs, x0); return; } slli(rd, rs, XLEN_ - 32); srli(rd, rd, XLEN_ - 32); }')
 
 tbl = [
   (0x30, 0b101, 0x13, 'rori', 0),

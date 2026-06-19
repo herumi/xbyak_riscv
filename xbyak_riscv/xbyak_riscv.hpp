@@ -960,6 +960,7 @@ private:
 	int XLEN_;
 	bool isRV32_;
 	bool supportRVC_;
+	bool supportBext_;
 	void opJmp(const Label& label, const Jmp& jmp)
 	{
 		const uint8_t* addr = labelMgr_.getAddr(label);
@@ -1330,6 +1331,7 @@ public:
 		, XLEN_(64)
 		, isRV32_(false)
 		, supportRVC_(false)
+		, supportBext_(false)
 	{
 		labelMgr_.set(this);
 	}
@@ -1342,6 +1344,7 @@ public:
 		XLEN_ = 64;
 		isRV32_ = false;
 		supportRVC_ = false;
+		supportBext_ = false;
 	}
 	void setRV32(bool on = true)
 	{
@@ -1351,6 +1354,10 @@ public:
 	void supportRVC(bool on = true)
 	{
 		supportRVC_ = on;
+	}
+	void supportBext(bool on = true)
+	{
+		supportBext_ = on;
 	}
 	bool hasUndefinedLabel() const { return labelMgr_.hasUndefClabel(); }
 	static inline void clearCache(void *p, size_t n)

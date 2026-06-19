@@ -219,7 +219,8 @@ def fpu():
 def misc():
   for name in ['ret', 'ecall', 'ebreak', 'nop']:
     put(name)
-  for name in ['mv', 'not_', 'neg', 'negw', 'sext_b', 'sext_h', 'sext_w', 'zext_b', 'zext_h', 'zext_w',
+  # sext_b/sext_h/zext_h/zext_w are tested in bitmanip() (both native and fallback)
+  for name in ['mv', 'not_', 'neg', 'negw', 'sext_w', 'zext_b',
     'seqz', 'snez', 'sltz', 'sgtz',
   ]:
     putRR(name)
@@ -230,14 +231,28 @@ def misc():
   ]:
     put('li', f'x2, {v}')
 
+# sext_b/sext_h/zext_h/zext_w are gated by supportBext(): native B when on, base-ISA
+# shift sequence when off. The same is tested for both modes below.
+pseudoB = ['sext_b', 'sext_h', 'zext_h', 'zext_w']
+
+def setBext(on):
+  # toggle the B extension on both sides: xbyak via supportBext(), gas via .option arch
+  if getXbyak():
+    print(f'supportBext({"true" if on else "false"});')
+  elif on:
+    print('.option arch, +zba, +zbb, +zbc, +zbs')
+  else:
+    print('.option arch, -zba, -zbb, -zbc, -zbs')
+
 def bitmanip():
+  setBext(True)
   for op in ['sh1add', 'sh2add', 'sh3add', 'add_uw', 'sh1add_uw', 'sh2add_uw', 'sh3add_uw',
     'andn', 'orn', 'xnor', 'min', 'minu', 'max', 'maxu', 'rol', 'ror', 'rolw', 'rorw',
     'clmul', 'clmulr', 'clmulh', 'bclr', 'bext', 'binv', 'bset',
   ]:
     putRRR(op)
 
-  for op in ['clz', 'ctz', 'cpop', 'clzw', 'ctzw', 'cpopw', 'sext_b', 'sext_h', 'zext_h', 'zext_w', 'orc_b', 'rev8']:
+  for op in ['clz', 'ctz', 'cpop', 'clzw', 'ctzw', 'cpopw', 'orc_b', 'rev8']:
     putRR(op)
 
   for shamt in [0, 1, 31, 32, 63]:
@@ -246,6 +261,16 @@ def bitmanip():
 
   for shamt in [0, 1, 31]:
     put('roriw', f'x1, x2, {shamt}')
+
+  # native B path
+  for op in pseudoB:
+    putRR(op)
+
+  # base-ISA fallback path (same mnemonics, B extension disabled on both sides)
+  setBext(False)
+  for op in pseudoB:
+    putRR(op)
+  setBext(True)  # restore the file-default arch for following sections
 
 def vec():
   tbl1 = ['vmclr_m', 'vmset_m']
