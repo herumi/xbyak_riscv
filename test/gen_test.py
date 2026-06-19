@@ -235,17 +235,21 @@ def misc():
 # shift sequence when off. The same is tested for both modes below.
 pseudoB = ['sext_b', 'sext_h', 'zext_h', 'zext_w']
 
-def setBext(on):
-  # toggle the B extension on both sides: xbyak via supportBext(), gas via .option arch
+def beginBextOff():
+  # disable the B extension for the fallback region: xbyak via supportBext(false),
+  # gas via an absolute .option arch (relative `-zba` removal is deprecated in newer binutils)
   if getXbyak():
-    print(f'supportBext({"true" if on else "false"});')
-  elif on:
-    print('.option arch, +zba, +zbb, +zbc, +zbs')
+    print('supportBext(false);')
   else:
-    print('.option arch, -zba, -zbb, -zbc, -zbs')
+    print('.option push')
+    print('.option arch, rv64imafdqv_zifencei')
+
+def endBextOff():
+  if not getXbyak():
+    print('.option pop')
 
 def bitmanip():
-  setBext(True)
+  if getXbyak(): print('supportBext(true);')  # gas: B is enabled by the command-line -march
   for op in ['sh1add', 'sh2add', 'sh3add', 'add_uw', 'sh1add_uw', 'sh2add_uw', 'sh3add_uw',
     'andn', 'orn', 'xnor', 'min', 'minu', 'max', 'maxu', 'rol', 'ror', 'rolw', 'rorw',
     'clmul', 'clmulr', 'clmulh', 'bclr', 'bext', 'binv', 'bset',
@@ -267,10 +271,10 @@ def bitmanip():
     putRR(op)
 
   # base-ISA fallback path (same mnemonics, B extension disabled on both sides)
-  setBext(False)
+  beginBextOff()
   for op in pseudoB:
     putRR(op)
-  setBext(True)  # restore the file-default arch for following sections
+  endBextOff()
 
 def vec():
   tbl1 = ['vmclr_m', 'vmset_m']
