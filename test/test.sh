@@ -18,7 +18,7 @@ vec)
   ;;
 esac
 
-ASFLAGS+="_zifencei"
+ASFLAGS+="_zba_zbb_zbc_zbs_zifencei"
 
 CXX=${CXX:-g++}
 AS=${AS:-riscv64-linux-gnu-as}
