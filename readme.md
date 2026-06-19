@@ -69,6 +69,8 @@ The binutils packaged with Ubuntu 24.04 (2.42) cannot assemble `Zvfbfwma`; use a
 distribution that ships binutils >= 2.43 (e.g. `debian:testing`) or build it from
 source.
 
+`test/run_vec_docker.sh` is a script for running and testing new binutils in Docker.
+
 ## License
 
 [BSD-3-Clause License](http://opensource.org/licenses/BSD-3-Clause)
