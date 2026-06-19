@@ -35,11 +35,6 @@ supportBext(false);          // back to the base-ISA sequence
 On Windows, define `NOMINMAX` before including `<windows.h>` so that `min` and
 `max` are not turned into macros that clash with the `min`/`max` mnemonics.
 
-## News
-- 2026/06/17 v1.20
-- 2026/06/15 v1.10 Support Zvfbfwma(BF16), D std extension
-
-
 ## Supported Compilers
 
 C++11 or later compiler
