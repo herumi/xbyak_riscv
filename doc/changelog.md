@@ -1,5 +1,6 @@
 # History
 
+- 2026/06/19 ver 1.30 support B extension. add supportBext(bool) for backward compatibility
 - 2026/06/17 ver 1.20 fix encoding of vl{2,4,8}re{8,16,32,64}_v, vs{2,48,}r_v. add `XBYAK_RISCV_VSETV_DEFAULT_OLD` for vsetivli and vsetvli (see usage.md).
 - 2026/06/15 ver 1.10 support Zvfbfwma and D std
 - 2025/12/18 ver 1.02 support hwprobe for Zvfh/Zvbb/Zvbc/Zvkg

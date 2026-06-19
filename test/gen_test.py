@@ -219,7 +219,8 @@ def fpu():
 def misc():
   for name in ['ret', 'ecall', 'ebreak', 'nop']:
     put(name)
-  for name in ['mv', 'not_', 'neg', 'negw', 'sext_b', 'sext_h', 'sext_w', 'zext_b', 'zext_h', 'zext_w',
+  # sext_b/sext_h/zext_h/zext_w are tested in bitmanip() (both native and fallback)
+  for name in ['mv', 'not_', 'neg', 'negw', 'sext_w', 'zext_b',
     'seqz', 'snez', 'sltz', 'sgtz',
   ]:
     putRR(name)
@@ -229,6 +230,51 @@ def misc():
 	# 0x80000000, # lui reg, 0x80000 is better than addiw, reg, 1 ; slli reg, reg, 31
   ]:
     put('li', f'x2, {v}')
+
+# sext_b/sext_h/zext_h/zext_w are gated by supportBext(): native B when on, base-ISA
+# shift sequence when off. The same is tested for both modes below.
+pseudoB = ['sext_b', 'sext_h', 'zext_h', 'zext_w']
+
+def beginBextOff():
+  # disable the B extension for the fallback region: xbyak via supportBext(false),
+  # gas via an absolute .option arch (relative `-zba` removal is deprecated in newer binutils)
+  if getXbyak():
+    print('supportBext(false);')
+  else:
+    print('.option push')
+    print('.option arch, rv64imafdqv_zifencei')
+
+def endBextOff():
+  if not getXbyak():
+    print('.option pop')
+
+def bitmanip():
+  if getXbyak(): print('supportBext(true);')  # gas: B is enabled by the command-line -march
+  for op in ['sh1add', 'sh2add', 'sh3add', 'add_uw', 'sh1add_uw', 'sh2add_uw', 'sh3add_uw',
+    'andn', 'orn', 'xnor', 'min', 'minu', 'max', 'maxu', 'rol', 'ror', 'rolw', 'rorw',
+    'clmul', 'clmulr', 'clmulh', 'bclr', 'bext', 'binv', 'bset',
+  ]:
+    putRRR(op)
+
+  for op in ['clz', 'ctz', 'cpop', 'clzw', 'ctzw', 'cpopw', 'orc_b', 'rev8']:
+    putRR(op)
+
+  for shamt in [0, 1, 31, 32, 63]:
+    for op in ['rori', 'slli_uw', 'bclri', 'bexti', 'binvi', 'bseti']:
+      put(op, f'x1, x2, {shamt}')
+
+  for shamt in [0, 1, 31]:
+    put('roriw', f'x1, x2, {shamt}')
+
+  # native B path
+  for op in pseudoB:
+    putRR(op)
+
+  # base-ISA fallback path (same mnemonics, B extension disabled on both sides)
+  beginBextOff()
+  for op in pseudoB:
+    putRR(op)
+  endBextOff()
 
 def vec():
   tbl1 = ['vmclr_m', 'vmset_m']
@@ -293,6 +339,7 @@ def main():
 
   csr()
   fpu()
+  bitmanip()
   misc()
   vec()
 

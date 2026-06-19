@@ -242,6 +242,81 @@ for (code, name, imm) in tbl:
   else:
     print(f'void {name}(const Reg& rd, CSR csr, uint32_t imm) {{ opCSR({hex(code)}, csr, imm, rd); }}')
 
+# encode Zba/Zbb/Zbc/Zbs scalar bit-manipulation instructions
+def opBitmanipR(funct7, funct3, opcode, name):
+  print(f'void {name}(const Reg& rd, const Reg& rs1, const Reg& rs2) {{ Rtype({hex(opcode)}, {funct3}, {hex(funct7)}, rd, rs1, rs2); }}')
+
+def opBitmanipI(imm12, funct3, opcode, name):
+  print(f'void {name}(const Reg& rd, const Reg& rs1) {{ Itype({hex(opcode)}, {funct3}, rd, rs1, {hex(imm12)}); }}')
+
+def opBitmanipShift(funct7, funct3, opcode, name, range = 0):
+  if range == 0:
+    print(f'void {name}(const Reg& rd, const Reg& rs1, uint32_t shamt) {{ opShift({hex(funct7)}, {funct3}, {hex(opcode)}, rd, rs1, shamt); }}')
+  else:
+    print(f'void {name}(const Reg& rd, const Reg& rs1, uint32_t shamt) {{ opShift({hex(funct7)}, {funct3}, {hex(opcode)}, rd, rs1, shamt, {range}); }}')
+
+tbl = [
+  (0x10, 0b010, 0x33, 'sh1add'),
+  (0x10, 0b100, 0x33, 'sh2add'),
+  (0x10, 0b110, 0x33, 'sh3add'),
+  (0x04, 0b000, 0x3b, 'add_uw'),
+  (0x10, 0b010, 0x3b, 'sh1add_uw'),
+  (0x10, 0b100, 0x3b, 'sh2add_uw'),
+  (0x10, 0b110, 0x3b, 'sh3add_uw'),
+  (0x20, 0b111, 0x33, 'andn'),
+  (0x20, 0b110, 0x33, 'orn'),
+  (0x20, 0b100, 0x33, 'xnor'),
+  (0x05, 0b100, 0x33, 'min'),
+  (0x05, 0b101, 0x33, 'minu'),
+  (0x05, 0b110, 0x33, 'max'),
+  (0x05, 0b111, 0x33, 'maxu'),
+  (0x30, 0b001, 0x33, 'rol'),
+  (0x30, 0b101, 0x33, 'ror'),
+  (0x30, 0b001, 0x3b, 'rolw'),
+  (0x30, 0b101, 0x3b, 'rorw'),
+  (0x05, 0b001, 0x33, 'clmul'),
+  (0x05, 0b010, 0x33, 'clmulr'),
+  (0x05, 0b011, 0x33, 'clmulh'),
+  (0x24, 0b001, 0x33, 'bclr'),
+  (0x24, 0b101, 0x33, 'bext'),
+  (0x34, 0b001, 0x33, 'binv'),
+  (0x14, 0b001, 0x33, 'bset'),
+]
+for (funct7, funct3, opcode, name) in tbl:
+  opBitmanipR(funct7, funct3, opcode, name)
+
+tbl = [
+  (0x600, 0b001, 0x13, 'clz'),
+  (0x601, 0b001, 0x13, 'ctz'),
+  (0x602, 0b001, 0x13, 'cpop'),
+  (0x600, 0b001, 0x1b, 'clzw'),
+  (0x601, 0b001, 0x1b, 'ctzw'),
+  (0x602, 0b001, 0x1b, 'cpopw'),
+  (0x287, 0b101, 0x13, 'orc_b'),
+]
+for (imm12, funct3, opcode, name) in tbl:
+  opBitmanipI(imm12, funct3, opcode, name)
+
+print('void rev8(const Reg& rd, const Reg& rs1) { Itype(0x13, 5, rd, rs1, isRV32_ ? 0x698 : 0x6b8); }')
+# sext_b/sext_h/zext_h/zext_w: use the B-extension encoding only when supportBext_,
+# otherwise fall back to the base-ISA shift sequence (backward compatible).
+print('void sext_b(const Reg& rd, const Reg& rs) { if (supportBext_) { Itype(0x13, 1, rd, rs, 0x604); return; } slli(rd, rs, XLEN_ - 8); srai(rd, rd, XLEN_ - 8); }')
+print('void sext_h(const Reg& rd, const Reg& rs) { if (supportBext_) { Itype(0x13, 1, rd, rs, 0x605); return; } slli(rd, rs, XLEN_ - 16); srai(rd, rd, XLEN_ - 16); }')
+print('void zext_h(const Reg& rd, const Reg& rs) { if (supportBext_) { Rtype(isRV32_ ? 0x33 : 0x3b, 4, 0x04, rd, rs, x0); return; } slli(rd, rs, XLEN_ - 16); srli(rd, rd, XLEN_ - 16); }')
+print('void zext_w(const Reg& rd, const Reg& rs) { if (supportBext_) { add_uw(rd, rs, x0); return; } slli(rd, rs, XLEN_ - 32); srli(rd, rd, XLEN_ - 32); }')
+
+tbl = [
+  (0x30, 0b101, 0x13, 'rori', 0),
+  (0x30, 0b101, 0x1b, 'roriw', 5),
+  (0x04, 0b001, 0x1b, 'slli_uw', 6),
+  (0x24, 0b001, 0x13, 'bclri', 0),
+  (0x24, 0b101, 0x13, 'bexti', 0),
+  (0x34, 0b001, 0x13, 'binvi', 0),
+  (0x14, 0b001, 0x13, 'bseti', 0),
+]
+for (funct7, funct3, opcode, name, range) in tbl:
+  opBitmanipShift(funct7, funct3, opcode, name, range)
+
 # encode RV32F, RV64F, RV32D, RV64D instructions with OP-FP opcode
 tbl = [
   # RV32_F extension
@@ -428,12 +503,8 @@ void mv(const Reg& rd, const Reg& rs) { addi(rd, rs, 0); }
 void not_(const Reg& rd, const Reg& rs) { xori(rd, rs, -1); }
 void neg(const Reg& rd, const Reg& rs) { sub(rd, x0, rs); }
 void negw(const Reg& rd, const Reg& rs) { subw(rd, x0, rs); }
-void sext_b(const Reg& rd, const Reg& rs) { slli(rd, rs, XLEN_ - 8); srai(rd, rd, XLEN_ - 8); }
-void sext_h(const Reg& rd, const Reg& rs) { slli(rd, rs, XLEN_ - 16); srai(rd, rd, XLEN_ - 16); }
 void sext_w(const Reg& rd, const Reg& rs) { addiw(rd, rs, 0); }
 void zext_b(const Reg& rd, const Reg& rs) { andi(rd, rs, 255); }
-void zext_h(const Reg& rd, const Reg& rs) { slli(rd, rs, XLEN_ - 16); srli(rd, rd, XLEN_ - 16); }
-void zext_w(const Reg& rd, const Reg& rs) { slli(rd, rs, XLEN_ - 32); srli(rd, rd, XLEN_ - 32); }
 void seqz(const Reg& rd, const Reg& rs) { sltiu(rd, rs, 1); }
 void snez(const Reg& rd, const Reg& rs) { sltu(rd, x0, rs); }
 void sltz(const Reg& rd, const Reg& rs) { slt(rd, rs, x0); }

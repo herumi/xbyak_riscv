@@ -1,5 +1,5 @@
 
-# Xbyak_riscv 1.20 [![Badge Build]][Build Status]
+# Xbyak_riscv 1.30 [![Badge Build]][Build Status]
 
 *A C++ JIT assembler for RISC-V (under CONSTRUCTION)*
 
@@ -15,11 +15,25 @@ Xbyak_riscv is a C++ header library that enables dynamically to assemble RISC-V 
 
 ## Feature
 
+### B extension (Zba/Zbb/Zbc/Zbs)
 
-## News
-- 2026/06/17 v1.20
-- 2026/06/15 v1.10 Support Zvfbfwma(BF16), D std extension
+The scalar bit-manipulation instructions (`andn`, `clz`, `min`, `rol`, `clmul`,
+`bclr`, ... ) are available.
 
+The pseudo instructions `sext_b`, `sext_h`, `zext_h`, and `zext_w` are encoded as
+a base-ISA shift sequence by default so that the generated code runs on cores
+without the B extension. Call `supportBext(true)` to emit the native B-extension
+instruction (`sext.b`, `zext.w`, ...) instead.
+
+```cpp
+sext_b(a0, a1);              // slli; srai (base ISA)
+supportBext(true);
+sext_b(a0, a1);              // sext.b a0, a1 (Zbb)
+supportBext(false);          // back to the base-ISA sequence
+```
+
+On Windows, define `NOMINMAX` before including `<windows.h>` so that `min` and
+`max` are not turned into macros that clash with the `min`/`max` mnemonics.
 
 ## Supported Compilers
 

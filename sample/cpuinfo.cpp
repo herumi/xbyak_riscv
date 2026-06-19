@@ -30,6 +30,10 @@ int main()
     std::cout << "Has C: " <<  cpu.hasExtension(RISCVExtension::C) << std::endl;
     std::cout << "Has V: " <<  cpu.hasExtension(RISCVExtension::V) << std::endl;
 
+    std::cout << "Has Zba: " <<  cpu.hasExtension(RISCVExtension::Zba) << std::endl;
+    std::cout << "Has Zbb: " <<  cpu.hasExtension(RISCVExtension::Zbb) << std::endl;
+    std::cout << "Has Zbc: " <<  cpu.hasExtension(RISCVExtension::Zbc) << std::endl;
+    std::cout << "Has Zbs: " <<  cpu.hasExtension(RISCVExtension::Zbs) << std::endl;
     std::cout << "Has Zvfh: " <<  cpu.hasExtension(RISCVExtension::Zvfh) << std::endl;
     std::cout << "Has Zvbb: " <<  cpu.hasExtension(RISCVExtension::Zvbb) << std::endl;
     std::cout << "Has Zvbc: " <<  cpu.hasExtension(RISCVExtension::Zvbc) << std::endl;
