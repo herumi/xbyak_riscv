@@ -58,6 +58,7 @@ void vfmv_f_s(const FReg& rd, const VReg& vs2) { opFVV(0x42001057, 0, vs2, 0, rd
 void vfmv_s_f(const VReg& vd, const FReg& rs1) { opFVF(0x42005057, 0, 0, rs1, vd); }
 void vfmv_v_f(const VReg& vd, const FReg& rs1) { opFVF(0x5e005057, 0, 0, rs1, vd); }
 void vfncvt_f_f_w(const VReg& vd, const VReg& vs2, VM vm=VM::unmasked) { opFVV(0x480a1057, vm, vs2, 0, vd); }
+void vfncvtbf16_f_f_w(const VReg& vd, const VReg& vs2, VM vm=VM::unmasked) { opFVV(0x480e9057, vm, vs2, 0, vd); }
 void vfncvt_f_x_w(const VReg& vd, const VReg& vs2, VM vm=VM::unmasked) { opFVV(0x48099057, vm, vs2, 0, vd); }
 void vfncvt_f_xu_w(const VReg& vd, const VReg& vs2, VM vm=VM::unmasked) { opFVV(0x48091057, vm, vs2, 0, vd); }
 void vfncvt_rod_f_f_w(const VReg& vd, const VReg& vs2, VM vm=VM::unmasked) { opFVV(0x480a9057, vm, vs2, 0, vd); }
@@ -97,6 +98,7 @@ void vfwadd_vv(const VReg& vd, const VReg& vs2, const VReg& vs1, VM vm=VM::unmas
 void vfwadd_wf(const VReg& vd, const VReg& vs2, const FReg& rs1, VM vm=VM::unmasked) { opFVF(0xd0005057, vm, vs2, rs1, vd); }
 void vfwadd_wv(const VReg& vd, const VReg& vs2, const VReg& vs1, VM vm=VM::unmasked) { opFVV(0xd0001057, vm, vs2, vs1, vd); }
 void vfwcvt_f_f_v(const VReg& vd, const VReg& vs2, VM vm=VM::unmasked) { opFVV(0x48061057, vm, vs2, 0, vd); }
+void vfwcvtbf16_f_f_v(const VReg& vd, const VReg& vs2, VM vm=VM::unmasked) { opFVV(0x48069057, vm, vs2, 0, vd); }
 void vfwcvt_f_x_v(const VReg& vd, const VReg& vs2, VM vm=VM::unmasked) { opFVV(0x48059057, vm, vs2, 0, vd); }
 void vfwcvt_f_xu_v(const VReg& vd, const VReg& vs2, VM vm=VM::unmasked) { opFVV(0x48051057, vm, vs2, 0, vd); }
 void vfwcvt_rtz_x_f_v(const VReg& vd, const VReg& vs2, VM vm=VM::unmasked) { opFVV(0x48079057, vm, vs2, 0, vd); }

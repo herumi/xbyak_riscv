@@ -1003,6 +1003,16 @@ vfncvt_f_f_w:
   - vm
   - vs2
   - vd
+vfncvtbf16_f_f_w:
+  encoding: 010010------11101001-----1010111
+  extension:
+  - rv_zvfbfmin
+  mask: '0xfc0ff07f'
+  match: '0x480e9057'
+  variable_fields:
+  - vm
+  - vs2
+  - vd
 vfncvt_f_x_w:
   encoding: 010010------10011001-----1010111
   extension:
@@ -1417,6 +1427,16 @@ vfwcvt_f_f_v:
   - rv_v
   mask: '0xfc0ff07f'
   match: '0x48061057'
+  variable_fields:
+  - vm
+  - vs2
+  - vd
+vfwcvtbf16_f_f_v:
+  encoding: 010010------01101001-----1010111
+  extension:
+  - rv_zvfbfmin
+  mask: '0xfc0ff07f'
+  match: '0x48069057'
   variable_fields:
   - vm
   - vs2
