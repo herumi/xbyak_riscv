@@ -1,5 +1,5 @@
 
-# Xbyak_riscv 1.30 [![Badge Build]][Build Status]
+# Xbyak_riscv 1.31 [![Badge Build]][Build Status]
 
 *A C++ JIT assembler for RISC-V (under CONSTRUCTION)*
 

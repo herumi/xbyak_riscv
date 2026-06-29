@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.6...3.0.2)
 
-project(xbyak_riscv LANGUAGES CXX VERSION 1.30)
+project(xbyak_riscv LANGUAGES CXX VERSION 1.31)
 
 OPTION(XBYAK_RISCV_V "RISC-V 'V' Vector Extension support" OFF)
 
