@@ -9,7 +9,7 @@ svc)
   ;;
 vec)
   echo "vec test"
-  ASFLAGS+="_zvfbfwma"
+  ASFLAGS+="_zvfbfmin_zvfbfwma"
   GEN=gen_test_vec.py
   ;;
 *)
