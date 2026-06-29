@@ -1,5 +1,5 @@
 
-# Xbyak_riscv 1.30 [![Badge Build]][Build Status]
+# Xbyak_riscv 1.31 [![Badge Build]][Build Status]
 
 *A C++ JIT assembler for RISC-V (under CONSTRUCTION)*
 
@@ -68,6 +68,8 @@ sudo apt install python3-yaml
 The binutils packaged with Ubuntu 24.04 (2.42) cannot assemble `Zvfbfwma`; use a
 distribution that ships binutils >= 2.43 (e.g. `debian:testing`) or build it from
 source.
+
+`test/run_vec_docker.sh` is a script for running and testing new binutils in Docker.
 
 ## License
 

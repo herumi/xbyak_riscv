@@ -5,7 +5,7 @@
 project(
 	'xbyak_riscv',
 	'cpp',
-	version: '1.30',
+	version: '1.31',
 	license: 'BSD-3-Clause',
 	default_options: 'b_ndebug=if-release'
 )

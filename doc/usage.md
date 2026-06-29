@@ -68,6 +68,10 @@ Replace a period in instructions with an underscore.
 
 Use `supportRVC()` to enable RVC instructions.
 
+# B extension
+
+Use `supportBext()` to emit native B-extension instructions.
+
 # Macros
 
 - Define `XBYAK_RISCV_V = 1` to enable Vector Operations.
