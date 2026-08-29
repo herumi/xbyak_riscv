@@ -40,8 +40,7 @@ The pseudo instructions `call`, `tail`, and `jump` are expanded to
 `auipc` + `jalr` (8 bytes, +-2GiB) in the same way as gas:
 
 ```cpp
-call(label);         // auipc x1, hi ; jalr x1, lo(x1)
-call(label, rd);     // auipc rd, hi ; jalr rd, lo(rd)
+call(label, rd = x1);// auipc rd, hi ; jalr rd, lo(rd)
 tail(label);         // auipc x6, hi ; jalr x0, lo(x6)
 jump(label, rt);     // auipc rt, hi ; jalr x0, lo(rt)
 la(label, rd);       // auipc rd, hi ; addi rd, rd, lo (rd = address of label)
