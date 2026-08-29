@@ -74,7 +74,7 @@ CYBOZU_TEST_AUTO(assignL_unreferenced_dst)
 	} c;
 	c.ready();
 	const uint8_t *p = c.getCode();
-	CYBOZU_TEST_EQUAL(read4ByteLE(p), 0x0000006f); // jal x0, 0
+	CYBOZU_TEST_EQUAL(read4ByteLE(p), 0x0000006fu); // jal x0, 0
 }
 
 // assignL(dst, src) after a forward reference to dst
