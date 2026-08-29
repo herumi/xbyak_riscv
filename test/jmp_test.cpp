@@ -53,3 +53,26 @@ CYBOZU_TEST_AUTO(putL)
 }
 
 
+
+// assignL(dst, src) where dst has not been referenced yet
+CYBOZU_TEST_AUTO(assignL_unreferenced_dst)
+{
+	struct Code : CodeGenerator {
+		Code()
+		{
+			Label src, dst;
+			L(src);
+			assignL(dst, src);
+			CYBOZU_TEST_EQUAL(dst.getAddress(), src.getAddress());
+			jal(x0, dst); // backward reference must be resolved
+			CYBOZU_TEST_ASSERT(!hasUndefinedLabel());
+			// a second assignL with another unreferenced dst must not throw ERR_LABEL_IS_REDEFINED
+			Label dst2;
+			assignL(dst2, src);
+			CYBOZU_TEST_EQUAL(dst2.getAddress(), src.getAddress());
+		}
+	} c;
+	c.ready();
+	const uint8_t *p = c.getCode();
+	CYBOZU_TEST_EQUAL(read4ByteLE(p), 0x0000006f); // jal x0, 0
+}

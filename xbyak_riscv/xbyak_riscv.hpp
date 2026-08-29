@@ -866,7 +866,7 @@ public:
 	{
 		ClabelDefList::const_iterator i = clabelDefList_.find(src.id);
 		if (i == clabelDefList_.end()) XBYAK_RISCV_THROW(ERR_LABEL_IS_NOT_SET_BY_L)
-		define_inner(clabelDefList_, clabelUndefList_, dst.id, i->second.addr);
+		define_inner(clabelDefList_, clabelUndefList_, getId(dst), i->second.addr);
 		dst.mgr = this;
 		labelPtrList_.insert(&dst);
 	}
