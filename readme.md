@@ -49,6 +49,15 @@ la(label, rd);       // auipc rd, hi ; addi rd, rd, lo (rd = address of label)
 Note that `tail` clobbers `x6` (t1). `call(label, rd)` uses `rd` itself as the
 scratch register, whereas gas `call rd, label` uses `x6`.
 
+If the label is already defined (a backward reference) and within +-1MiB,
+`call`, `tail` and `jump` emit a single `jal` (4 bytes) instead.
+With `supportRVC(true)`, a backward jump/branch to a label in range is also compressed:
+`j_`/`tail`/`jump` to `c.j` (+-2KiB), `call`/`jal(x1, label)` to `c.jal` (RV32 only),
+and `beqz`/`bnez` with `x8`-`x15` to `c.beqz`/`c.bnez` (+-256B).
+A forward reference is never shortened.
+Since a 2-byte instruction changes the alignment of the following code,
+use `align()` if you put data after the code.
+
 On Windows, define `NOMINMAX` before including `<windows.h>` so that `min` and
 `max` are not turned into macros that clash with the `min`/`max` mnemonics.
 

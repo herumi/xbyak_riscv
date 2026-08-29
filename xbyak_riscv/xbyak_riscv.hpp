@@ -290,6 +290,7 @@ inline size_t get5_z5_4to2_7to6_z2(size_t v) { return ((v & (1<<5)) << 7)| ((v &
 inline size_t get5_z5_4to3_8to6_z2(size_t v) { return ((v & (1<<5)) << 7)| ((v & (3<<3)) << 2)| ((v & (7<<6)) >> 4); }
 inline size_t get5to2_7to6_z7(size_t v) { return ((v & (15<<2)) << 7)| ((v & (3<<6)) << 1); }
 inline size_t get5to3_8to6_z7(size_t v) { return ((v & (7<<3)) << 7)| ((v & (7<<6)) << 1); }
+inline size_t get8_4to3_z3_7to6_2to1_5_z2(size_t v) { return ((v & (1<<8)) << 4)| ((v & (3<<3)) << 7)| ((v & (3<<6)) >> 1)| ((v & (3<<1)) << 2)| ((v & (1<<5)) >> 3); }
 // @@@ embedded by bit_pattern.py (DON'T DELETE THIS LINE)
 
 } // local
@@ -732,11 +733,15 @@ struct Jmp {
 		tJal,
 		tBtype,
 		tRawAddress,
-		tAuipc, // auipc rt, hi20 ; I-type rd, rt, lo12 (call, tail, jump)
+		tAuipc, // auipc rt, hi20 ; I-type rd, rt, lo12 (call, tail, jump, la)
 	} type;
 	const uint8_t* from; /* address of the jmp mnemonic */
 	uint32_t encoded;
 	uint32_t encoded2; /* 2nd instruction of tAuipc */
+	uint32_t rd; /* link register (tJal, tAuipc with jalr) */
+	uint32_t rs1, rs2, funct3; /* tBtype */
+	bool isJalr; /* tAuipc : jalr (call, tail, jump) or addi (la) */
+	// size of the fixed-length form (used for an undefined label)
 	size_t encSize() const
 	{
 		if (type == tRawAddress) return sizeof(size_t);
@@ -749,6 +754,9 @@ struct Jmp {
 		, from(from)
 		, encoded((rd.getIdx() << 7) | opcode)
 		, encoded2(0)
+		, rd(rd.getIdx())
+		, rs1(0), rs2(0), funct3(0)
+		, isJalr(false)
 	{
 	}
 	// B-type
@@ -757,6 +765,9 @@ struct Jmp {
 		, from(from)
 		, encoded((src2.getIdx() << 20) | (src1.getIdx() << 15) | (funct3 << 12) | opcode)
 		, encoded2(0)
+		, rd(0)
+		, rs1(src1.getIdx()), rs2(src2.getIdx()), funct3(funct3)
+		, isJalr(false)
 	{
 	}
 	// raw address
@@ -765,6 +776,9 @@ struct Jmp {
 		, from(from)
 		, encoded(0)
 		, encoded2(0)
+		, rd(0)
+		, rs1(0), rs2(0), funct3(0)
+		, isJalr(false)
 	{
 	}
 	// auipc rt, hi20 ; <opcode2/funct3_2> rd2, rt, lo12
@@ -773,13 +787,18 @@ struct Jmp {
 		, from(from)
 		, encoded((rt.getIdx() << 7) | 0x17)
 		, encoded2((rd2.getIdx() << 7) | (funct3_2 << 12) | (rt.getIdx() << 15) | opcode2)
+		, rd(rd2.getIdx())
+		, rs1(0), rs2(0), funct3(0)
+		, isJalr(opcode2 == 0x67)
 	{
 	}
+	// imm is a (maskBit+1)-bit signed even number
 	static inline bool isValidImm(size_t imm, size_t maskBit)
 	{
 		const size_t M = local::mask(maskBit);
 		return (imm < M || ~M <= imm) && (imm & 1) == 0;
 	}
+	// fixed-length form
 	uint64_t encode(const uint8_t* addr) const
 	{
 		if (addr == 0) return 0;
@@ -803,15 +822,53 @@ struct Jmp {
 			return local::get12_10to5_z13_4to1_11_z7(imm) | encoded;
 		}
 	}
-	// update jmp address by addr
+	/*
+		encode the shortest form for a defined label (addr != 0)
+		@param code [out] machine code
+		@param addr [in] address of the label
+		@param rvc [in] allow compressed instructions
+		@param rv32 [in] RV32 (c.jal exists only on RV32)
+		@return size of code (2, 4 or 8)
+	*/
+	size_t encodeShort(uint64_t *code, const uint8_t *addr, bool rvc, bool rv32) const
+	{
+		const size_t imm = addr - from;
+		if (type == tBtype) {
+			// c.beqz/c.bnez rs1', imm9 (rs1' in x8..x15, rs2 = x0) as gas does
+			if (rvc && funct3 <= 1 && rs2 == 0 && 8 <= rs1 && rs1 < 16 && isValidImm(imm, 8)) {
+				*code = ((6 + funct3) << 13) | ((rs1 - 8) << 7) | local::get8_4to3_z3_7to6_2to1_5_z2(imm) | 1;
+				return 2;
+			}
+		} else if (type == tJal || (type == tAuipc && isJalr)) {
+			// c.j imm12 (rd = x0) or c.jal imm12 (rd = x1, RV32 only)
+			if (rvc && (rd == 0 || (rd == 1 && rv32)) && isValidImm(imm, 11)) {
+				*code = ((rd == 0 ? 5 : 1) << 13) | local::get11_4_9to8_10_6_7_3to1_5_z2(imm) | 1;
+				return 2;
+			}
+			// jal rd, imm21
+			if (type == tAuipc && isValidImm(imm, 20)) {
+				*code = local::get20_10to1_11_19to12_z12(imm) | (rd << 7) | 0x6f;
+				return 4;
+			}
+		}
+		*code = encode(addr);
+		return encSize();
+	}
+	// update jmp address by addr (the fixed-length form is reserved)
 	void update(CodeArray *base, const uint8_t *addr) const
 	{
 		base->writeBytes(from, encode(addr), encSize());
 	}
-	// append jmp opcode with addr
-	void appendCode(CodeArray *base, const uint8_t *addr) const
+	// append jmp opcode with addr ; use the shortest form if addr is known
+	void appendCode(CodeArray *base, const uint8_t *addr, bool rvc, bool rv32) const
 	{
-		base->appendBytes(encode(addr), encSize());
+		if (addr == 0) {
+			base->appendBytes(0, encSize());
+			return;
+		}
+		uint64_t code;
+		const size_t n = encodeShort(&code, addr, rvc, rv32);
+		base->appendBytes(code, n);
 	}
 };
 
@@ -1024,7 +1081,7 @@ private:
 	void opJmp(const Label& label, const Jmp& jmp)
 	{
 		const uint8_t* addr = labelMgr_.getAddr(label);
-		jmp.appendCode(this, addr);
+		jmp.appendCode(this, addr, supportRVC_, isRV32_);
 		if (addr) return;
 		labelMgr_.addUndefinedLabel(label, jmp);
 	}

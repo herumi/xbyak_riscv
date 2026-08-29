@@ -23,6 +23,7 @@ tbl = [
   '5|z5|4:3|8:6|z2',       # c.ldsp
   '5:2|7:6|z7',            # c.swsp
   '5:3|8:6|z7',            # c.sdsp
+  '8|4:3|z3|7:6|2:1|5|z2', # c.beqz, c.bnez
 ]
 for ptn in tbl:
   ptnText += bitPattern(ptn) + '\n'
