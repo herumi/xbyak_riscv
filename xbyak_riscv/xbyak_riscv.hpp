@@ -374,7 +374,13 @@ public:
 			}
 		}
 #endif
-		void *p = mmap(NULL, size, PROT_READ | PROT_WRITE, mode, fd, 0);
+		int prot = PROT_READ | PROT_WRITE;
+#ifdef PROT_MPROTECT
+		// Some NetBSD systems have this protection turned on by default
+		// https://man.netbsd.org/mprotect.2
+		prot |= PROT_MPROTECT(PROT_READ | PROT_WRITE | PROT_EXEC);
+#endif
+		void *p = mmap(NULL, size, prot, mode, fd, 0);
 		if (p == MAP_FAILED) {
 			if (fd != -1) close(fd);
 			XBYAK_RISCV_THROW_RET(ERR_CANT_ALLOC, 0)
