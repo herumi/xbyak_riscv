@@ -514,7 +514,6 @@ class CodeArray {
 	};
 	CodeArray(const CodeArray& rhs);
 	void operator=(const CodeArray&);
-	bool isAllocType() const { return type_ == ALLOC_BUF; }
 	const Type type_;
 #ifdef XBYAK_RISCV_USE_MMAP_ALLOCATOR
 	MmapAllocator defaultAllocator_;
@@ -534,12 +533,16 @@ public:
 		PROTECT_RWE = 1, // read/write/exec
 		PROTECT_RE = 2 // read/exec
 	};
+protected:
+	ProtectMode curMode_;
+public:
 	explicit CodeArray(size_t maxSize, void *userPtr = 0, Allocator *allocator = 0)
 		: type_((userPtr == 0 || userPtr == DontSetProtectRWE) ? ALLOC_BUF : USER_BUF)
 		, alloc_(allocator ? allocator : (Allocator*)&defaultAllocator_)
 		, maxSize_(maxSize)
 		, top_(type_ == USER_BUF ? reinterpret_cast<uint8_t*>(userPtr) : alloc_->alloc((std::max<size_t>)(maxSize, 1)))
 		, size_(0)
+		, curMode_(PROTECT_RW)
 	{
 		if (maxSize_ > 0 && top_ == 0) XBYAK_RISCV_THROW(ERR_CANT_ALLOC)
 		if ((type_ == ALLOC_BUF && userPtr != DontSetProtectRWE && useProtect()) && !setProtectMode(PROTECT_RWE, false)) {
@@ -557,10 +560,14 @@ public:
 	bool setProtectMode(ProtectMode mode, bool throwException = true)
 	{
 		bool isOK = protect(top_, maxSize_, mode);
-		if (isOK) return true;
+		if (isOK) {
+			curMode_ = mode;
+			return true;
+		}
 		if (throwException) XBYAK_RISCV_THROW_RET(ERR_CANT_PROTECT, false)
 		return false;
 	}
+	bool isAllocType() const { return type_ == ALLOC_BUF; }
 	bool setProtectModeRE(bool throwException = true) { return setProtectMode(PROTECT_RE, throwException); }
 	bool setProtectModeRW(bool throwException = true) { return setProtectMode(PROTECT_RW, throwException); }
 	void resetSize()
@@ -1341,6 +1348,7 @@ public:
 		resetSize();
 		labelMgr_.reset();
 		labelMgr_.set(this);
+		if (isAllocType() && useProtect() && curMode_ == PROTECT_RE) setProtectModeRW();
 		XLEN_ = 64;
 		isRV32_ = false;
 		supportRVC_ = false;
