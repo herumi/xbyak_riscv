@@ -290,10 +290,17 @@ inline size_t get5to3_8to6_z7(size_t v) { return ((v & (7<<3)) << 7)| ((v & (7<<
 
 /*
 	custom allocator
+	alloc() must allocate the buffer with size rounded up to a multiple of
+	the page size because protect() works at page granularity.
 */
 struct Allocator {
 	explicit Allocator(const std::string& = "") {} // same interface with MmapAllocator
-	virtual uint8_t *alloc(size_t size) { return reinterpret_cast<uint8_t*>(AlignedMalloc(size, local::ALIGN_PAGE_SIZE)); }
+	virtual uint8_t *alloc(size_t size)
+	{
+		const size_t alignedSizeM1 = local::ALIGN_PAGE_SIZE - 1;
+		size = (size + alignedSizeM1) & ~alignedSizeM1;
+		return reinterpret_cast<uint8_t*>(AlignedMalloc(size, local::ALIGN_PAGE_SIZE));
+	}
 	virtual void free(uint8_t *p) { AlignedFree(p); }
 	virtual ~Allocator() {}
 	/* override to return false if you call protect() manually */
