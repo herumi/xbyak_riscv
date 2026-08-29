@@ -1,4 +1,4 @@
-const char *getVersionString() const { return "1.31.1"; }
+const char *getVersionString() const { return "1.32"; }
 void add(const Reg& rd, const Reg& rs1, const Reg& rs2) { if (supportRVC_ && rd == rs1 && c_mv(rd, rs2, 1)) return; Rtype(0x33, 0, 0x0, rd, rs1, rs2); }
 void sub(const Reg& rd, const Reg& rs1, const Reg& rs2) { if (supportRVC_ && c_noimm(rd, rs1, rs2, 0x23, 0)) return; Rtype(0x33, 0, 0x20, rd, rs1, rs2); }
 void sll(const Reg& rd, const Reg& rs1, const Reg& rs2) { Rtype(0x33, 1, 0x0, rd, rs1, rs2); }
@@ -286,6 +286,14 @@ void sgtz(const Reg& rd, const Reg& rs) { slt(rd, x0, rs); }
 void fence() { append4B(0x0ff0000f); }
 void j_(const Label& label) { jal(x0, label); }
 void jal(const Reg& rd, const Label& label) { Jmp jmp(getCurr(), 0x6f, rd); opJmp(label, jmp); }
+// auipc rt, hi ; jalr x0, lo(rt)
+void jump(const Label& label, const Reg& rt) { Jmp jmp(getCurr(), rt, 0x67, 0, x0); opJmp(label, jmp); }
+// auipc rd, hi ; jalr rd, lo(rd)
+void call(const Label& label, const Reg& rd = x1) { Jmp jmp(getCurr(), rd, 0x67, 0, rd); opJmp(label, jmp); }
+// tail uses x6 (t1) as a scratch register
+void tail(const Label& label) { jump(label, x6); }
+// auipc rd, hi ; addi rd, rd, lo
+void la(const Label& label, const Reg& rd) { Jmp jmp(getCurr(), rd, 0x13, 0, rd); opJmp(label, jmp); }
 void jr(const Reg& rs) { jalr(x0, rs, 0); }
 void jalr(const Reg& rs) { jalr(x1, rs, 0); }
 void ret() { jalr(x0, x1); }

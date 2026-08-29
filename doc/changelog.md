@@ -1,4 +1,5 @@
 # History
+- 2026/08/29 ver 1.32 support pseudo instructions call, tail, jump and la.
 - 2026/08/29 ver 1.31.1 fix assignL() after a forward referenced. fix reset() to restore write protection.
 - 2026/06/30 ver 1.31 support Zvfbfmin
 - 2026/06/19 ver 1.30 support B extension. add supportBext(bool) for backward compatibility

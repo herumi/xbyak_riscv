@@ -107,7 +107,7 @@ namespace Xbyak_riscv {
 
 enum {
 	DEFAULT_MAX_CODE_SIZE = 4096,
-	VERSION = 0x1311 /* 0xABCD = A.BC.D */
+	VERSION = 0x1320 /* 0xABCD = A.BC.D */
 };
 
 inline uint32_t getVersion() { return VERSION; }
@@ -256,10 +256,8 @@ inline XBYAK_RISCV_CONSTEXPR bool inSBit(int x, int n)
 	return -(1 << (n-1)) <= x && x < (1 << (n-1));
 }
 
-// split x to hi20bits and low12bits
-// return false if x in 12-bit signed integer
-inline bool split32bit(int *pH, int* pL, int x) {
-	if (inSBit(x, 12)) return false;
+// split x to hi20bits and low12bits (L is sign-extended, H is adjusted if L < 0)
+inline void splitHiLo(int *pH, int* pL, int x) {
 	int H = (x >> 12) & mask(20);
 	int L = x & mask(12);
 	if (x & (1 << 11)) {
@@ -268,6 +266,13 @@ inline bool split32bit(int *pH, int* pL, int x) {
 	}
 	*pH = H;
 	*pL = L;
+}
+
+// split x to hi20bits and low12bits
+// return false if x in 12-bit signed integer
+inline bool split32bit(int *pH, int* pL, int x) {
+	if (inSBit(x, 12)) return false;
+	splitHiLo(pH, pL, x);
 	return true;
 }
 
@@ -727,18 +732,23 @@ struct Jmp {
 		tJal,
 		tBtype,
 		tRawAddress,
+		tAuipc, // auipc rt, hi20 ; I-type rd, rt, lo12 (call, tail, jump)
 	} type;
 	const uint8_t* from; /* address of the jmp mnemonic */
 	uint32_t encoded;
+	uint32_t encoded2; /* 2nd instruction of tAuipc */
 	size_t encSize() const
 	{
-		return (type == tRawAddress) ? sizeof(size_t) : 4;
+		if (type == tRawAddress) return sizeof(size_t);
+		if (type == tAuipc) return 8;
+		return 4;
 	}
 	// jal
 	Jmp(const uint8_t *from, uint32_t opcode, const Reg& rd)
 		: type(tJal)
 		, from(from)
 		, encoded((rd.getIdx() << 7) | opcode)
+		, encoded2(0)
 	{
 	}
 	// B-type
@@ -746,6 +756,7 @@ struct Jmp {
 		: type(tBtype)
 		, from(from)
 		, encoded((src2.getIdx() << 20) | (src1.getIdx() << 15) | (funct3 << 12) | opcode)
+		, encoded2(0)
 	{
 	}
 	// raw address
@@ -753,6 +764,15 @@ struct Jmp {
 		: type(tRawAddress)
 		, from(from)
 		, encoded(0)
+		, encoded2(0)
+	{
+	}
+	// auipc rt, hi20 ; <opcode2/funct3_2> rd2, rt, lo12
+	Jmp(const uint8_t* from, const Reg& rt, uint32_t opcode2, uint32_t funct3_2, const Reg& rd2)
+		: type(tAuipc)
+		, from(from)
+		, encoded((rt.getIdx() << 7) | 0x17)
+		, encoded2((rd2.getIdx() << 7) | (funct3_2 << 12) | (rt.getIdx() << 15) | opcode2)
 	{
 	}
 	static inline bool isValidImm(size_t imm, size_t maskBit)
@@ -760,10 +780,20 @@ struct Jmp {
 		const size_t M = local::mask(maskBit);
 		return (imm < M || ~M <= imm) && (imm & 1) == 0;
 	}
-	size_t encode(const uint8_t* addr) const
+	uint64_t encode(const uint8_t* addr) const
 	{
 		if (addr == 0) return 0;
 		if (type == tRawAddress) return size_t(addr);
+		if (type == tAuipc) {
+			const int64_t imm = static_cast<int64_t>(addr - from);
+			// hi20 is computed from imm + 0x800, so it must fit in 32-bit signed
+			if (imm + 0x800 < -(int64_t(1) << 31) || (int64_t(1) << 31) <= imm + 0x800) XBYAK_RISCV_THROW_RET(ERR_LABEL_IS_TOO_FAR, 0)
+			int H, L;
+			local::splitHiLo(&H, &L, static_cast<int>(imm));
+			const uint64_t lo = ((uint32_t(H) & local::mask(20)) << 12) | encoded;
+			const uint64_t hi = ((uint32_t(L) & local::mask(12)) << 20) | encoded2;
+			return (hi << 32) | lo;
+		}
 		const size_t imm = addr - from;
 		if (type == tJal) {
 			if (!isValidImm(imm, 20)) XBYAK_RISCV_THROW_RET(ERR_INVALID_IMM_OF_JAL, 0)
