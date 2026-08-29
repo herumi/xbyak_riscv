@@ -578,6 +578,7 @@ public:
 	{
 		if (n > 8) XBYAK_RISCV_THROW(ERR_BAD_PARAMETER)
 		if (offset + n > maxSize_) XBYAK_RISCV_THROW(ERR_CODE_IS_TOO_BIG)
+		if (top_ == 0) XBYAK_RISCV_THROW(ERR_CANT_ALLOC)
 		uint8_t *const p = top_ + offset;
 		for (size_t i = 0; i < n; i++) {
 			p[i] = static_cast<uint8_t>(v >> (i * 8));

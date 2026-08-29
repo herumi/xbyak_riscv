@@ -12,3 +12,18 @@ CYBOZU_TEST_AUTO(imm_too_big)
 	ClearError();
 	CYBOZU_TEST_EQUAL(GetError(), 0);
 }
+
+// a failed allocation must not cause a null pointer write
+CYBOZU_TEST_AUTO(alloc_fail)
+{
+	struct NullAllocator : Allocator {
+		uint8_t *alloc(size_t) override { return 0; }
+		void free(uint8_t *) override {}
+	} a;
+	CodeGenerator c(4096, 0, &a);
+	CYBOZU_TEST_EQUAL(GetError(), (int)ERR_CANT_ALLOC);
+	ClearError();
+	c.nop();
+	CYBOZU_TEST_EQUAL(GetError(), (int)ERR_CANT_ALLOC);
+	ClearError();
+}
