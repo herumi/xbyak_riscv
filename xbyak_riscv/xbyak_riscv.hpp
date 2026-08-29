@@ -743,10 +743,10 @@ struct Jmp {
 			return local::get12_10to5_z13_4to1_11_z7(imm) | encoded;
 		}
 	}
-	// update jmp address by base->getCurr()
-	void update(CodeArray *base) const
+	// update jmp address by addr
+	void update(CodeArray *base, const uint8_t *addr) const
 	{
-		base->writeBytes(from, encode(base->getCurr()), encSize());
+		base->writeBytes(from, encode(addr), encSize());
 	}
 	// append jmp opcode with addr
 	void appendCode(CodeArray *base, const uint8_t *addr) const
@@ -804,7 +804,7 @@ class LabelManager {
 			ClabelUndefList::iterator itr = undefList.find(labelId);
 			if (itr == undefList.end()) break;
 			const Jmp& jmp = itr->second;
-			jmp.update(base_);
+			jmp.update(base_, addr); // assign() defines a label at another address
 			undefList.erase(itr);
 		}
 	}
