@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <unordered_set>
 #include <unordered_map>
+#include <vector>
 
 #ifdef _WIN32
 	#ifndef WIN32_LEAN_AND_MEAN
@@ -106,7 +107,7 @@ namespace Xbyak_riscv {
 
 enum {
 	DEFAULT_MAX_CODE_SIZE = 4096,
-	VERSION = 0x1310 /* 0xABCD = A.BC.D */
+	VERSION = 0x1311 /* 0xABCD = A.BC.D */
 };
 
 inline uint32_t getVersion() { return VERSION; }
@@ -290,10 +291,17 @@ inline size_t get5to3_8to6_z7(size_t v) { return ((v & (7<<3)) << 7)| ((v & (7<<
 
 /*
 	custom allocator
+	alloc() must allocate the buffer with size rounded up to a multiple of
+	the page size because protect() works at page granularity.
 */
 struct Allocator {
 	explicit Allocator(const std::string& = "") {} // same interface with MmapAllocator
-	virtual uint8_t *alloc(size_t size) { return reinterpret_cast<uint8_t*>(AlignedMalloc(size, local::ALIGN_PAGE_SIZE)); }
+	virtual uint8_t *alloc(size_t size)
+	{
+		const size_t alignedSizeM1 = local::ALIGN_PAGE_SIZE - 1;
+		size = (size + alignedSizeM1) & ~alignedSizeM1;
+		return reinterpret_cast<uint8_t*>(AlignedMalloc(size, local::ALIGN_PAGE_SIZE));
+	}
 	virtual void free(uint8_t *p) { AlignedFree(p); }
 	virtual ~Allocator() {}
 	/* override to return false if you call protect() manually */
@@ -326,6 +334,7 @@ inline int getMacOsVersion()
 #endif
 class MmapAllocator : public Allocator {
 	struct Allocation {
+		uintptr_t addr;
 		size_t size;
 #if defined(XBYAK_RISCV_USE_MEMFD)
 		// fd_ is only used with XBYAK_RISCV_USE_MEMFD. We keep the file open
@@ -335,7 +344,7 @@ class MmapAllocator : public Allocator {
 #endif
 	};
 	const std::string name_; // only used with XBYAK_RISCV_USE_MEMFD
-	typedef std::unordered_map<uintptr_t, Allocation> AllocationList;
+	typedef std::vector<Allocation> AllocationList;
 	AllocationList allocList_;
 public:
 	explicit MmapAllocator(const std::string& name = "xbyak") : name_(name) {}
@@ -365,29 +374,42 @@ public:
 			}
 		}
 #endif
-		void *p = mmap(NULL, size, PROT_READ | PROT_WRITE, mode, fd, 0);
+		int prot = PROT_READ | PROT_WRITE;
+#ifdef PROT_MPROTECT
+		// Some NetBSD systems have this protection turned on by default
+		// https://man.netbsd.org/mprotect.2
+		prot |= PROT_MPROTECT(PROT_READ | PROT_WRITE | PROT_EXEC);
+#endif
+		void *p = mmap(NULL, size, prot, mode, fd, 0);
 		if (p == MAP_FAILED) {
 			if (fd != -1) close(fd);
 			XBYAK_RISCV_THROW_RET(ERR_CANT_ALLOC, 0)
 		}
 		assert(p);
-		Allocation &alloc = allocList_[(uintptr_t)p];
+		Allocation alloc;
+		alloc.addr = (uintptr_t)p;
 		alloc.size = size;
 #if defined(XBYAK_RISCV_USE_MEMFD)
 		alloc.fd = fd;
 #endif
+		allocList_.push_back(alloc);
 		return (uint8_t*)p;
 	}
 	void free(uint8_t *p) override
 	{
 		if (p == 0) return;
-		AllocationList::iterator i = allocList_.find((uintptr_t)p);
-		if (i == allocList_.end()) XBYAK_RISCV_THROW(ERR_BAD_PARAMETER)
-		if (munmap((void*)i->first, i->second.size) < 0) XBYAK_RISCV_THROW(ERR_MUNMAP)
+		for (size_t idx = 0; idx < allocList_.size(); idx++) {
+			Allocation& a = allocList_[idx];
+			if (a.addr != (uintptr_t)p) continue;
+			if (munmap((void*)a.addr, a.size) < 0) XBYAK_RISCV_THROW(ERR_MUNMAP)
 #if defined(XBYAK_RISCV_USE_MEMFD)
-		if (i->second.fd != -1) close(i->second.fd);
+			if (a.fd != -1) close(a.fd);
 #endif
-		allocList_.erase(i);
+			a = allocList_.back();
+			allocList_.pop_back();
+			return;
+		}
+		XBYAK_RISCV_THROW(ERR_BAD_PARAMETER)
 	}
 };
 #endif
@@ -514,7 +536,6 @@ class CodeArray {
 	};
 	CodeArray(const CodeArray& rhs);
 	void operator=(const CodeArray&);
-	bool isAllocType() const { return type_ == ALLOC_BUF; }
 	const Type type_;
 #ifdef XBYAK_RISCV_USE_MMAP_ALLOCATOR
 	MmapAllocator defaultAllocator_;
@@ -534,12 +555,16 @@ public:
 		PROTECT_RWE = 1, // read/write/exec
 		PROTECT_RE = 2 // read/exec
 	};
+protected:
+	ProtectMode curMode_;
+public:
 	explicit CodeArray(size_t maxSize, void *userPtr = 0, Allocator *allocator = 0)
 		: type_((userPtr == 0 || userPtr == DontSetProtectRWE) ? ALLOC_BUF : USER_BUF)
 		, alloc_(allocator ? allocator : (Allocator*)&defaultAllocator_)
 		, maxSize_(maxSize)
 		, top_(type_ == USER_BUF ? reinterpret_cast<uint8_t*>(userPtr) : alloc_->alloc((std::max<size_t>)(maxSize, 1)))
 		, size_(0)
+		, curMode_(PROTECT_RW)
 	{
 		if (maxSize_ > 0 && top_ == 0) XBYAK_RISCV_THROW(ERR_CANT_ALLOC)
 		if ((type_ == ALLOC_BUF && userPtr != DontSetProtectRWE && useProtect()) && !setProtectMode(PROTECT_RWE, false)) {
@@ -557,10 +582,14 @@ public:
 	bool setProtectMode(ProtectMode mode, bool throwException = true)
 	{
 		bool isOK = protect(top_, maxSize_, mode);
-		if (isOK) return true;
+		if (isOK) {
+			curMode_ = mode;
+			return true;
+		}
 		if (throwException) XBYAK_RISCV_THROW_RET(ERR_CANT_PROTECT, false)
 		return false;
 	}
+	bool isAllocType() const { return type_ == ALLOC_BUF; }
 	bool setProtectModeRE(bool throwException = true) { return setProtectMode(PROTECT_RE, throwException); }
 	bool setProtectModeRW(bool throwException = true) { return setProtectMode(PROTECT_RW, throwException); }
 	void resetSize()
@@ -571,6 +600,7 @@ public:
 	{
 		if (n > 8) XBYAK_RISCV_THROW(ERR_BAD_PARAMETER)
 		if (offset + n > maxSize_) XBYAK_RISCV_THROW(ERR_CODE_IS_TOO_BIG)
+		if (top_ == 0) XBYAK_RISCV_THROW(ERR_CANT_ALLOC)
 		uint8_t *const p = top_ + offset;
 		for (size_t i = 0; i < n; i++) {
 			p[i] = static_cast<uint8_t>(v >> (i * 8));
@@ -736,17 +766,17 @@ struct Jmp {
 		if (type == tRawAddress) return size_t(addr);
 		const size_t imm = addr - from;
 		if (type == tJal) {
-			if (!isValidImm(imm, 20)) XBYAK_RISCV_THROW(ERR_INVALID_IMM_OF_JAL)
+			if (!isValidImm(imm, 20)) XBYAK_RISCV_THROW_RET(ERR_INVALID_IMM_OF_JAL, 0)
 			return local::get20_10to1_11_19to12_z12(imm) | encoded;
 		} else {
-			if (!isValidImm(imm, 12)) XBYAK_RISCV_THROW(ERR_INVALID_IMM_OF_JAL)
+			if (!isValidImm(imm, 12)) XBYAK_RISCV_THROW_RET(ERR_INVALID_IMM_OF_JAL, 0)
 			return local::get12_10to5_z13_4to1_11_z7(imm) | encoded;
 		}
 	}
-	// update jmp address by base->getCurr()
-	void update(CodeArray *base) const
+	// update jmp address by addr
+	void update(CodeArray *base, const uint8_t *addr) const
 	{
-		base->writeBytes(from, encode(base->getCurr()), encSize());
+		base->writeBytes(from, encode(addr), encSize());
 	}
 	// append jmp opcode with addr
 	void appendCode(CodeArray *base, const uint8_t *addr) const
@@ -804,7 +834,7 @@ class LabelManager {
 			ClabelUndefList::iterator itr = undefList.find(labelId);
 			if (itr == undefList.end()) break;
 			const Jmp& jmp = itr->second;
-			jmp.update(base_);
+			jmp.update(base_, addr); // assign() defines a label at another address
 			undefList.erase(itr);
 		}
 	}
@@ -866,7 +896,7 @@ public:
 	{
 		ClabelDefList::const_iterator i = clabelDefList_.find(src.id);
 		if (i == clabelDefList_.end()) XBYAK_RISCV_THROW(ERR_LABEL_IS_NOT_SET_BY_L)
-		define_inner(clabelDefList_, clabelUndefList_, dst.id, i->second.addr);
+		define_inner(clabelDefList_, clabelUndefList_, getId(dst), i->second.addr);
 		dst.mgr = this;
 		labelPtrList_.insert(&dst);
 	}
@@ -1341,6 +1371,7 @@ public:
 		resetSize();
 		labelMgr_.reset();
 		labelMgr_.set(this);
+		if (isAllocType() && useProtect() && curMode_ == PROTECT_RE) setProtectModeRW();
 		XLEN_ = 64;
 		isRV32_ = false;
 		supportRVC_ = false;

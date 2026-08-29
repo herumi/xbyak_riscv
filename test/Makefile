@@ -1,8 +1,10 @@
 HEADER=../xbyak_riscv/xbyak_riscv_mnemonic.hpp
 
-test: $(HEADER) jmp_test.exe misc_test.exe
+test: $(HEADER) jmp_test.exe misc_test.exe noexception_test.exe mmap_allocator_test.exe
 	./jmp_test.exe
 	./misc_test.exe
+	./noexception_test.exe
+	./mmap_allocator_test.exe
 	./test.sh
 	./test.sh svc
 
@@ -16,7 +18,7 @@ test_vec:
 test_vec_docker:
 	./run_vec_docker.sh
 
-%.exe: %.cpp $(HEADER)
+%.exe: %.cpp $(HEADER) ../xbyak_riscv/xbyak_riscv.hpp
 	$(CXX) -o $@ $< -Wall -Wextra -Wsuggest-override -I ../ -I ./
 
 $(HEADER):

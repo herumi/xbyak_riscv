@@ -1,5 +1,5 @@
 # History
-
+- 2026/08/29 ver 1.31.1 fix assignL() after a forward referenced. fix reset() to restore write protection.
 - 2026/06/30 ver 1.31 support Zvfbfmin
 - 2026/06/19 ver 1.30 support B extension. add supportBext(bool) for backward compatibility
 - 2026/06/17 ver 1.20 fix encoding of vl{2,4,8}re{8,16,32,64}_v, vs{2,48,}r_v. add `XBYAK_RISCV_VSETV_DEFAULT_OLD` for vsetivli and vsetvli (see usage.md).

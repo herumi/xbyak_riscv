@@ -47,3 +47,24 @@ CYBOZU_TEST_AUTO(align)
 }
 
 
+
+// reset() must restore write access after readyRE()/setProtectModeRE()
+CYBOZU_TEST_AUTO(reset_after_readyRE)
+{
+	{
+		CodeGenerator c;
+		c.nop();
+		c.readyRE();
+		c.reset();
+		c.nop();
+		CYBOZU_TEST_EQUAL(c.getSize(), 4u);
+	}
+	{
+		CodeGenerator c(4096, DontSetProtectRWE);
+		c.nop();
+		c.setProtectModeRE();
+		c.reset();
+		c.nop();
+		CYBOZU_TEST_EQUAL(c.getSize(), 4u);
+	}
+}
