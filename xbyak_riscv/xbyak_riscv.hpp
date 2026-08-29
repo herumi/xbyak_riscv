@@ -743,10 +743,10 @@ struct Jmp {
 		if (type == tRawAddress) return size_t(addr);
 		const size_t imm = addr - from;
 		if (type == tJal) {
-			if (!isValidImm(imm, 20)) XBYAK_RISCV_THROW(ERR_INVALID_IMM_OF_JAL)
+			if (!isValidImm(imm, 20)) XBYAK_RISCV_THROW_RET(ERR_INVALID_IMM_OF_JAL, 0)
 			return local::get20_10to1_11_19to12_z12(imm) | encoded;
 		} else {
-			if (!isValidImm(imm, 12)) XBYAK_RISCV_THROW(ERR_INVALID_IMM_OF_JAL)
+			if (!isValidImm(imm, 12)) XBYAK_RISCV_THROW_RET(ERR_INVALID_IMM_OF_JAL, 0)
 			return local::get12_10to5_z13_4to1_11_z7(imm) | encoded;
 		}
 	}
