@@ -16,7 +16,7 @@ test_vec:
 test_vec_docker:
 	./run_vec_docker.sh
 
-%.exe: %.cpp $(HEADER)
+%.exe: %.cpp $(HEADER) ../xbyak_riscv/xbyak_riscv.hpp
 	$(CXX) -o $@ $< -Wall -Wextra -Wsuggest-override -I ../ -I ./
 
 $(HEADER):
