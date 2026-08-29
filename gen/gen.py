@@ -518,6 +518,8 @@ void jump(const Label& label, const Reg& rt) { Jmp jmp(getCurr(), rt, 0x67, 0, x
 void call(const Label& label, const Reg& rd = x1) { Jmp jmp(getCurr(), rd, 0x67, 0, rd); opJmp(label, jmp); }
 // tail uses x6 (t1) as a scratch register
 void tail(const Label& label) { jump(label, x6); }
+// auipc rd, hi ; addi rd, rd, lo
+void la(const Label& label, const Reg& rd) { Jmp jmp(getCurr(), rd, 0x13, 0, rd); opJmp(label, jmp); }
 void jr(const Reg& rs) { jalr(x0, rs, 0); }
 void jalr(const Reg& rs) { jalr(x1, rs, 0); }
 void ret() { jalr(x0, x1); }

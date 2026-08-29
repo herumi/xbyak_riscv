@@ -32,7 +32,7 @@ sext_b(a0, a1);              // sext.b a0, a1 (Zbb)
 supportBext(false);          // back to the base-ISA sequence
 ```
 
-### Far jump to a label (`call`, `tail`, `jump`)
+### Far jump to a label (`call`, `tail`, `jump`, `la`)
 
 `jal`/`j_` take a 21-bit offset (+-1MiB) and the branch instructions take a
 13-bit offset (+-4KiB); an exception is thrown if the label is out of range.
@@ -44,6 +44,7 @@ call(label);         // auipc x1, hi ; jalr x1, lo(x1)
 call(label, rd);     // auipc rd, hi ; jalr rd, lo(rd)
 tail(label);         // auipc x6, hi ; jalr x0, lo(x6)
 jump(label, rt);     // auipc rt, hi ; jalr x0, lo(rt)
+la(label, rd);       // auipc rd, hi ; addi rd, rd, lo (rd = address of label)
 ```
 
 Note that `tail` clobbers `x6` (t1). `call(label, rd)` uses `rd` itself as the
