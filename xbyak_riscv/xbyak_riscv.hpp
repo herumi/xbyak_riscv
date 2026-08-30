@@ -348,7 +348,11 @@ private:
 			const int hi20 = int((v + 0x800) >> 12) & 0xfffff;
 			const int lo = lo12(v);
 			if (hi20) push(tLui, hi20);
-			if (lo || hi20 == 0) push((rv64_ && hi20) ? tAddiw : tAddi, lo);
+			if (lo || hi20 == 0) {
+				// use ADDIW only when LUI + lo12 overflows 32 bits (LLVM >= 21)
+				const int64_t luiRes = int64_t(int32_t(uint32_t(hi20) << 12));
+				push((rv64_ && hi20 && !isSInt(uint64_t(luiRes + lo), 32)) ? tAddiw : tAddi, lo);
+			}
 			return;
 		}
 		XBYAK_RISCV_ASSERT(rv64_);
@@ -482,6 +486,12 @@ public:
 					hi &= hi - 1;
 				} while (hi);
 				*this = tmp;
+			}
+			// fold ADDI 1 + SLLI into BSETI (LLVM >= 21)
+			if (this->v[0].op == tAddi && this->v[0].imm == 1 && this->v[1].op == tSlli) {
+				this->v[1].op = tBseti;
+				for (size_t i = 1; i < n_; i++) this->v[i - 1] = this->v[i];
+				n_--;
 			}
 		}
 		// Zbs : BCLRI for each cleared upper bit

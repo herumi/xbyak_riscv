@@ -225,8 +225,9 @@ def misc():
   ]:
     putRR(name)
   name = 'li'
-  # values on which gas and LLVM agree (li follows LLVM ; the full test is gen_test_li.py with llvm-mc)
-  for v in [0, 1, -1, 2, -2, 100, -100, -2049, -2048, -2047, 2047, 0xfffff, -0xfffff, 0x1fffff, -0x1fffff, 0x000000007ffffabc,
+  # values on which gas and LLVM >= 21 agree (li follows LLVM ; the full test is gen_test_li.py with llvm-mc)
+  # gas always uses LUI+ADDIW, but LLVM >= 21 uses ADDI unless LUI + lo12 overflows 32 bits, so such values are excluded
+  for v in [0, 1, -1, 2, -2, 100, -100, -2048, -2047, 2047, 0x000000007ffffabc,
     0x7ffffffe, 0x7fffffff, 0x12345000, 0x12348000, 0x7ffff000, 0x1000, 0x7ffff800, 0xffffffff80000000,
   ]:
     put('li', f'x2, {v:#x}')
