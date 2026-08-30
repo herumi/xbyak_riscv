@@ -68,3 +68,45 @@ CYBOZU_TEST_AUTO(reset_after_readyRE)
 		CYBOZU_TEST_EQUAL(c.getSize(), 4u);
 	}
 }
+
+static uint32_t read4ByteLE(const uint8_t *p)
+{
+	return p[0] | (p[1]<<8) | (p[2]<<16) | (p[3]<<24);
+}
+
+// li takes a 64-bit immediate (gas compatible) ; RV32 accepts a 32-bit value
+CYBOZU_TEST_AUTO(li)
+{
+	// RV64
+	{
+		CodeGenerator c;
+		c.li(x1, 0x80000000); // addi x1, x0, 1 ; slli x1, x1, 31
+		CYBOZU_TEST_EQUAL(c.getSize(), 8u);
+		CYBOZU_TEST_EQUAL(read4ByteLE(c.getCode()), 0x00100093u);
+		CYBOZU_TEST_EQUAL(read4ByteLE(c.getCode() + 4), 0x01f09093u);
+	}
+	{
+		CodeGenerator c;
+		c.li(x1, 0xffffffff80000000); // lui x1, 0x80000
+		CYBOZU_TEST_EQUAL(c.getSize(), 4u);
+		CYBOZU_TEST_EQUAL(read4ByteLE(c.getCode()), 0x800000b7u);
+	}
+	// RV32 : the same as RV64 for a sign-extended 32-bit value
+	{
+		CodeGenerator c;
+		c.setRV32();
+		c.li(x1, 0x80000000); // lui x1, 0x80000
+		c.li(x1, 0xffffffff80000000); // lui x1, 0x80000
+		c.li(x1, 0xffffffff); // addi x1, x0, -1
+		c.li(x1, -1); // addi x1, x0, -1
+		c.li(x1, 0x12345678); // lui x1, 0x12345 ; addi x1, x1, 0x678
+		CYBOZU_TEST_EQUAL(c.getSize(), 24u);
+		const uint32_t expected[] = { 0x800000b7, 0x800000b7, 0xfff00093, 0xfff00093, 0x123450b7, 0x67808093 };
+		for (size_t i = 0; i < 6; i++) {
+			CYBOZU_TEST_EQUAL(read4ByteLE(c.getCode() + i * 4), expected[i]);
+		}
+		// not a 32-bit value
+		CYBOZU_TEST_EXCEPTION(c.li(x1, 0x100000000), std::exception);
+		CYBOZU_TEST_EXCEPTION(c.li(x1, 0xfffffffe80000000), std::exception);
+	}
+}

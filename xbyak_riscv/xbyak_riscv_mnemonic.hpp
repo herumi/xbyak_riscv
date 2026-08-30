@@ -1,4 +1,4 @@
-const char *getVersionString() const { return "1.32"; }
+const char *getVersionString() const { return "1.34"; }
 void add(const Reg& rd, const Reg& rs1, const Reg& rs2) { if (supportRVC_ && rd == rs1 && c_mv(rd, rs2, 1)) return; Rtype(0x33, 0, 0x0, rd, rs1, rs2); }
 void sub(const Reg& rd, const Reg& rs1, const Reg& rs2) { if (supportRVC_ && c_noimm(rd, rs1, rs2, 0x23, 0)) return; Rtype(0x33, 0, 0x20, rd, rs1, rs2); }
 void sll(const Reg& rd, const Reg& rs1, const Reg& rs2) { Rtype(0x33, 1, 0x0, rd, rs1, rs2); }
@@ -255,6 +255,8 @@ void fsh(const FReg& rs2, const Reg& rs1, int32_t imm12 = 0) { opStoreFP(0x1027,
 
 
 void nop() { if (supportRVC_) { append2B(0x0001); return; } addi(x0, x0, 0); }
+#ifdef XBYAK_RISCV_LI_OLD
+// imm is a 32-bit value (sign-extended on RV64)
 void li(const Reg& rd, uint32_t imm)
 {
 	if (imm && (imm & local::mask(12)) == 0) { // lower 12 bits of imm are zero
@@ -273,6 +275,20 @@ void li(const Reg& rd, uint32_t imm)
 		addiw(rd, rd, L);
 	}
 }
+#else
+// load a 64-bit immediate in the same way as LLVM
+// Zba/Zbb/Zbs instructions are used if supportBext(true)
+// RV32 : imm must be a 32-bit value (zero- or sign-extended)
+void li(const Reg& rd, uint64_t imm)
+{
+	if (isRV32_) {
+		const uint64_t hi = imm >> 32;
+		if (hi != 0 && hi != local::mask(32)) XBYAK_RISCV_THROW(ERR_IMM_IS_TOO_BIG)
+		imm = local::sext32(imm);
+	}
+	li_inner(rd, imm);
+}
+#endif
 void mv(const Reg& rd, const Reg& rs) { addi(rd, rs, 0); }
 void not_(const Reg& rd, const Reg& rs) { xori(rd, rs, -1); }
 void neg(const Reg& rd, const Reg& rs) { sub(rd, x0, rs); }

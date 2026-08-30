@@ -87,6 +87,18 @@ def noimmTest():
 def miscTest():
   put('ebreak')
 
+# a jump to a defined label is compressed (backward only ; gas compresses a forward jump too)
+def jmpTest():
+  putEach('Label B = L()', 'B:')
+  put('j_', 'B')
+  put('jal', 'x1, B') # c.jal is RV32 only
+  for i in range(32):
+    put('beqz', f'x{i}, B')
+    put('bnez', f'x{i}, B')
+  put('beq', 'x0, x9, B')
+  put('bne', 'x8, x9, B')
+  put('blt', 'x8, x0, B')
+
 def main():
   setModeFromArgv()
   if getXbyak():
@@ -96,6 +108,7 @@ def main():
   immTest()
   noimmTest()
   miscTest()
+  jmpTest()
 
 if __name__ == '__main__':
   main()

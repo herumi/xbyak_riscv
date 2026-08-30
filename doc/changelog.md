@@ -1,4 +1,6 @@
 # History
+- 2026/08/30 ver 1.34 li takes a 64-bit immediate (the same expansion as LLVM, Zba/Zbb/Zbs are used if supportBext). define XBYAK_RISCV_LI_OLD for backward compatibility of the old 32-bit li.
+- 2026/08/30 ver 1.33 shorten call/tail/jump and jumps to a defined label (jal, c.j, c.jal, c.beqz, c.bnez).
 - 2026/08/29 ver 1.32 support pseudo instructions call, tail, jump and la.
 - 2026/08/29 ver 1.31.1 fix assignL() after a forward referenced. fix reset() to restore write protection.
 - 2026/06/30 ver 1.31 support Zvfbfmin

@@ -1,15 +1,25 @@
 HEADER=../xbyak_riscv/xbyak_riscv_mnemonic.hpp
 
-test: $(HEADER) jmp_test.exe misc_test.exe noexception_test.exe mmap_allocator_test.exe
+test: $(HEADER) jmp_test.exe misc_test.exe noexception_test.exe mmap_allocator_test.exe li_old_test.exe
 	./jmp_test.exe
 	./misc_test.exe
+	./li_old_test.exe
 	./noexception_test.exe
 	./mmap_allocator_test.exe
 	./test.sh
 	./test.sh svc
+	./test.sh li
+	./test.sh li_bext
+	./test.sh li_rv32
 
 test_svc:
 	./test.sh svc
+
+# require llvm-mc
+test_li:
+	./test.sh li
+	./test.sh li_bext
+	./test.sh li_rv32
 
 # require binutils>= 2.43
 test_vec:

@@ -225,11 +225,12 @@ def misc():
   ]:
     putRR(name)
   name = 'li'
-  for v in [0, 1, -1, 2, -2, 100, -100, -2049, -2048, -2047, 2047, 2048, 0xfffff, -0xfffff, 0x1fffff, -0x1fffff, 0x000000007ffffabc,
-    0x7ffffffe, 0x7fffffff, 0x12345000, 0x12348000, 0x7ffff000,
-	# 0x80000000, # lui reg, 0x80000 is better than addiw, reg, 1 ; slli reg, reg, 31
+  # values on which gas and LLVM >= 21 agree (li follows LLVM ; the full test is gen_test_li.py with llvm-mc)
+  # gas always uses LUI+ADDIW, but LLVM >= 21 uses ADDI unless LUI + lo12 overflows 32 bits, so such values are excluded
+  for v in [0, 1, -1, 2, -2, 100, -100, -2048, -2047, 2047, 0x000000007ffffabc,
+    0x7ffffffe, 0x7fffffff, 0x12345000, 0x12348000, 0x7ffff000, 0x1000, 0x7ffff800, 0xffffffff80000000,
   ]:
-    put('li', f'x2, {v}')
+    put('li', f'x2, {v:#x}')
 
 # sext_b/sext_h/zext_h/zext_w are gated by supportBext(): native B when on, base-ISA
 # shift sequence when off. The same is tested for both modes below.
