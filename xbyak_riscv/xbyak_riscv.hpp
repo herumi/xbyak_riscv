@@ -84,6 +84,10 @@
 	#define XBYAK_RISCV_CONSTEXPR
 #endif
 
+#ifdef XBYAK_RISCV_LI_OLD
+	#pragma message "XBYAK_RISCV_LI_OLD (li takes a 32-bit immediate) is deprecated and will be removed in the future"
+#endif
+
 #if defined(XBYAK_RISCV_V) && XBYAK_RISCV_V == 1
 
 #ifndef XBYAK_RISCV_VSETV_DEFAULT_OLD
@@ -266,6 +270,22 @@ inline void splitHiLo(int *pH, int* pL, int x) {
 	}
 	*pH = H;
 	*pL = L;
+}
+
+// sign-extended lower 12 bits of x
+inline int lo12(uint64_t x) {
+	const int lo = int(x & mask(12));
+	return lo >= 0x800 ? lo - 0x1000 : lo;
+}
+// sign-extend the lower 32 bits of x
+inline uint64_t sext32(uint64_t x) {
+	const uint64_t lo = x & 0xffffffff;
+	return (x & (uint64_t(1) << 31)) ? lo | (~uint64_t(0) << 32) : lo;
+}
+// arithmetic shift right of x by s (1 <= s <= 63) without signed integer conversion
+inline uint64_t sar64(uint64_t x, int s) {
+	const uint64_t sign = x >> 63;
+	return (x >> s) | ((uint64_t(0) - sign) << (64 - s));
 }
 
 // split x to hi20bits and low12bits
@@ -1421,6 +1441,28 @@ private:
 		uint32_t v = (funct3<<13) | (rs.getIdx()<<2) | local::get5to3_8to6_z7(imm) | 2;
 		append2B(v);
 		return true;
+	}
+	// load_const() in gas (tc-riscv.c) : build a 64-bit imm by lui/addiw/slli/addi with rd only
+	void li_inner(const Reg& rd, uint64_t imm)
+	{
+		// lower : sign-extended lower 12 bits, upper : the rest (lower 12 bits are zero)
+		const int lo = local::lo12(imm);
+		const uint64_t upper = imm - uint64_t(int64_t(lo));
+		if (imm + (uint64_t(1) << 31) < (uint64_t(1) << 32)) { // imm is a signed 32-bit value
+			// lui rd, upper ; addiw rd, rd, lo (addiw wraps around at 32-bit, so upper may be 0x80000000)
+			if (upper) lui(rd, uint32_t(upper >> 12) & local::mask(20));
+			if (lo || upper == 0) {
+				const Reg& rs = upper ? rd : x0;
+				if (isRV32_) addi(rd, rs, lo); else addiw(rd, rs, lo);
+			}
+			return;
+		}
+		// reduce to a signed 32-bit value by slli and addi
+		int shift = 12;
+		while (((upper >> shift) & 1) == 0) shift++;
+		li_inner(rd, local::sar64(upper, shift));
+		slli(rd, rd, shift);
+		if (lo) addi(rd, rd, lo);
 	}
 public:
 	void L(Label& label) { labelMgr_.defineClabel(label); }

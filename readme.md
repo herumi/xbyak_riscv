@@ -58,6 +58,25 @@ A forward reference is never shortened.
 Since a 2-byte instruction changes the alignment of the following code,
 use `align()` if you put data after the code.
 
+### 64-bit immediate (`li`)
+
+`li(rd, imm)` takes a 64-bit immediate and expands it in the same way as gas
+(`lui`/`addiw` for a signed 32-bit value, otherwise `slli`/`addi` sequences
+using `rd` only, at most 8 instructions). On RV32 (`setRV32()`), `imm` must be
+a 32-bit value (zero- or sign-extended); otherwise an exception is thrown.
+
+```cpp
+li(a0, 0x12345678);         // lui a0, 0x12345 ; addiw a0, a0, 0x678
+li(a0, 0x80000000);         // addiw a0, zero, 1 ; slli a0, a0, 31 (RV64)
+li(a0, 0xffffffff80000000); // lui a0, 0x80000
+li(a0, -1);                 // addi a0, zero, -1
+```
+
+Note that `li` took a `uint32_t` before ver 1.34 and a 32-bit value with bit 31
+set was sign-extended on RV64 (`li(a0, 0x80000000)` was `lui a0, 0x80000`).
+Define `XBYAK_RISCV_LI_OLD` to restore that behavior temporarily; it will be
+removed in the future.
+
 On Windows, define `NOMINMAX` before including `<windows.h>` so that `min` and
 `max` are not turned into macros that clash with the `min`/`max` mnemonics.
 

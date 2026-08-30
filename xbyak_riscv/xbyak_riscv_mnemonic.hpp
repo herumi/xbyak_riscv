@@ -255,6 +255,8 @@ void fsh(const FReg& rs2, const Reg& rs1, int32_t imm12 = 0) { opStoreFP(0x1027,
 
 
 void nop() { if (supportRVC_) { append2B(0x0001); return; } addi(x0, x0, 0); }
+#ifdef XBYAK_RISCV_LI_OLD
+// imm is a 32-bit value (sign-extended on RV64)
 void li(const Reg& rd, uint32_t imm)
 {
 	if (imm && (imm & local::mask(12)) == 0) { // lower 12 bits of imm are zero
@@ -273,6 +275,23 @@ void li(const Reg& rd, uint32_t imm)
 		addiw(rd, rd, L);
 	}
 }
+#else
+// load a 64-bit immediate in the same way as gas (li alias + load_const in tc-riscv.c)
+// RV32 : imm must be a 32-bit value (zero- or sign-extended)
+void li(const Reg& rd, uint64_t imm)
+{
+	if (isRV32_) {
+		const uint64_t hi = imm >> 32;
+		if (hi != 0 && hi != local::mask(32)) XBYAK_RISCV_THROW(ERR_IMM_IS_TOO_BIG)
+		imm = local::sext32(imm);
+	}
+	if (imm + 0x800 < 0x1000) { // 12-bit signed : addi rd, x0, imm
+		addi(rd, x0, local::lo12(imm));
+		return;
+	}
+	li_inner(rd, imm);
+}
+#endif
 void mv(const Reg& rd, const Reg& rs) { addi(rd, rs, 0); }
 void not_(const Reg& rd, const Reg& rs) { xori(rd, rs, -1); }
 void neg(const Reg& rd, const Reg& rs) { sub(rd, x0, rs); }

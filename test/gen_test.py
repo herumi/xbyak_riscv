@@ -226,10 +226,13 @@ def misc():
     putRR(name)
   name = 'li'
   for v in [0, 1, -1, 2, -2, 100, -100, -2049, -2048, -2047, 2047, 2048, 0xfffff, -0xfffff, 0x1fffff, -0x1fffff, 0x000000007ffffabc,
-    0x7ffffffe, 0x7fffffff, 0x12345000, 0x12348000, 0x7ffff000,
-	# 0x80000000, # lui reg, 0x80000 is better than addiw, reg, 1 ; slli reg, reg, 31
+    0x7ffffffe, 0x7fffffff, 0x12345000, 0x12348000, 0x7ffff000, 0x800, 0x1000, 0x7ffff800,
+    # 64-bit (the same as gas load_const)
+    0x80000000, 0xffffffff, 0x100000000, 0x100000001, 0x1234500000000, 0x123456789abcdef0,
+    0x7fffffffffffffff, 0x8000000000000000, 0xffffffff80000000, 0xfffffffeffffffff, 0x7ff0000000000000,
+    -0x123456789, 0x00007fffffff8000, 0x0000800000000000, 0x1fffffffff,
   ]:
-    put('li', f'x2, {v}')
+    put('li', f'x2, {v:#x}')
 
 # sext_b/sext_h/zext_h/zext_w are gated by supportBext(): native B when on, base-ISA
 # shift sequence when off. The same is tested for both modes below.
