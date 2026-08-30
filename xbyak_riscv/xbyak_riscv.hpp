@@ -117,7 +117,7 @@ enum {
 inline uint32_t getVersion() { return VERSION; }
 
 enum {
-	ERR_NONE = 1,
+	ERR_NONE = 0,
 	ERR_OFFSET_IS_TOO_BIG,
 	ERR_CODE_IS_TOO_BIG,
 	ERR_IMM_IS_TOO_BIG,
@@ -157,7 +157,7 @@ inline const char *ConvertErrorToString(int err)
 		"bad align",
 		"internal error"
 	};
-	assert(ERR_INTERNAL == sizeof(errTbl) / sizeof(*errTbl));
+	assert(ERR_INTERNAL + 1 == sizeof(errTbl) / sizeof(*errTbl));
 	return err <= ERR_INTERNAL ? errTbl[err] : "unknown err";
 }
 
