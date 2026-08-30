@@ -1,5 +1,5 @@
 
-# Xbyak_riscv 1.33 [![Badge Build]][Build Status]
+# Xbyak_riscv 1.34 [![Badge Build]][Build Status]
 
 *A C++ JIT assembler for RISC-V (under CONSTRUCTION)*
 
@@ -12,6 +12,10 @@
 ## Abstract
 
 Xbyak_riscv is a C++ header library that enables dynamically to assemble RISC-V instructions.
+
+## News
+Breaking change: `li(rd, u64imm)` supports 64-bit unsigned imm and it breaks backward compatibility of the old `li(rd, u32imm)`.
+Define `XBYAK_RISCV_LI_OLD` to use the old li. See [64-bit immediate (`li`)](#64-bit-immediate-li).
 
 ## Feature
 
