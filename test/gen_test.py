@@ -225,12 +225,9 @@ def misc():
   ]:
     putRR(name)
   name = 'li'
-  for v in [0, 1, -1, 2, -2, 100, -100, -2049, -2048, -2047, 2047, 2048, 0xfffff, -0xfffff, 0x1fffff, -0x1fffff, 0x000000007ffffabc,
-    0x7ffffffe, 0x7fffffff, 0x12345000, 0x12348000, 0x7ffff000, 0x800, 0x1000, 0x7ffff800,
-    # 64-bit (the same as gas load_const)
-    0x80000000, 0xffffffff, 0x100000000, 0x100000001, 0x1234500000000, 0x123456789abcdef0,
-    0x7fffffffffffffff, 0x8000000000000000, 0xffffffff80000000, 0xfffffffeffffffff, 0x7ff0000000000000,
-    -0x123456789, 0x00007fffffff8000, 0x0000800000000000, 0x1fffffffff,
+  # values on which gas and LLVM agree (li follows LLVM ; the full test is gen_test_li.py with llvm-mc)
+  for v in [0, 1, -1, 2, -2, 100, -100, -2049, -2048, -2047, 2047, 0xfffff, -0xfffff, 0x1fffff, -0x1fffff, 0x000000007ffffabc,
+    0x7ffffffe, 0x7fffffff, 0x12345000, 0x12348000, 0x7ffff000, 0x1000, 0x7ffff800, 0xffffffff80000000,
   ]:
     put('li', f'x2, {v:#x}')
 

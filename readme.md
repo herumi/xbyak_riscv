@@ -60,16 +60,21 @@ use `align()` if you put data after the code.
 
 ### 64-bit immediate (`li`)
 
-`li(rd, imm)` takes a 64-bit immediate and expands it in the same way as gas
-(`lui`/`addiw` for a signed 32-bit value, otherwise `slli`/`addi` sequences
-using `rd` only, at most 8 instructions). On RV32 (`setRV32()`), `imm` must be
-a 32-bit value (zero- or sign-extended); otherwise an exception is thrown.
+`li(rd, imm)` takes a 64-bit immediate and expands it in the same way as LLVM
+(`RISCVMatInt::generateInstSeq`): `lui`/`addiw` for a signed 32-bit value,
+otherwise `slli`/`srli`/`addi`/`xori` sequences using `rd` only (at most 8
+instructions). With `supportBext(true)`, Zba/Zbb/Zbs instructions (`bseti`,
+`bclri`, `slli.uw`, `zext.w`, `sh1add`, `rori`, ...) are also used. On RV32
+(`setRV32()`), `imm` must be a 32-bit value (zero- or sign-extended); otherwise
+an exception is thrown.
 
 ```cpp
 li(a0, 0x12345678);         // lui a0, 0x12345 ; addiw a0, a0, 0x678
-li(a0, 0x80000000);         // addiw a0, zero, 1 ; slli a0, a0, 31 (RV64)
+li(a0, 0xffffffff);         // addi a0, zero, -1 ; srli a0, a0, 32
+li(a0, 0x123450000000);     // lui a0, 0x12345 ; slli a0, a0, 16
 li(a0, 0xffffffff80000000); // lui a0, 0x80000
-li(a0, -1);                 // addi a0, zero, -1
+supportBext(true);
+li(a0, 0x8000000000000000); // bseti a0, zero, 63
 ```
 
 Note that `li` took a `uint32_t` before ver 1.34 and a 32-bit value with bit 31

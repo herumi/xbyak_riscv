@@ -288,6 +288,262 @@ inline uint64_t sar64(uint64_t x, int s) {
 	return (x >> s) | ((uint64_t(0) - sign) << (64 - s));
 }
 
+// x is a signed n-bit integer (n < 64)
+inline bool isSInt(uint64_t x, int n) {
+	return x + (uint64_t(1) << (n - 1)) < (uint64_t(1) << n);
+}
+inline int ctz64(uint64_t x) { int n = 0; while (((x >> n) & 1) == 0) n++; return n; } // x != 0
+inline int clz64(uint64_t x) { int n = 0; while (((x << n) >> 63) == 0) n++; return n; } // x != 0
+inline int cto64(uint64_t x) { return x == ~uint64_t(0) ? 64 : ctz64(~x); }
+inline int clo64(uint64_t x) { return x == ~uint64_t(0) ? 64 : clz64(~x); }
+inline int popcnt64(uint64_t x) { int n = 0; while (x) { x &= x - 1; n++; } return n; }
+inline uint64_t rotl64(uint64_t x, int s) { s &= 63; return s == 0 ? x : (x << s) | (x >> (64 - s)); }
+// signed x is divisible by d (d > 0) ; *q = x / d
+inline bool sdivExact(uint64_t x, uint64_t d, uint64_t *q) {
+	const bool neg = (x >> 63) != 0;
+	const uint64_t a = neg ? uint64_t(0) - x : x;
+	if (a % d != 0) return false;
+	*q = neg ? uint64_t(0) - a / d : a / d;
+	return true;
+}
+
+/*
+	instruction sequence to load a 64-bit immediate to a register
+	ported from RISCVMatInt::generateInstSeq() of LLVM (llvm/lib/Target/RISCV/MCTargetDesc/RISCVMatInt.cpp)
+*/
+struct LiSeq {
+	enum Op {
+		tLui, tAddi, tAddiw, tSlli, tSrli, tXori, // base ISA
+		tBseti, tBclri, // Zbs
+		tSlliUw, tAddUw, tSh1add, tSh2add, tSh3add, // Zba
+		tRori, // Zbb
+	};
+	struct Inst {
+		int op;
+		int imm;
+	};
+	static const size_t maxN = 8;
+	Inst v[maxN];
+private:
+	size_t n_;
+	const bool rv64_;
+	const bool zb_; // Zba/Zbb/Zbs
+	void clear() { n_ = 0; }
+	void push(int op, int imm)
+	{
+		XBYAK_RISCV_ASSERT(n_ < maxN);
+		v[n_].op = op;
+		v[n_].imm = imm;
+		n_++;
+	}
+	// generateInstSeqImpl
+	void genImpl(uint64_t v)
+	{
+		// use BSETI for a single bit that can't be expressed by a single LUI or ADDI
+		if (zb_ && v != 0 && (v & (v - 1)) == 0 && (!isSInt(v, 32) || v == 0x800)) {
+			push(tBseti, ctz64(v));
+			return;
+		}
+		if (isSInt(v, 32)) {
+			const int hi20 = int((v + 0x800) >> 12) & 0xfffff;
+			const int lo = lo12(v);
+			if (hi20) push(tLui, hi20);
+			if (lo || hi20 == 0) push((rv64_ && hi20) ? tAddiw : tAddi, lo);
+			return;
+		}
+		XBYAK_RISCV_ASSERT(rv64_);
+		// remove the lowest 12 bits, then find the optimal shift amount and process the rest recursively
+		const int lo = lo12(v);
+		v -= uint64_t(int64_t(lo));
+		int shift = 0;
+		bool uns = false;
+		if (!isSInt(v, 32)) { // v may be valid for LUI without shift
+			shift = ctz64(v);
+			v = sar64(v, shift);
+			// if the rest doesn't fit in 12 bits, reduce the shift amount to use LUI (the lower 12 bits are zero)
+			if (shift > 12 && !isSInt(v, 12)) {
+				if (isSInt(v << 12, 32)) {
+					shift -= 12;
+					v <<= 12;
+				} else if (zb_ && ((v << 12) >> 32) == 0) {
+					// LUI+ADDI(W) computes (v | 0xffffffff00000000), then SLLI.UW clears the upper 32 bits
+					shift -= 12;
+					v = (v << 12) | (~uint64_t(0) << 32);
+					uns = true;
+				}
+			}
+			if (zb_ && (v >> 32) == 0 && !isSInt(v, 32)) {
+				v |= ~uint64_t(0) << 32;
+				uns = true;
+			}
+		}
+		genImpl(v);
+		if (shift) push(uns ? tSlliUw : tSlli, shift);
+		if (lo) push(tAddi, lo);
+	}
+	static unsigned extractRotateInfo(uint64_t v)
+	{
+		const int leadingOnes = clo64(v);
+		const int trailingOnes = cto64(v);
+		if (trailingOnes > 0 && trailingOnes < 64 && leadingOnes + trailingOnes > 64 - 12) return 64 - trailingOnes;
+		// count within each 32-bit half
+		const int upperTrailingOnes = (std::min)(cto64(v >> 32), 32);
+		const int lowerLeadingOnes = (std::min)(clo64(v << 32), 32);
+		if (upperTrailingOnes < 32 && upperTrailingOnes + lowerLeadingOnes > 64 - 12) return 32 - upperTrailingOnes;
+		return 0;
+	}
+	// try (v << leadingZeros) then SRLI ; v > 0
+	void genLeadingZeros(uint64_t v)
+	{
+		const int lz = clz64(v);
+		uint64_t shifted = (v << lz) | mask64(lz);
+		LiSeq tmp(rv64_, zb_);
+		tmp.genImpl(shifted);
+		if (tmp.size() + 1 < n_ || (n_ == 0 && tmp.size() < maxN)) {
+			tmp.push(tSrli, lz);
+			*this = tmp;
+		}
+		shifted &= ~mask64(lz);
+		tmp.clear();
+		tmp.genImpl(shifted);
+		if (tmp.size() + 1 < n_ || (n_ == 0 && tmp.size() < maxN)) {
+			tmp.push(tSrli, lz);
+			*this = tmp;
+		}
+		if (lz == 32 && zb_) {
+			tmp.clear();
+			tmp.genImpl(v | (~uint64_t(0) << 32));
+			if (tmp.size() + 1 < n_ || (n_ == 0 && tmp.size() < maxN)) {
+				tmp.push(tAddUw, 0);
+				*this = tmp;
+			}
+		}
+	}
+	static uint64_t mask64(int n) { return n == 64 ? ~uint64_t(0) : (uint64_t(1) << n) - 1; }
+public:
+	LiSeq(bool rv64, bool zb) : n_(0), rv64_(rv64), zb_(zb) {}
+	LiSeq& operator=(const LiSeq& rhs)
+	{
+		XBYAK_RISCV_ASSERT(rv64_ == rhs.rv64_ && zb_ == rhs.zb_);
+		n_ = rhs.n_;
+		for (size_t i = 0; i < n_; i++) v[i] = rhs.v[i];
+		return *this;
+	}
+	size_t size() const { return n_; }
+	// generateInstSeq
+	void gen(uint64_t v)
+	{
+		clear();
+		genImpl(v);
+		// if there are trailing zeros, try a constant without them and a final SLLI
+		if ((v & 0xfff) != 0 && (v & 1) == 0 && n_ >= 2) {
+			const int tz = ctz64(v);
+			const uint64_t shifted = sar64(v, tz);
+			const bool compressible = isSInt(shifted, 6); // C.LI+C.SLLI
+			LiSeq tmp(rv64_, zb_);
+			tmp.genImpl(shifted);
+			if (tmp.size() + 1 < n_ || compressible) {
+				tmp.push(tSlli, tz);
+				*this = tmp;
+			}
+		}
+		if (n_ <= 2) return;
+		XBYAK_RISCV_ASSERT(rv64_);
+		// if the lower 13 bits are like 0x17ff, add 1 to make them 0x1800 and subtract it by ADDI
+		if ((v & 0xfff) != 0 && (v & 0x1800) == 0x1000) {
+			const int imm12 = -(0x800 - int(v & 0xfff));
+			LiSeq tmp(rv64_, zb_);
+			tmp.genImpl(v - uint64_t(int64_t(imm12)));
+			if (tmp.size() + 1 < n_) {
+				tmp.push(tAddi, imm12);
+				*this = tmp;
+			}
+		}
+		const bool neg = (v >> 63) != 0;
+		if (!neg && n_ > 2) genLeadingZeros(v);
+		if (neg && n_ > 3) {
+			LiSeq tmp(rv64_, zb_);
+			tmp.genLeadingZeros(~v);
+			if (tmp.size() > 0 && tmp.size() + 1 < n_) {
+				tmp.push(tXori, -1);
+				*this = tmp;
+			}
+		}
+		if (!zb_) return;
+		// Zbs : lower 31 bits by LUI/ADDI then BSETI for each upper bit
+		if (n_ > 2) {
+			const uint64_t lo = v & 0x7fffffff;
+			uint64_t hi = v ^ lo;
+			LiSeq tmp(rv64_, zb_);
+			if (lo) tmp.genImpl(lo);
+			if (tmp.size() + popcnt64(hi) < n_) {
+				do {
+					tmp.push(tBseti, ctz64(hi));
+					hi &= hi - 1;
+				} while (hi);
+				*this = tmp;
+			}
+		}
+		// Zbs : BCLRI for each cleared upper bit
+		if (n_ > 2) {
+			const uint64_t lo = v | (~uint64_t(0) << 31);
+			uint64_t hi = v ^ lo;
+			LiSeq tmp(rv64_, zb_);
+			tmp.genImpl(lo);
+			if (tmp.size() + popcnt64(hi) < n_) {
+				do {
+					tmp.push(tBclri, ctz64(hi));
+					hi &= hi - 1;
+				} while (hi);
+				*this = tmp;
+			}
+		}
+		// Zba : v = x * 3, 5, 9 by SH1ADD, SH2ADD, SH3ADD
+		if (n_ > 2) {
+			const struct { int d; int op; } tbl[] = { { 3, tSh1add }, { 5, tSh2add }, { 9, tSh3add } };
+			uint64_t q = 0;
+			int op = -1;
+			for (size_t i = 0; i < 3; i++) {
+				if (sdivExact(v, tbl[i].d, &q) && isSInt(q, 32)) { op = tbl[i].op; break; }
+			}
+			LiSeq tmp(rv64_, zb_);
+			if (op >= 0) {
+				tmp.genImpl(q);
+				if (tmp.size() + 1 < n_) {
+					tmp.push(op, 0);
+					*this = tmp;
+				}
+			} else {
+				const uint64_t hi52 = (v + 0x800) & ~uint64_t(0xfff);
+				const int lo = lo12(v);
+				for (size_t i = 0; i < 3; i++) {
+					if (sdivExact(hi52, tbl[i].d, &q) && isSInt(q, 32)) { op = tbl[i].op; break; }
+				}
+				if (op >= 0) {
+					XBYAK_RISCV_ASSERT(lo != 0);
+					tmp.genImpl(q);
+					if (tmp.size() + 2 < n_) {
+						tmp.push(op, 0);
+						tmp.push(tAddi, lo);
+						*this = tmp;
+					}
+				}
+			}
+		}
+		// Zbb : ADDI then RORI
+		if (n_ > 2) {
+			const unsigned rot = extractRotateInfo(v);
+			if (rot) {
+				const uint64_t imm = rotl64(v, int(rot));
+				XBYAK_RISCV_ASSERT(isSInt(imm, 12));
+				clear();
+				push(tAddi, lo12(imm));
+				push(tRori, int(rot));
+			}
+		}
+	}
+};
+
 // split x to hi20bits and low12bits
 // return false if x in 12-bit signed integer
 inline bool split32bit(int *pH, int* pL, int x) {
@@ -1442,27 +1698,33 @@ private:
 		append2B(v);
 		return true;
 	}
-	// load_const() in gas (tc-riscv.c) : build a 64-bit imm by lui/addiw/slli/addi with rd only
+	// emit the instruction sequence to load imm to rd (see local::LiSeq)
 	void li_inner(const Reg& rd, uint64_t imm)
 	{
-		// lower : sign-extended lower 12 bits, upper : the rest (lower 12 bits are zero)
-		const int lo = local::lo12(imm);
-		const uint64_t upper = imm - uint64_t(int64_t(lo));
-		if (imm + (uint64_t(1) << 31) < (uint64_t(1) << 32)) { // imm is a signed 32-bit value
-			// lui rd, upper ; addiw rd, rd, lo (addiw wraps around at 32-bit, so upper may be 0x80000000)
-			if (upper) lui(rd, uint32_t(upper >> 12) & local::mask(20));
-			if (lo || upper == 0) {
-				const Reg& rs = upper ? rd : x0;
-				if (isRV32_) addi(rd, rs, lo); else addiw(rd, rs, lo);
+		local::LiSeq seq(!isRV32_, supportBext_);
+		seq.gen(imm);
+		for (size_t i = 0; i < seq.size(); i++) {
+			const int op = seq.v[i].op;
+			const int v = seq.v[i].imm;
+			const Reg& rs = (i == 0) ? x0 : rd; // the first instruction reads x0
+			switch (op) {
+			case local::LiSeq::tLui: lui(rd, uint32_t(v)); break;
+			case local::LiSeq::tAddi: addi(rd, rs, v); break;
+			case local::LiSeq::tAddiw: addiw(rd, rs, v); break;
+			case local::LiSeq::tSlli: slli(rd, rd, uint32_t(v)); break;
+			case local::LiSeq::tSrli: srli(rd, rd, uint32_t(v)); break;
+			case local::LiSeq::tXori: xori(rd, rd, v); break;
+			case local::LiSeq::tBseti: bseti(rd, rs, uint32_t(v)); break;
+			case local::LiSeq::tBclri: bclri(rd, rd, uint32_t(v)); break;
+			case local::LiSeq::tSlliUw: slli_uw(rd, rd, uint32_t(v)); break;
+			case local::LiSeq::tAddUw: add_uw(rd, rd, x0); break;
+			case local::LiSeq::tSh1add: sh1add(rd, rd, rd); break;
+			case local::LiSeq::tSh2add: sh2add(rd, rd, rd); break;
+			case local::LiSeq::tSh3add: sh3add(rd, rd, rd); break;
+			case local::LiSeq::tRori: rori(rd, rd, uint32_t(v)); break;
+			default: XBYAK_RISCV_THROW(ERR_INTERNAL)
 			}
-			return;
 		}
-		// reduce to a signed 32-bit value by slli and addi
-		int shift = 12;
-		while (((upper >> shift) & 1) == 0) shift++;
-		li_inner(rd, local::sar64(upper, shift));
-		slli(rd, rd, shift);
-		if (lo) addi(rd, rd, lo);
 	}
 public:
 	void L(Label& label) { labelMgr_.defineClabel(label); }

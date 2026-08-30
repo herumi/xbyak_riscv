@@ -502,7 +502,8 @@ void li(const Reg& rd, uint32_t imm)
 	}
 }
 #else
-// load a 64-bit immediate in the same way as gas (li alias + load_const in tc-riscv.c)
+// load a 64-bit immediate in the same way as LLVM
+// Zba/Zbb/Zbs instructions are used if supportBext(true)
 // RV32 : imm must be a 32-bit value (zero- or sign-extended)
 void li(const Reg& rd, uint64_t imm)
 {
@@ -510,10 +511,6 @@ void li(const Reg& rd, uint64_t imm)
 		const uint64_t hi = imm >> 32;
 		if (hi != 0 && hi != local::mask(32)) XBYAK_RISCV_THROW(ERR_IMM_IS_TOO_BIG)
 		imm = local::sext32(imm);
-	}
-	if (imm + 0x800 < 0x1000) { // 12-bit signed : addi rd, x0, imm
-		addi(rd, x0, local::lo12(imm));
-		return;
 	}
 	li_inner(rd, imm);
 }

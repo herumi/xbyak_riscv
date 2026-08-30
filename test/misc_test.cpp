@@ -80,9 +80,9 @@ CYBOZU_TEST_AUTO(li)
 	// RV64
 	{
 		CodeGenerator c;
-		c.li(x1, 0x80000000); // addiw x1, x0, 1 ; slli x1, x1, 31
+		c.li(x1, 0x80000000); // addi x1, x0, 1 ; slli x1, x1, 31
 		CYBOZU_TEST_EQUAL(c.getSize(), 8u);
-		CYBOZU_TEST_EQUAL(read4ByteLE(c.getCode()), 0x0010009bu);
+		CYBOZU_TEST_EQUAL(read4ByteLE(c.getCode()), 0x00100093u);
 		CYBOZU_TEST_EQUAL(read4ByteLE(c.getCode() + 4), 0x01f09093u);
 	}
 	{
