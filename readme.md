@@ -50,8 +50,8 @@ jump(label, rt);     // auipc rt, hi ; jalr x0, lo(rt)
 la(label, rd);       // auipc rd, hi ; addi rd, rd, lo (rd = address of label)
 ```
 
-Note that `tail` clobbers `x6` (t1). `call(label, rd)` uses `rd` itself as the
-scratch register, whereas gas `call rd, label` uses `x6`.
+Note that `tail` clobbers `x6` (t1).
+`call(label, rd)` uses `rd` itself as the scratch register, whereas gas `call rd, label` uses `x6`.
 
 If the label is already defined (a backward reference) and within +-1MiB,
 `call`, `tail` and `jump` emit a single `jal` (4 bytes) instead.
@@ -59,18 +59,14 @@ With `supportRVC(true)`, a backward jump/branch to a label in range is also comp
 `j_`/`tail`/`jump` to `c.j` (+-2KiB), `call`/`jal(x1, label)` to `c.jal` (RV32 only),
 and `beqz`/`bnez` with `x8`-`x15` to `c.beqz`/`c.bnez` (+-256B).
 A forward reference is never shortened.
-Since a 2-byte instruction changes the alignment of the following code,
-use `align()` if you put data after the code.
+Since a 2-byte instruction changes the alignment of the following code, use `align()` if you put data after the code.
 
 ### 64-bit immediate (`li`)
 
-`li(rd, imm)` takes a 64-bit immediate and expands it in the same way as LLVM
-(`RISCVMatInt::generateInstSeq`): `lui`/`addiw` for a signed 32-bit value,
-otherwise `slli`/`srli`/`addi`/`xori` sequences using `rd` only (at most 8
-instructions). With `supportBext(true)`, Zba/Zbb/Zbs instructions (`bseti`,
-`bclri`, `slli.uw`, `zext.w`, `sh1add`, `rori`, ...) are also used. On RV32
-(`setRV32()`), `imm` must be a 32-bit value (zero- or sign-extended); otherwise
-an exception is thrown.
+`li(rd, imm)` takes a 64-bit immediate and expands it in the same way as LLVM:
+`lui`/`addiw` for a signed 32-bit value, otherwise `slli`/`srli`/`addi`/`xori` sequences using `rd`.
+With `supportBext(true)`, Zba/Zbb/Zbs instructions (`bseti`, `bclri`, `slli.uw`, `zext.w`, `sh1add`, `rori`, ...) are also used.
+On RV32 (`setRV32()`), `imm` must be a 32-bit value (zero- or sign-extended); otherwise an exception is thrown.
 
 ```cpp
 li(a0, 0x12345678);         // lui a0, 0x12345 ; addiw a0, a0, 0x678
@@ -81,13 +77,10 @@ supportBext(true);
 li(a0, 0x8000000000000000); // bseti a0, zero, 63
 ```
 
-Note that `li` took a `uint32_t` before ver 1.34 and a 32-bit value with bit 31
-set was sign-extended on RV64 (`li(a0, 0x80000000)` was `lui a0, 0x80000`).
-Define `XBYAK_RISCV_LI_OLD` to restore that behavior temporarily; it will be
-removed in the future.
+Note that `li` took a `uint32_t` before ver 1.34 and a 32-bit value with bit 31 set was sign-extended on RV64 (`li(a0, 0x80000000)` was `lui a0, 0x80000`).
+Define `XBYAK_RISCV_LI_OLD` to restore that behavior temporarily; it will be removed in the future.
 
-On Windows, define `NOMINMAX` before including `<windows.h>` so that `min` and
-`max` are not turned into macros that clash with the `min`/`max` mnemonics.
+On Windows, define `NOMINMAX` before including `<windows.h>` so that `min` and `max` are not turned into macros that clash with the `min`/`max` mnemonics.
 
 ## Supported Compilers
 
